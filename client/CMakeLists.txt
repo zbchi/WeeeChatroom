@@ -1,2 +1,9 @@
-add_executable(chat_client main.cc)
+add_executable(chat_client 
+main.cc
+Client.cc)
+
 target_link_libraries(chat_client PRIVATE netlib)
+
+target_include_directories(chat_client PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)

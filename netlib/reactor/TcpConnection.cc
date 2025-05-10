@@ -131,6 +131,7 @@ void TcpConnection::sendInLoop(const std::string &message)
     if (!channel_->isWriting() && outputBuffer_.readableBytes() == 0)
     {
         nwrote = ::write(channel_->fd(), message.data(), message.size());
+        LOG_TRACE("I have send %zd bytes", nwrote);
         if (nwrote >= 0)
         {
             if (static_cast<size_t>(nwrote) < message.size())
