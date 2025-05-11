@@ -14,7 +14,7 @@ int main()
   server.setConnectionCallback([](const TcpConnectionPtr &conn) {});
   server.setMessageCallback([&service](const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
                             {std:: string msg =buf->retrieveAsString();
-                              std::cout<<msg;
+                              std::cout<<msg<<std::endl;
                             service.handleMessage(conn,msg,time); });
 
   server.start();

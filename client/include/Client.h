@@ -1,6 +1,7 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <iostream>
+#include <functional>
 
 #include "InetAddress.h"
 #include "TcpClient.h"
@@ -17,5 +18,10 @@ public:
         LOGIN_MSG,
         LOGIN_MSG_ACK
     };
+    using MsgHandler = std::function<void(const TcpConnection &, json &, Timetamp)>;
+    std::unordered_map<int, MsgHandler> msgHandlerMap_;
+
+    void handleMessage(const TcpConnectionPtr &conn, std::string &jsonStr, Timestamp time);
     void reg(const TcpConnectionPtr &conn);
+    void parse();
 };

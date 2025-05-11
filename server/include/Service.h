@@ -4,6 +4,7 @@
 #include <string>
 #include <functional>
 #include <nlohmann/json.hpp>
+#include <hiredis/hiredis.h>
 using json = nlohmann::json;
 using namespace mylib;
 class Service
@@ -21,6 +22,8 @@ public:
     std::unordered_map<int, MsgHandler> msgHandlerMap_;
 
     void reg(const TcpConnectionPtr &conn, json &js, Timestamp time);
-    
-    void handleMessage(const TcpConnectionPtr&conn,std::string &jsonStr,Timestamp time);
+    void reg_ack(const TcpConnectionPtr &conn, json &js, Timestamp time);
+    void handleMessage(const TcpConnectionPtr &conn, std::string &jsonStr, Timestamp time);
+
+    redisContext *redis;
 };
