@@ -5,19 +5,21 @@ add_executable(chat_server
     Service.cc
     login.cc
     redis.cc
+    MySQLConn.cc
 )
 
 
+include_directories(/user/include/mysql)
 find_package(CURL REQUIRED)
-
 find_path(HIREDIS_INCLUDE_DIR hiredis/hiredis.h)
 find_library(HIREDIS_LIB hiredis)
 
 
 target_link_libraries(chat_server PRIVATE 
     netlib 
-    CURL::libcurl  # 使用现代 CMake 的 CURL 目标
+    CURL::libcurl
     ${HIREDIS_LIB}
+    mysqlclient
 )
 
 target_include_directories(chat_server PRIVATE 

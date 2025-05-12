@@ -52,3 +52,7 @@ CREATE TABLE IF NOT EXISTS group_messages
     FOREIGN KEY (group_id) REFERENCES `groups`(id),
     FOREIGN KEY (sender_id) REFERENCES users(id)
 );
+
+CREATE USER 'zb'@'localhost' IDENTIFIED BY '1662308219@Zb';
+GRANT ALL PRIVILEGES ON chatdb.* To 'zb'@'localhost';
+FLUSH PRIVILEGES;
