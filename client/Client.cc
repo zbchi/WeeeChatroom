@@ -1,11 +1,9 @@
 #include "Client.h"
-#include <nlohmann/json.hpp>
-using json = nlohmann::json;
 
 Client::Client()
 {
     msgHandlerMap_[REG_MSG_ACK] =
-        [this](const TcpConnectionPtr &conn, json &js, Timestamp time) {}
+        [this](const TcpConnectionPtr &conn, json &js, Timestamp time) {};
 }
 
 void Client::handleMessage(const TcpConnectionPtr &conn, std::string &jsonStr, Timestamp time)
@@ -29,7 +27,10 @@ void Client::reg(const TcpConnectionPtr &conn)
 
     int code;
     std::cin >> code;
-    
+    regInfo["msgid"] = REG_MSG_ACK;
+    regInfo["code"] = code;
+    msg = regInfo.dump();
+    conn->send(msg);
 }
 
 void Client::parse()

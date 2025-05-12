@@ -5,7 +5,6 @@
 #include "Service.h"
 #include "login.h"
 Service::Service()
-    : redis(redisConnect("127.0.0.1", 6397))
 {
     msgHandlerMap_[REG_MSG] =
         [this](const TcpConnectionPtr &conn, json &js, Timestamp time)
@@ -33,7 +32,7 @@ void Service::reg(const TcpConnectionPtr &conn, json &js, Timestamp time)
 {
     int code = gVerificationCode();
     std::string email = js["email"].get<std::string>();
-    bool isStore = storeCode(redis, email, code);
+    bool isStore = storeCode(email, code);
     bool isSend = sendCode(email, code);
 }
 
@@ -42,6 +41,6 @@ void Service::reg_ack(const TcpConnectionPtr &conn, json &js, Timestamp time)
     int inputCode = js["code"].get<int>();
     std::string email = js["email"].get<std::string>();
     std::string password = js["password"].get<std::string>();
-    bool isVerify = verifyCode(redis, email, inputCode);
-        inputAccount(email,password);
+    bool isVerify = verifyCode(email, inputCode);
+    inputAccount(email, password);
 }

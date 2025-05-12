@@ -6,7 +6,9 @@
 #include "InetAddress.h"
 #include "TcpClient.h"
 #include "EventLoop.h"
+
 using namespace mylib;
+using json = nlohmann::json;
 class Client
 {
 public:
@@ -18,7 +20,7 @@ public:
         LOGIN_MSG,
         LOGIN_MSG_ACK
     };
-    using MsgHandler = std::function<void(const TcpConnection &, json &, Timetamp)>;
+    using MsgHandler = std::function<void(const TcpConnectionPtr &, json &, Timestamp)>;
     std::unordered_map<int, MsgHandler> msgHandlerMap_;
 
     void handleMessage(const TcpConnectionPtr &conn, std::string &jsonStr, Timestamp time);

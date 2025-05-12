@@ -4,6 +4,7 @@ add_executable(chat_server
     main.cc
     Service.cc
     login.cc
+    redis.cc
 )
 
 

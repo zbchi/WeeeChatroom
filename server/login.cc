@@ -4,6 +4,7 @@
 #include <curl/curl.h>
 #include "Logger.h"
 #include "login.h"
+#include "redis.h"
 #include <curl/easy.h>
 int gVerificationCode()
 {
@@ -12,39 +13,28 @@ int gVerificationCode()
     return verificationCode;
 }
 
-bool storeCode(redisContext *redis, std::string &email, int code, int expireTime)
+bool storeCode(std::string &email, int code, int expireTime)
 {
 
     std::string key = "verify_email:" + email;
-    redisReply *reply =
-        (redisReply *)redisCommand(redis, "HSET %s code %s EX %s",
-                                   key.c_str(), std::to_string(code),
-                                   std::to_string(expireTime));
-    bool success = (reply != nullptr && reply->type != REDIS_REPLY_ERROR);
-    if (!success)
-        LOG_ERROR("Redis存储失败: %p", reply ? reply->str : "nullptr");
 
-    freeReplyObject(reply);
-    return success;
+    Redis redis;
+    bool isSet = redis.hset(key, "code", std::to_string(code));
+    bool isExpire = redis.expire(key, expireTime);
+    return isSet && isExpire;
 }
 
-bool verifyCode(redisContext *redis, std::string &email, int inputCode)
+bool verifyCode(std::string &email, int inputCode)
 {
     std::string key = "verify_email:" + email;
-    redisReply *reply = (redisReply *)redisCommand(redis, "HMGET %s code", key.c_str());
-    if (!reply || reply->type != REDIS_REPLY_ARRAY || reply->elements != 1)
-    {
-        if (reply)
-            freeReplyObject(reply);
-        return false;
-    }
 
-    std::string real_code = reply->element[0]->str ? reply->element[0]->str : "";
-    freeReplyObject(reply);
+    Redis redis;
+    std::string real_code = redis.hget(key, "code");
+
     if (real_code != std::to_string(inputCode))
         return false;
 
-    redisCommand(redis, "DEL %s", key.c_str());
+    redis.hdel(key, "code");
     return true;
 }
 
@@ -115,11 +105,15 @@ bool sendCode(std::string &email, int code)
         curl_slist_free_all(recipients);
         curl_slist_free_all(headers);
         curl_easy_cleanup(curl);
+        LOG_INFO("邮件发送成功");
+        return true;
     }
+    LOG_ERROR("邮件发送失败");
+    return false;
 }
 
-
-bool inputAccount(std::string &email,std::string &password)
+bool inputAccount(std::string &email, std::string &password)
 {
-    
+    LOG_DEBUG("验证成功");
+    return true;
 }
