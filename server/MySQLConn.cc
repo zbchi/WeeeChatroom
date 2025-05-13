@@ -76,3 +76,30 @@ MYSQL *MySQLConn::getConnection()
 {
     return conn_;
 }
+
+std::vector<std::map<std::string, std::string>> MySQLConn::queryResult(const std::string &sql)
+{
+    std::vector<std::map<std::string, std::string>> resultVec;
+    if (mysql_query(conn_, sql.c_str()) != 0)
+        return resultVec;
+
+    MYSQL_RES *result = mysql_store_result(conn_);
+    if (result == nullptr)
+        return resultVec;
+
+    int numFields = mysql_num_fields(result);
+    MYSQL_FIELD *fields = mysql_fetch_field(result);
+
+    MYSQL_ROW row;
+    while ((row = mysql_fetch_row(result)) != nullptr)
+    {
+        std::map<std::string, std::string> rowMap;
+        for (int i = 0; i < numFields; i++)
+        {
+            rowMap[fields[i].name] = row[i] ? row[i] : "";
+        }
+        resultVec.emplace_back(std::move(rowMap));
+    }
+    mysql_free_result(result);
+    return resultVec;
+}

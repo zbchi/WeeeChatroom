@@ -1,8 +1,11 @@
+#pragma once
 #include <mysql/mysql.h>
 #include <string>
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+#include <vector>
+#include <map>
 class MySQLConn
 {
 private:
@@ -18,6 +21,7 @@ public:
     bool update(const std::string &sql);
     MYSQL_RES *query(const std::string &sql);
     MYSQL *getConnection();
+    std::vector<std::map<std::string, std::string>> queryResult(const std::string &sql);
 };
 
 class MySQLConnPool

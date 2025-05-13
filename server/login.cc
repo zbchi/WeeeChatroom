@@ -1,11 +1,15 @@
 #include <cstdlib>
 #include <ctime>
-
 #include <curl/curl.h>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
 #include "Logger.h"
 #include "login.h"
 #include "redis.h"
-#include <curl/easy.h>
+#include "MySQLConn.h"
+
 int gVerificationCode()
 {
     std::srand(std::time(nullptr));
@@ -24,18 +28,31 @@ bool storeCode(std::string &email, int code, int expireTime)
     return isSet && isExpire;
 }
 
-bool verifyCode(std::string &email, int inputCode)
+int verifyCode(std::string &email, int inputCode)
 {
-    std::string key = "verify_email:" + email;
+    auto mysql = MySQLConnPool::instance().getConnection();
+    char sql_c[128];
+    snprintf(sql_c, sizeof(sql_c), "select id from users where email = '%s'", email.c_str());
+    std::string sql(sql_c);
+    auto result = mysql->queryResult(sql);
+    /*if (!result.empty())
+    {
+        LOG_INFO("%s已经注册", email.c_str());
+        return 2;
+    }*/
 
+    std::string key = "verify_email:" + email;
     Redis redis;
     std::string real_code = redis.hget(key, "code");
 
     if (real_code != std::to_string(inputCode))
-        return false;
-
+    {
+        LOG_INFO("验证码错误");
+        return 1;
+    }
     redis.hdel(key, "code");
-    return true;
+    LOG_DEBUG("验证成功");
+    return 0;
 }
 
 static size_t payload_source(char *ptr, size_t size, size_t nmemb, void *userp)
@@ -108,12 +125,28 @@ bool sendCode(std::string &email, int code)
         LOG_INFO("邮件发送成功");
         return true;
     }
+
     LOG_ERROR("邮件发送失败");
     return false;
 }
 
-bool inputAccount(std::string &email, std::string &password)
+bool inputAccount(std::string &email, std::string &password, std::string &nickname, json &response)
 {
-    LOG_DEBUG("验证成功");
+
+    auto mysql = MySQLConnPool::instance().getConnection();
+    char sql_c[128];
+    snprintf(sql_c, sizeof(sql_c), "insert into users(email,nickname,password) values('%s','%s','%s')",
+             email.c_str(), nickname.c_str(), password.c_str());
+    std::string sql(sql_c);
+    
+    if (mysql->update(sql))
+        LOG_INFO("注册数据写入成功");
+    else
+    {
+        LOG_ERROR("注册数据写入失败");
+        return false;
+    }
+    response["id"] = mysql_insert_id(mysql->getConnection());
+
     return true;
 }

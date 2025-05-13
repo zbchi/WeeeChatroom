@@ -4,6 +4,8 @@
 
 #include "Service.h"
 #include "login.h"
+#include "base.h"
+#include <arpa/inet.h>
 Service::Service()
 {
     msgHandlerMap_[REG_MSG] =
@@ -41,6 +43,31 @@ void Service::reg_ack(const TcpConnectionPtr &conn, json &js, Timestamp time)
     int inputCode = js["code"].get<int>();
     std::string email = js["email"].get<std::string>();
     std::string password = js["password"].get<std::string>();
-    bool isVerify = verifyCode(email, inputCode);
-    inputAccount(email, password);
+    std::string nickname = js["nickname"].get<std::string>();
+
+    json response;
+    response["msgid"] = REG_MSG_ACK;
+
+    int errno_verify = verifyCode(email, inputCode);
+    if (errno_verify == 0)
+    {
+        if (inputAccount(email, password, nickname, response))
+            response["errno"] = 0;
+        else
+        {
+            response["errno"] = -1;
+            response["errmsg"] = "注册失败";
+        }
+    }
+    else if (errno_verify == 2)
+    {
+        response["errno"] = 2;
+        response["errmsg"] = "该邮箱已注册";
+    }
+    else if (errno_verify == 1)
+    {
+        response["errno"] = 1;
+        response["errmsg"] = "验证码错误";
+    }
+    sendJson(conn, response);
 }
