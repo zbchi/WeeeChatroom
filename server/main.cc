@@ -4,7 +4,7 @@
 #include <iostream>
 #include <arpa/inet.h>
 Service service;
-
+using namespace mylib;
 void onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
 {
   while (buf->readableBytes() >= 4)

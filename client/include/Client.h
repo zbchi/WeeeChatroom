@@ -13,13 +13,7 @@ class Client
 {
 public:
     Client();
-    enum MsgType
-    {
-        REG_MSG = 1,
-        REG_MSG_ACK,
-        LOGIN_MSG,
-        LOGIN_MSG_ACK
-    };
+    
     using MsgHandler = std::function<void(const TcpConnectionPtr &, json &, Timestamp)>;
     std::unordered_map<int, MsgHandler> msgHandlerMap_;
     void send(std::string &str);

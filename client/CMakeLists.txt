@@ -1,5 +1,6 @@
 add_executable(chat_client 
 main.cc
+base.cc
 Client.cc)
 
 target_link_libraries(chat_client PRIVATE netlib)

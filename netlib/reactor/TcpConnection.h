@@ -1,3 +1,4 @@
+#pragma once
 #include "InetAddress.h"
 #include "Buffer.h"
 #include "Socket.h"

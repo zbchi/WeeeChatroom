@@ -2,10 +2,13 @@ cmake_minimum_required(VERSION 3.10)
 
 add_executable(chat_server 
     main.cc
-    Service.cc
-    login.cc
-    redis.cc
+    Redis.cc
+    base.cc
     MySQLConn.cc
+
+    Service.cc
+    Register.cc
+    Loginer.cc
 )
 
 

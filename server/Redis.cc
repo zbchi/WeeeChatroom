@@ -1,4 +1,4 @@
-#include "redis.h"
+#include "Redis.h"
 #include "Logger.h"
 
 bool Redis::checkReply(redisReply *reply)

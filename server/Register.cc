@@ -1,23 +1,64 @@
-#include <cstdlib>
-#include <ctime>
-#include <curl/curl.h>
-#include <nlohmann/json.hpp>
+#include "Register.h"
 
-using json = nlohmann::json;
-
+#include "Service.h"
+#include "Timestamp.h"
 #include "Logger.h"
-#include "login.h"
-#include "redis.h"
-#include "MySQLConn.h"
+#include "base.h"
 
-int gVerificationCode()
+#include "Redis.h"
+#include "MySQLConn.h"
+#include <curl/curl.h>
+
+void Register::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    int code = gVerificationCode();
+    std::string email = js["email"].get<std::string>();
+    bool isStore = storeCode(email, code);
+    bool isSend = sendCode(email, code);
+}
+
+void RegisterAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    int inputCode = js["code"].get<int>();
+    std::string email = js["email"].get<std::string>();
+    std::string password = js["password"].get<std::string>();
+    std::string nickname = js["nickname"].get<std::string>();
+
+    json response;
+    response["msgid"] = REG_MSG_ACK;
+
+    int errno_verify = verifyCode(email, inputCode);
+    if (errno_verify == 0)
+    {
+        if (inputAccount(email, password, nickname, response))
+            response["errno"] = 0;
+        else
+        {
+            response["errno"] = -1;
+            response["errmsg"] = "注册失败";
+        }
+    }
+    else if (errno_verify == 2)
+    {
+        response["errno"] = 2;
+        response["errmsg"] = "该邮箱已注册";
+    }
+    else if (errno_verify == 1)
+    {
+        response["errno"] = 1;
+        response["errmsg"] = "验证码错误";
+    }
+    sendJson(conn, response);
+}
+
+int RegisterKiter::gVerificationCode()
 {
     std::srand(std::time(nullptr));
     int verificationCode = 100000 + (std::rand() % 900000);
     return verificationCode;
 }
 
-bool storeCode(std::string &email, int code, int expireTime)
+bool RegisterKiter::storeCode(std::string &email, int code, int expireTime)
 {
 
     std::string key = "verify_email:" + email;
@@ -28,7 +69,7 @@ bool storeCode(std::string &email, int code, int expireTime)
     return isSet && isExpire;
 }
 
-int verifyCode(std::string &email, int inputCode)
+int RegisterKiter::verifyCode(std::string &email, int inputCode)
 {
     auto mysql = MySQLConnPool::instance().getConnection();
     char sql_c[128];
@@ -76,7 +117,7 @@ static size_t payload_source(char *ptr, size_t size, size_t nmemb, void *userp)
     return will_send;
 }
 
-bool sendCode(std::string &email, int code)
+bool RegisterKiter::sendCode(std::string &email, int code)
 {
     CURLcode res = CURLE_OK;
     CURL *curl = curl_easy_init();
@@ -130,7 +171,7 @@ bool sendCode(std::string &email, int code)
     return false;
 }
 
-bool inputAccount(std::string &email, std::string &password, std::string &nickname, json &response)
+bool RegisterKiter::inputAccount(std::string &email, std::string &password, std::string &nickname, json &response)
 {
 
     auto mysql = MySQLConnPool::instance().getConnection();
@@ -138,7 +179,7 @@ bool inputAccount(std::string &email, std::string &password, std::string &nickna
     snprintf(sql_c, sizeof(sql_c), "insert into users(email,nickname,password) values('%s','%s','%s')",
              email.c_str(), nickname.c_str(), password.c_str());
     std::string sql(sql_c);
-    
+
     if (mysql->update(sql))
         LOG_INFO("注册数据写入成功");
     else

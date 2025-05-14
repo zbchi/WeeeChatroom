@@ -1,13 +1,12 @@
+#pragma once
 #include <nlohmann/json.hpp>
+#include "TcpConnection.h"
 using json = nlohmann::json;
-using namespace mylib;
-void sendJson(const TcpConnectionPtr &conn, json &js)
+void sendJson(const mylib::TcpConnectionPtr &conn, json &js);
+enum MsgType
 {
-    std::string jsonStr = js.dump();
-    int len = static_cast<int>(jsonStr.size());
-    int beLen = htonl(len);
-    std::string msg;
-    msg.append(reinterpret_cast<const char *>(&beLen), sizeof(beLen));
-    msg.append(jsonStr);
-    conn->send(msg);
-}
+    REG_MSG = 1,
+    REG_MSG_ACK,
+    LOGIN_MSG,
+    LOGIN_MSG_ACK
+};

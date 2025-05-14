@@ -12,7 +12,7 @@ private:
     MYSQL *conn_;
 
 public:
-    MySQLConn(/* args */);
+    MySQLConn();
     ~MySQLConn();
 
     bool connect(const std::string &host, int port,
