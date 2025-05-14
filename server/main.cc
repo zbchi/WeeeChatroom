@@ -20,7 +20,8 @@ void onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
     std::string jsonStr(buf->peek(), len);
     buf->retrieve(len);
     std::cout << jsonStr << std::endl;
-    service.handleMessage(conn, jsonStr, time);
+    service.threadPool_.add_task([conn, jsonStr, time]()
+                                 { service.handleMessage(conn, jsonStr, time); });
   }
 }
 int main()

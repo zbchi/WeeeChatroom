@@ -9,7 +9,7 @@
 #include "base.h"
 #include <arpa/inet.h>
 
-Service::Service()
+Service::Service() : threadPool_(16)
 {
     handlers_[REG_MSG] = std::make_shared<Register>(this);
     handlers_[REG_MSG_ACK] = std::make_shared<RegisterAcker>(this);
@@ -17,7 +17,7 @@ Service::Service()
 }
 
 void Service::handleMessage(const mylib::TcpConnectionPtr &conn,
-                            std::string &jsonStr, mylib::Timestamp time)
+                            const std::string &jsonStr, mylib::Timestamp time)
 {
     json data = json::parse(jsonStr);
     int msgid = data["msgid"].get<int>();

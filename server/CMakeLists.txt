@@ -5,7 +5,7 @@ add_executable(chat_server
     Redis.cc
     base.cc
     MySQLConn.cc
-
+    ThreadPool.cc
     Service.cc
     Register.cc
     Loginer.cc
