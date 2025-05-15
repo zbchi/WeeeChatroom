@@ -13,10 +13,15 @@ class Service
 {
 public:
     Service();
-    std::unordered_map<int, std::shared_ptr<Handler>> handlers_;
-
-    void handleMessage(const mylib::TcpConnectionPtr &conn, const std::string &jsonStr, mylib::Timestamp time);
-    ThreadPool threadPool_;
+    void start();
 
 private:
+    std::unordered_map<int, std::shared_ptr<Handler>> handlers_;
+    void handleMessage(const mylib::TcpConnectionPtr &conn, const std::string &jsonStr, mylib::Timestamp time);
+    void onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time);
+
+    ThreadPool threadPool_;
+    InetAddress listenAddr_;
+    EventLoop loop_;
+    TcpServer server_;
 };

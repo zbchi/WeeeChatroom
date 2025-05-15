@@ -20,7 +20,6 @@ namespace mylib
         MessageCallback messageCallback_;
         WriteCompleteCallback writeCompleteCallback_;
 
-        TcpConnectionPtr connection_;
         std::mutex mutex_;
 
     public:
@@ -33,5 +32,6 @@ namespace mylib
         void connect();
         void disconnect();
         void stop();
+        TcpConnectionPtr connection_;
     };
 }

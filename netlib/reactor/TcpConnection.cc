@@ -34,7 +34,10 @@ void TcpConnection::connectEstablished()
 {
     setState(kConnected);
     channel_->enableReading();
-    connectionCallback_(shared_from_this());
+    if (connectionCallback_)
+    {
+        connectionCallback_(shared_from_this());
+    }
 }
 
 void TcpConnection::handleRead(Timestamp receiveTime)

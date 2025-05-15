@@ -9,11 +9,23 @@
 #include "base.h"
 #include <arpa/inet.h>
 
-Service::Service() : threadPool_(16)
+Service::Service() : threadPool_(16),
+                     listenAddr_(8000),
+                     server_(&loop_, listenAddr_)
 {
     handlers_[REG_MSG] = std::make_shared<Register>(this);
     handlers_[REG_MSG_ACK] = std::make_shared<RegisterAcker>(this);
     handlers_[LOGIN_MSG] = std::make_shared<Loginer>(this);
+
+    server_.setConnectionCallback([](const TcpConnectionPtr &conn) {});
+    server_.setMessageCallback([this](const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
+                               { this->onMessage(conn, buf, time); });
+}
+
+void Service::start()
+{
+    server_.start();
+    loop_.loop();
 }
 
 void Service::handleMessage(const mylib::TcpConnectionPtr &conn,
@@ -27,4 +39,25 @@ void Service::handleMessage(const mylib::TcpConnectionPtr &conn,
         it->second->handle(conn, data, time);
     else
         LOG_ERROR("无法解析此命令 %d", msgid);
+}
+
+void Service::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
+{
+    while (buf->readableBytes() >= 4)
+    {
+        const void *data = buf->peek();
+        int lenNetOrder;
+        memcpy(&lenNetOrder, data, sizeof(lenNetOrder));
+        int len = ntohl(lenNetOrder);
+        if (buf->readableBytes() < 4 + len)
+            break;
+        buf->retrieve(4);
+
+        std::string jsonStr(buf->peek(), len);
+        buf->retrieve(len);
+        std::cout << jsonStr << std::endl;
+
+        threadPool_.add_task([conn, jsonStr, time, this]()
+                             { handleMessage(conn, jsonStr, time); });
+    }
 }
