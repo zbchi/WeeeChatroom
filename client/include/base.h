@@ -2,7 +2,6 @@
 #include <nlohmann/json.hpp>
 #include "TcpConnection.h"
 using json = nlohmann::json;
-void sendJson(const mylib::TcpConnectionPtr &conn, json &js);
 enum MsgType
 {
     REG_MSG = 1,

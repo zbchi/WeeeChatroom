@@ -1,3 +1,4 @@
+#pragma once
 #include "EventLoop.h"
 #include <thread>
 #include <condition_variable>

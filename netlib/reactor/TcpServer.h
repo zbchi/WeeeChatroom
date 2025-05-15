@@ -1,5 +1,5 @@
+#pragma once
 #include "TcpConnection.h"
-
 #include <string>
 #include <memory>
 #include <map>

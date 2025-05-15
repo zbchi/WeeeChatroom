@@ -1,3 +1,4 @@
+#pragma once
 #include "TcpConnection.h"
 #include <mutex>
 namespace mylib
