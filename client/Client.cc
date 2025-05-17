@@ -6,32 +6,30 @@
 #include "Timestamp.h"
 #include "Logger.h"
 
+#include "Register.h"
 using namespace mylib;
-Client::Client() : neter_(this), userService_(&neter_)
+Client::Client() : neter_(this), userService_(&neter_), controller_(this, &neter_)
 {
 
-    msgHandlerMap_[REG_MSG_ACK] =
-        [this](const TcpConnectionPtr &conn, json &js, Timestamp time)
-    { this->reg_ack(conn, js, time); };
+    handlers_[REG_MSG_ACK] = std::make_shared<Register>(this);
 }
 
 void Client::start()
 {
     neter_.start();
-    std::string email = "1934613109@qq.com";
-    std::string password = "1234567890";
-    std::string nickname = "winkwink";
-    userService_.regiSter(email, password, nickname);
+    controller_.mainLoop();
 }
 
-void Client::handleMessage(const TcpConnectionPtr &conn, std::string &jsonStr, Timestamp time)
+void Client::handleMessage(const TcpConnectionPtr &conn, std::string &jsonStr)
 {
     json data = json::parse(jsonStr);
     int msgid = data["msgid"].get<int>();
 
-    auto it = msgHandlerMap_.find(msgid);
-    if (it != msgHandlerMap_.end())
-        it->second(conn, data, time);
+    auto it = handlers_.find(msgid);
+    if (it != handlers_.end())
+        it->second->handle(conn, data);
+    else
+        LOG_ERROR("无法解析此命令 %d", msgid);
 }
 
 void Client::reg_ack(const TcpConnectionPtr &conn, json &js, Timestamp time)

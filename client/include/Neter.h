@@ -15,7 +15,7 @@ public:
     void start();
     void onMessage(const mylib::TcpConnectionPtr &conn, mylib::Buffer *buf, mylib::Timestamp time);
 
-    void sendJson(json&js);
+    void sendJson(json &js);
     mylib::TcpConnectionPtr conn_;
 
 private:
