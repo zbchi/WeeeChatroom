@@ -6,12 +6,13 @@
 #include "Timestamp.h"
 #include "Logger.h"
 
+#include "Loginer.h"
 #include "Register.h"
 using namespace mylib;
 Client::Client() : neter_(this), userService_(&neter_), controller_(this, &neter_)
 {
-
     handlers_[REG_MSG_ACK] = std::make_shared<Register>(this);
+    handlers_[LOGIN_MSG_ACK] = std::make_shared<Loginer>(this);
 }
 
 void Client::start()
@@ -30,9 +31,4 @@ void Client::handleMessage(const TcpConnectionPtr &conn, std::string &jsonStr)
         it->second->handle(conn, data);
     else
         LOG_ERROR("无法解析此命令 %d", msgid);
-}
-
-void Client::reg_ack(const TcpConnectionPtr &conn, json &js, Timestamp time)
-{
-    LOG_INFO("reg_ack");
 }

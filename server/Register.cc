@@ -31,7 +31,10 @@ void RegisterAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp tim
     if (errno_verify == 0)
     {
         if (inputAccount(email, password, nickname, response))
+        {
             response["errno"] = 0;
+            response["errmsg"] = "";
+        }
         else
         {
             response["errno"] = -1;
@@ -78,7 +81,7 @@ int RegisterKiter::verifyCode(std::string &email, int inputCode)
     auto result = mysql->queryResult(sql);
     /*if (!result.empty())
     {
-        LOG_INFO("%s已经注册", email.c_str());
+        LOG_DEBUG("%s已经注册", email.c_str());
         return 2;
     }*/
 
@@ -88,7 +91,7 @@ int RegisterKiter::verifyCode(std::string &email, int inputCode)
 
     if (real_code != std::to_string(inputCode))
     {
-        LOG_INFO("验证码错误");
+        LOG_DEBUG("验证码错误");
         return 1;
     }
     redis.hdel(key, "code");

@@ -4,6 +4,7 @@ Neter.cc
 UserService.cc
 Controller.cc
 Register.cc
+Loginer.cc
 Client.cc)
 
 target_link_libraries(chat_client PRIVATE netlib)

@@ -7,7 +7,11 @@ void Controller::mainLoop()
     std::string email = "1934613109@qq.com";
     std::string password = "1234567890";
     std::string nickname = "winkwink";
-    client_->userService_.regiSter(email, password, nickname);
+  //  client_->userService_.regiSter(email, password, nickname);
+
+
+    client_->userService_.login(email, password);
+
     while (client_->messageQueue_.isEmpty())
     {
         json js = client_->messageQueue_.pop();

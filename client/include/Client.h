@@ -25,8 +25,6 @@ public:
     MessageQueue messageQueue_;
     void handleMessage(const TcpConnectionPtr &conn, std::string &jsonStr);
 
-    void reg_ack(const TcpConnectionPtr &conn, json &js, Timestamp time);
-
 private:
     Neter neter_;
     UserService userService_;

@@ -1,3 +1,4 @@
+#pragma once
 #include "Handler.h"
 using namespace mylib;
 class Service;
@@ -8,5 +9,6 @@ public:
     void handle(const TcpConnectionPtr &conn, json &js, Timestamp time);
 
 private:
+    int  verifyAccount(std::string &email, std::string &password);
     Service *service_;
 };

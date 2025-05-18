@@ -24,4 +24,10 @@ void UserService::regiSter(std::string &email, std::string &password, std::strin
 
 void UserService::login(std::string &email, std::string &password)
 {
+    json loginInfo;
+    loginInfo["msgid"] = LOGIN_MSG;
+    loginInfo["email"] = email;
+    loginInfo["password"] = password;
+
+    neter_->sendJson(loginInfo);
 }
