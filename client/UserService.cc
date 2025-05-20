@@ -14,10 +14,15 @@ void UserService::regiSter(std::string &email, std::string &password, std::strin
     regInfo["password"] = password;
 
     neter_->sendJson(regInfo);
+}
 
-    int code;
-    std::cin >> code;
+void UserService::registerCode(std::string &email, std::string &password, std::string &nickname, int code)
+{
+    json regInfo;
     regInfo["msgid"] = REG_MSG_ACK;
+    regInfo["email"] = email;
+    regInfo["nickname"] = nickname;
+    regInfo["password"] = password;
     regInfo["code"] = code;
     neter_->sendJson(regInfo);
 }

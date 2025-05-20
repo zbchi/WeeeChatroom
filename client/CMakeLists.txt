@@ -3,7 +3,6 @@ main.cc
 Neter.cc
 UserService.cc
 Controller.cc
-Register.cc
 Loginer.cc
 Client.cc)
 

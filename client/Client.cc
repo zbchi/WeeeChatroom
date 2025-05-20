@@ -7,11 +7,9 @@
 #include "Logger.h"
 
 #include "Loginer.h"
-#include "Register.h"
 using namespace mylib;
 Client::Client() : neter_(this), userService_(&neter_), controller_(this, &neter_)
 {
-    handlers_[REG_MSG_ACK] = std::make_shared<Register>(this);
     handlers_[LOGIN_MSG_ACK] = std::make_shared<Loginer>(this);
 }
 

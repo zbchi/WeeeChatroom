@@ -15,7 +15,7 @@ void Loginer::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
 
     json response;
     response["msgid"] = LOGIN_MSG_ACK;
-
+    response["email"] = email;
     int errno_verify = verifyAccount(email, password);
     if (errno_verify == 0)
     {
