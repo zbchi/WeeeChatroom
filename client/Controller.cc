@@ -48,6 +48,9 @@ void Controller::mainLoop()
       case State::LOGGED_IN:
         showMenue();
         break;
+      case State::CHAT_FRIEND:
+        chatWithFriend();
+        break;
       default:
         break;
       }
@@ -138,9 +141,24 @@ void Controller::showLogin()
   }
 }
 
+void Controller::chatWithFriend()
+{
+  std::cout << "输入框:";
+  std::string content;
+  std::cin >> content;
+  client_->chatService_.sendMessage(client_->user_id_, client_->currentFriend_.id_, content);
+}
+
 void Controller::showMenue()
 {
   sleep(1);
   system("clear");
-  std::cout << "主菜单" << std::endl;
+  std::cout << "==============主菜单============" << std::endl;
+  
+  
+  int index = 0;
+  client_->currentFriend_.setCurrentFriend(client_->firendList_[index]);
+
+  state_ = State::CHAT_FRIEND;
 }
+ 

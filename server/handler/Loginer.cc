@@ -16,7 +16,7 @@ void Loginer::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     json response;
     response["msgid"] = LOGIN_MSG_ACK;
     response["email"] = email;
-    int errno_verify = verifyAccount(email, password);
+    int errno_verify = verifyAccount(email, password, conn);
     if (errno_verify == 0)
     {
         response["errno"] = 0;
@@ -35,13 +35,12 @@ void Loginer::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     sendJson(conn, response);
 }
 
-int Loginer::verifyAccount(std::string &email, std::string &password)
+int Loginer::verifyAccount(std::string &email, std::string &password, const TcpConnectionPtr &conn)
 {
     auto mysql = MySQLConnPool::instance().getConnection();
-    char sql_c[128];
-    snprintf(sql_c, sizeof(sql_c), "select * from users where email='%s'", email.c_str());
-    std::string sql(sql_c);
-    auto result = mysql->queryResult(sql);
+    char sql[128];
+    snprintf(sql, sizeof(sql), "select * from users where email='%s'", email.c_str());
+    auto result = mysql->queryResult(std::string(sql));
     if (result.empty())
     {
         LOG_DEBUG("%s未注册", email.c_str());
@@ -50,6 +49,8 @@ int Loginer::verifyAccount(std::string &email, std::string &password)
 
     if (result[0]["password"] == password)
     {
+        std::lock_guard<std::mutex> lock(service_->onlienUsersMutex_);
+        service_->onlienUsers_[result[0]["id"]] = conn;
         LOG_DEBUG("密码正确");
         return 0;
     }

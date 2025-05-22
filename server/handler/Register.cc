@@ -178,12 +178,11 @@ bool RegisterKiter::inputAccount(std::string &email, std::string &password, std:
 {
 
     auto mysql = MySQLConnPool::instance().getConnection();
-    char sql_c[128];
-    snprintf(sql_c, sizeof(sql_c), "insert into users(email,nickname,password) values('%s','%s','%s')",
+    char sql[128];
+    snprintf(sql, sizeof(sql), "insert into users(email,nickname,password) values('%s','%s','%s')",
              email.c_str(), nickname.c_str(), password.c_str());
-    std::string sql(sql_c);
 
-    if (mysql->update(sql))
+    if (mysql->update(std::string(sql)))
         LOG_INFO("注册数据写入成功");
     else
     {

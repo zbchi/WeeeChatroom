@@ -15,10 +15,15 @@ public:
     Service();
     void start();
 
+    std::unordered_map<std::string, TcpConnectionPtr> onlienUsers_;
+    std::mutex onlienUsersMutex_;
+    TcpConnectionPtr getConnectionPtr(std::string user_id);
+
 private:
     std::unordered_map<int, std::shared_ptr<Handler>> handlers_;
     void handleMessage(const mylib::TcpConnectionPtr &conn, const std::string &jsonStr, mylib::Timestamp time);
     void onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time);
+    void onConnection(const TcpConnectionPtr &conn);
 
     ThreadPool threadPool_;
     InetAddress listenAddr_;

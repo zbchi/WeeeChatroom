@@ -6,11 +6,11 @@
 #include "Timestamp.h"
 #include "Logger.h"
 
-#include "Loginer.h"
 using namespace mylib;
-Client::Client() : neter_(this), userService_(&neter_), controller_(this, &neter_)
+Client::Client() : neter_(this), userService_(&neter_, this),
+                   chatService_(&neter_),
+                   controller_(this, &neter_)
 {
-    handlers_[LOGIN_MSG_ACK] = std::make_shared<Loginer>(this);
 }
 
 void Client::start()

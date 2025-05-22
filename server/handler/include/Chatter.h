@@ -1,14 +1,13 @@
-#pragma once
 #include "Handler.h"
+
 using namespace mylib;
 class Service;
-class Loginer : public Handler
+class Chatter : public Handler
 {
 public:
-    Loginer(Service *service) : service_(service) {}
+    Chatter(Service *service) : service_(service) {}
     void handle(const TcpConnectionPtr &conn, json &js, Timestamp time);
 
 private:
-    int  verifyAccount(std::string &email, std::string &password);
     Service *service_;
 };

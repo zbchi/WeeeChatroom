@@ -2,9 +2,11 @@ add_executable(chat_client
 main.cc
 Neter.cc
 UserService.cc
+ChatService.cc
+
 Controller.cc
-Loginer.cc
-Client.cc)
+Client.cc
+)
 
 target_link_libraries(chat_client PRIVATE netlib)
 

@@ -57,6 +57,8 @@ namespace mylib
         void send(const std::string &message);
         void setTcpNodelay(bool on);
 
+        std::string user_id;
+
     private:
         enum StateE
         {

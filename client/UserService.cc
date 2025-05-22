@@ -4,7 +4,7 @@
 
 #include "base.h"
 #include "Neter.h"
-
+#include "Client.h"
 void UserService::regiSter(std::string &email, std::string &password, std::string &nickname)
 {
     json regInfo;
@@ -35,4 +35,21 @@ void UserService::login(std::string &email, std::string &password)
     loginInfo["password"] = password;
 
     neter_->sendJson(loginInfo);
+}
+
+void UserService::addFriend(std::string &friendEmail)
+{
+    json addInfo;
+    addInfo["msgid"] = ADD_FRIEND;
+    addInfo["email"] = friendEmail;
+    neter_->sendJson(addInfo);
+}
+
+void UserService::getFriends()
+{
+    json getInfo;
+    getInfo["msgid"] = GET_FRIENDS;
+    neter_->sendJson(getInfo);
+    json friendsList = client_->messageQueue_.pop();
+    
 }

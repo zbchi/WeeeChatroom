@@ -10,7 +10,7 @@ enum class State
     LOGGED_IN,
     SHOW_FREINDS,
     SHOW_GROUPS,
-    CHAT_IN,
+    CHAT_FRIEND,
 
 };
 extern State state_;
@@ -27,6 +27,7 @@ private:
     void showRegister();
     void showLogin();
     void showMenue();
+    void chatWithFriend();
     Client *client_;
     Neter *neter_;
 };
