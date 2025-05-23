@@ -85,10 +85,9 @@ void Controller::showRegister()
   while (1)
   {
     int code = getValidInt("请输入验证码:");
-    client_->userService_.registerCode(email, password, nickname, code);
+    int reg_errno = client_->userService_.registerCode(email, password, nickname, code);
 
-    json response = client_->messageQueue_.pop();
-    if (response["errno"] == 0)
+    if (reg_errno == 0)
     {
       std::cout << "注册成功!" << std::endl;
       state_ = State::LOGINING;
@@ -96,8 +95,8 @@ void Controller::showRegister()
     }
     else
     {
-      std::cout << "错误：" << response["errmsg"] << std::endl;
-      if (response["errno"] != 1)
+      std::cout << "错误：" << reg_errno << std::endl;
+      if (reg_errno != 1)
       {
         state_ = State::INIT;
         break;
@@ -119,21 +118,18 @@ void Controller::showLogin()
   {
     std::cout << "请输入密码:";
     std::cin >> password;
-    client_->userService_.login(email, password);
+    int login_errno = client_->userService_.login(email, password);
 
-    json response = client_->messageQueue_.pop();
-
-    if (response["errno"] == 0)
+    if (login_errno == 0)
     {
-      std::cout << "登录成功，用户 : " << response["email"] << std::endl;
-      client_->user_id_ = response["user_id"];
+      std::cout << "登录成功，用户 : " << client_->user_email_ << std::endl;
       state_ = State::LOGGED_IN;
       break;
     }
     else
     {
-      std::cout << "错误" << response["errmsg"] << std::endl;
-      if (response["errno"] != 1)
+      std::cout << "错误:" << login_errno << std::endl;
+      if (login_errno != 1)
       {
         state_ = State::INIT;
         break;

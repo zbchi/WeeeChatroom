@@ -41,6 +41,7 @@ public:
     void handleMessage(const TcpConnectionPtr &conn, std::string &jsonStr);
 
     std::string user_id_;
+    std::string user_email_;
     std::vector<Friend> firendList_;
     Friend currentFriend_;
 

@@ -16,7 +16,7 @@ void UserService::regiSter(std::string &email, std::string &password, std::strin
     neter_->sendJson(regInfo);
 }
 
-void UserService::registerCode(std::string &email, std::string &password, std::string &nickname, int code)
+int UserService::registerCode(std::string &email, std::string &password, std::string &nickname, int code)
 {
     json regInfo;
     regInfo["msgid"] = REG_MSG_ACK;
@@ -25,9 +25,12 @@ void UserService::registerCode(std::string &email, std::string &password, std::s
     regInfo["password"] = password;
     regInfo["code"] = code;
     neter_->sendJson(regInfo);
+
+    json response = client_->messageQueue_.pop();
+    return response["errno"];
 }
 
-void UserService::login(std::string &email, std::string &password)
+int UserService::login(std::string &email, std::string &password)
 {
     json loginInfo;
     loginInfo["msgid"] = LOGIN_MSG;
@@ -35,6 +38,11 @@ void UserService::login(std::string &email, std::string &password)
     loginInfo["password"] = password;
 
     neter_->sendJson(loginInfo);
+
+    json response = client_->messageQueue_.pop();
+    client_->user_email_ = response["email"];
+    client_->user_id_ = response["user_id"];
+    return response["errno"];
 }
 
 void UserService::addFriend(std::string &friendEmail)
