@@ -20,6 +20,7 @@ void Loginer::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     if (errno_verify == 0)
     {
         response["errno"] = 0;
+        response["user_id"] = service_->getUserid(conn);
         response["errmsg"] = "";
     }
     else if (errno_verify == 2)

@@ -138,7 +138,7 @@ bool RegisterKiter::sendCode(std::string &email, int code)
         const std::string to = "To: <" + email + ">\r\n";
         const std::string type = "Content-Type: text/html;\r\n";
         const std::string subject = "Subject: Chatroom Verification Code\r\n";
-        const std::string body = "使用以下验证码以完成注册：<p style=\"font-size: 48px; color:rgb(0, 0, 0);\">" +
+        const std::string body = "使用以下验证码以完成注册：<p style=\"font-size: 48px; color:rgb(0, 162, 255);\">" +
                                  std::to_string(code) + "</p>\r\n";
 
         struct curl_slist *headers = NULL;

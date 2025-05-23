@@ -126,6 +126,7 @@ void Controller::showLogin()
     if (response["errno"] == 0)
     {
       std::cout << "登录成功，用户 : " << response["email"] << std::endl;
+      client_->user_id_ = response["user_id"];
       state_ = State::LOGGED_IN;
       break;
     }
@@ -154,11 +155,20 @@ void Controller::showMenue()
   sleep(1);
   system("clear");
   std::cout << "==============主菜单============" << std::endl;
-  
-  
+  client_->userService_.getFriends();
+  showFriends();
   int index = 0;
   client_->currentFriend_.setCurrentFriend(client_->firendList_[index]);
 
   state_ = State::CHAT_FRIEND;
 }
- 
+
+void Controller::showFriends()
+{
+  for (const auto &afriend : client_->firendList_)
+  {
+    int i = 1;
+    std::cout << i << "." << afriend.nickname_ << std::endl;
+    i++;
+  }
+}

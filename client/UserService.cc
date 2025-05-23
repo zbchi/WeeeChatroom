@@ -49,7 +49,15 @@ void UserService::getFriends()
 {
     json getInfo;
     getInfo["msgid"] = GET_FRIENDS;
+    getInfo["user_id"] = client_->user_id_;
     neter_->sendJson(getInfo);
     json friendsList = client_->messageQueue_.pop();
-    
+
+    Friend f;
+    for (const auto &afriend : friendsList["friends"])
+    {
+        f.id_ = afriend["id"];
+        f.nickname_ = afriend["nickname"];
+        client_->firendList_.push_back(f);
+    }
 }

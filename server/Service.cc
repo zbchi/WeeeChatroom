@@ -5,6 +5,7 @@
 #include "Service.h"
 #include "Register.h"
 #include "Loginer.h"
+#include "Friender.h"
 // #include "Adder.h"
 
 #include "base.h"
@@ -17,6 +18,7 @@ Service::Service() : threadPool_(16),
     handlers_[REG_MSG] = std::make_shared<Register>(this);
     handlers_[REG_MSG_ACK] = std::make_shared<RegisterAcker>(this);
     handlers_[LOGIN_MSG] = std::make_shared<Loginer>(this);
+    handlers_[GET_FRIENDS] = std::make_shared<FriendLister>(this);
     // handlers_[ADD_FRIEND] = std::make_shared<AdderFriend>(this);
     // handlers_[ADD_GROUP] = std::make_shared<AdderGroup>(this);
 
@@ -72,6 +74,17 @@ TcpConnectionPtr Service::getConnectionPtr(std::string user_id)
         return it->second;
     else
         return nullptr;
+}
+
+std::string Service::getUserid(const TcpConnectionPtr &conn)
+{
+    std::lock_guard<std::mutex> lock(onlienUsersMutex_);
+    for (const auto &pair : onlienUsers_)
+    {
+        if (pair.second == conn)
+            return pair.first;
+    }
+    return "";
 }
 
 void Service::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)

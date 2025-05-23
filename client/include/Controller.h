@@ -27,6 +27,7 @@ private:
     void showRegister();
     void showLogin();
     void showMenue();
+    void showFriends();
     void chatWithFriend();
     Client *client_;
     Neter *neter_;

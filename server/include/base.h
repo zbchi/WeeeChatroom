@@ -14,3 +14,9 @@ enum MsgType
     ADD_FRIEND,
     ADD_GROUP,
 };
+
+struct User
+{
+    std::string id;
+    std::string nickname;
+};

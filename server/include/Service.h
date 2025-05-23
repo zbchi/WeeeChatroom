@@ -18,6 +18,7 @@ public:
     std::unordered_map<std::string, TcpConnectionPtr> onlienUsers_;
     std::mutex onlienUsersMutex_;
     TcpConnectionPtr getConnectionPtr(std::string user_id);
+    std::string getUserid(const TcpConnectionPtr &conn);
 
 private:
     std::unordered_map<int, std::shared_ptr<Handler>> handlers_;

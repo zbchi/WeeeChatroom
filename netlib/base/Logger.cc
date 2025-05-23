@@ -10,7 +10,7 @@
 namespace mylib
 {
 
-    Logger::LogLevel g_logLevel = Logger::TRACE;
+    Logger::LogLevel g_logLevel = Logger::DEBUG;
     bool showMicroseconds = false;
     bool enableColorLog = true;
 
