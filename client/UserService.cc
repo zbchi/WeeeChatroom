@@ -41,7 +41,8 @@ int UserService::login(std::string &email, std::string &password)
 
     json response = client_->messageQueue_.pop();
     client_->user_email_ = response["email"];
-    client_->user_id_ = response["user_id"];
+    if (response["errno"] == 0)
+        client_->user_id_ = response["user_id"];
     return response["errno"];
 }
 

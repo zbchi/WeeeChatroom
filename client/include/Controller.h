@@ -20,7 +20,7 @@ class Neter;
 class Controller
 {
 public:
-    Controller(Client *client, Neter *neter) : client_(client), neter_(neter) {}
+    Controller(Neter *neter, Client *client) : client_(client), neter_(neter) {}
     void mainLoop();
 
 private:

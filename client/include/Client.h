@@ -36,13 +36,17 @@ public:
     Client();
     void start();
 
-    std::unordered_map<int, std::shared_ptr<Handler>> handlers_;
+    using MsgHandler = std::function<void(const TcpConnectionPtr &, json &)>;
+    std::unordered_map<int, MsgHandler> msgHandlerMap_;
+
     MessageQueue messageQueue_;
-    void handleMessage(const TcpConnectionPtr &conn, std::string &jsonStr);
+    void handleJson(const TcpConnectionPtr &conn, std::string &jsonStr);
 
     std::string user_id_;
     std::string user_email_;
     std::vector<Friend> firendList_;
+    std::unordered_map<std::string, ChatLog> chatLogs_;
+
     Friend currentFriend_;
 
 private:

@@ -8,9 +8,12 @@
 
 using namespace mylib;
 Client::Client() : neter_(this), userService_(&neter_, this),
-                   chatService_(&neter_),
-                   controller_(this, &neter_)
+                   chatService_(&neter_, this),
+                   controller_(&neter_, this)
 {
+    msgHandlerMap_[CHAT_MSG] =
+        [this](const TcpConnectionPtr &conn, json &js)
+    { this->chatService_.handleMessage(conn, js); };
 }
 
 void Client::start()
@@ -19,14 +22,14 @@ void Client::start()
     controller_.mainLoop();
 }
 
-void Client::handleMessage(const TcpConnectionPtr &conn, std::string &jsonStr)
+void Client::handleJson(const TcpConnectionPtr &conn, std::string &jsonStr)
 {
     json data = json::parse(jsonStr);
     int msgid = data["msgid"].get<int>();
 
-    auto it = handlers_.find(msgid);
-    if (it != handlers_.end())
-        it->second->handle(conn, data);
+    auto it = msgHandlerMap_.find(msgid);
+    if (it != msgHandlerMap_.end())
+        it->second(conn, data);
     else
         LOG_ERROR("无法解析此命令 %d", msgid);
 }

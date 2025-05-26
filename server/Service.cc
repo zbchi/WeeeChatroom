@@ -6,6 +6,7 @@
 #include "Register.h"
 #include "Loginer.h"
 #include "Friender.h"
+#include "Chatter.h"
 // #include "Adder.h"
 
 #include "base.h"
@@ -19,6 +20,7 @@ Service::Service() : threadPool_(16),
     handlers_[REG_MSG_ACK] = std::make_shared<RegisterAcker>(this);
     handlers_[LOGIN_MSG] = std::make_shared<Loginer>(this);
     handlers_[GET_FRIENDS] = std::make_shared<FriendLister>(this);
+    handlers_[CHAT_MSG] = std::make_shared<Chatter>(this);
     // handlers_[ADD_FRIEND] = std::make_shared<AdderFriend>(this);
     // handlers_[ADD_GROUP] = std::make_shared<AdderGroup>(this);
 

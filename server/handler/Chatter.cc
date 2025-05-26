@@ -14,7 +14,7 @@ void Chatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     std::string user_id = js["sender_id"];
     std::string reciever_id = js["reciver_id"];
     std::string content = js["content"];
-    auto targetConn = service_->getConnectionPtr(user_id);
+    auto targetConn = service_->getConnectionPtr(reciever_id);
     if (targetConn != nullptr)
     {
         sendJson(targetConn, js);

@@ -32,36 +32,36 @@ void Controller::mainLoop()
 
   while (1)
   {
-    if (state_ != lastState_)
+    // if (state_ != lastState_)
+    //{
+    lastState_ = state_;
+    switch (state_)
     {
-      lastState_ = state_;
-      switch (state_)
-      {
-      case State::REGISTERING:
-        showRegister();
-        break;
+    case State::REGISTERING:
+      showRegister();
+      break;
 
-      case State::LOGINING:
-        showLogin();
-        break;
+    case State::LOGINING:
+      showLogin();
+      break;
 
-      case State::LOGGED_IN:
-        showMenue();
-        break;
-      case State::CHAT_FRIEND:
-        chatWithFriend();
-        break;
-      default:
-        break;
-      }
+    case State::LOGGED_IN:
+      showMenue();
+      break;
+    case State::CHAT_FRIEND:
+      chatWithFriend();
+      break;
+    default:
+      break;
     }
+    //}
 
     while (!client_->messageQueue_.isEmpty())
     {
       std::cout << "-------------------" << std::endl;
       json js = client_->messageQueue_.pop();
       std::string jsonStr = js.dump();
-      client_->handleMessage(client_->neter_.conn_, jsonStr);
+      client_->handleJson(client_->neter_.conn_, jsonStr);
     }
   }
 }
@@ -140,6 +140,14 @@ void Controller::showLogin()
 
 void Controller::chatWithFriend()
 {
+  system("clear");
+  for (auto &chatlog : client_->chatLogs_[client_->currentFriend_.id_])
+  {
+    if (chatlog.sender_id == client_->user_id_)
+      std::cout << "[我]:" << chatlog.content << std::endl;
+    else
+      std::cout << "[" << client_->currentFriend_.nickname_ << "]:" << chatlog.content << std::endl;
+  }
   std::cout << "输入框:";
   std::string content;
   std::cin >> content;
@@ -151,7 +159,6 @@ void Controller::showMenue()
   sleep(1);
   system("clear");
   std::cout << "==============主菜单============" << std::endl;
-  client_->userService_.getFriends();
   showFriends();
   int index = 0;
   client_->currentFriend_.setCurrentFriend(client_->firendList_[index]);
@@ -161,6 +168,7 @@ void Controller::showMenue()
 
 void Controller::showFriends()
 {
+  client_->userService_.getFriends();
   for (const auto &afriend : client_->firendList_)
   {
     int i = 1;
