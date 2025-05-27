@@ -41,7 +41,7 @@ void Neter::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
 
         std::string jsonStr(buf->peek(), len);
         buf->retrieve(len);
-        std::cout << jsonStr << std::endl;
+        // std::cout << jsonStr << std::endl;
 
         client_->messageQueue_.push(json::parse(jsonStr));
         // client_->handleMessage(conn, jsonStr, time);

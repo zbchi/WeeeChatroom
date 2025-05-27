@@ -23,7 +23,7 @@ namespace mylib
         }
 
         std::string toString() const;
-        std::string toFormattedString(bool showMicroseconds = true) const;
+        std::string toFormattedString(bool showMicroseconds = false) const;
         bool valid() const { return microSecondsSinceEpoch_ > 0; }
 
         int64_t microSecondsSinceEpoch() const { return microSecondsSinceEpoch_; }
@@ -49,7 +49,7 @@ namespace mylib
         return mylib::Timestamp(timestamp.microSecondsSinceEpoch() + delta);
     }
 
-    inline bool operator<(mylib::Timestamp lhs,mylib::Timestamp rhs)
+    inline bool operator<(mylib::Timestamp lhs, mylib::Timestamp rhs)
     {
         return lhs.microSecondsSinceEpoch() < rhs.microSecondsSinceEpoch();
     }

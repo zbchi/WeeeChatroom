@@ -2,9 +2,18 @@
 #include "Client.h"
 #include "unistd.h"
 
+#include <thread>
+#include <atomic>
+
+#include <termios.h>
+#include <unistd.h>
 State state_ = State::LOGINING;
 State lastState_ = State::INIT;
 
+void clearStdin()
+{
+  tcflush(STDIN_FILENO, TCIFLUSH);
+}
 int getValidInt(const std::string &prompt)
 {
   int value;
@@ -98,7 +107,7 @@ void Controller::showRegister()
       std::cout << "错误：" << reg_errno << std::endl;
       if (reg_errno != 1)
       {
-        state_ = State::INIT;
+        state_ = State::REGISTERING;
         break;
       }
     }
@@ -131,9 +140,29 @@ void Controller::showLogin()
       std::cout << "错误:" << login_errno << std::endl;
       if (login_errno != 1)
       {
-        state_ = State::INIT;
+        state_ = State::LOGINING;
         break;
       }
+    }
+  }
+}
+
+void Controller::flushLogs()
+{
+  system("clear");
+  {
+    std::lock_guard<std::mutex> lock(client_->chatService_.chatLogs_mutex_);
+    for (auto &chatlog : client_->chatLogs_[client_->currentFriend_.id_])
+    {
+
+      std::cout << "[" << chatlog.timestamp << "]";
+
+      if (chatlog.sender_id == client_->user_id_)
+        std::cout << "[我]:";
+      else
+        std::cout << "[" << client_->currentFriend_.nickname_ << "]:";
+
+      std::cout << chatlog.content << std::endl;
     }
   }
 }
@@ -141,17 +170,37 @@ void Controller::showLogin()
 void Controller::chatWithFriend()
 {
   system("clear");
-  for (auto &chatlog : client_->chatLogs_[client_->currentFriend_.id_])
+  std::atomic<bool> chatting(true);
+
+  std::thread inputThread([&]()
+                          {
+                            std::string content;
+                            while (chatting)
+                            {
+                              std::getline(std::cin, content);
+                              if(content.empty())continue;;
+                              if (content == "/exit")
+                              {
+                                chatting = false;
+                                state_ = State::LOGGED_IN;
+                                break;
+                              }
+                              client_->chatService_.sendMessage(client_->user_id_, client_->currentFriend_.id_, content);
+                              flushLogs();
+                            } });
+  while (chatting)
   {
-    if (chatlog.sender_id == client_->user_id_)
-      std::cout << "[我]:" << chatlog.content << std::endl;
-    else
-      std::cout << "[" << client_->currentFriend_.nickname_ << "]:" << chatlog.content << std::endl;
+    if (!client_->messageQueue_.isEmpty())
+    {
+      json js = client_->messageQueue_.pop();
+      std::string jsonStr = js.dump();
+      client_->handleJson(client_->neter_.conn_, jsonStr);
+      flushLogs();
+      usleep(100);
+    }
   }
-  std::cout << "输入框:";
-  std::string content;
-  std::cin >> content;
-  client_->chatService_.sendMessage(client_->user_id_, client_->currentFriend_.id_, content);
+  if (inputThread.joinable())
+    inputThread.join();
 }
 
 void Controller::showMenue()

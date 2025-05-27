@@ -24,6 +24,7 @@ public:
     void mainLoop();
 
 private:
+    void flushLogs();
     void showRegister();
     void showLogin();
     void showMenue();
