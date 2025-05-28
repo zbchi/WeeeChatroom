@@ -31,6 +31,8 @@ public:
 class Client
 {
     friend class Controller;
+    friend class UserService;
+    friend class ChatService;
 
 public:
     Client();
@@ -40,8 +42,8 @@ public:
     std::unordered_map<int, MsgHandler> msgHandlerMap_;
 
     MessageQueue messageQueue_;
-    void handleJson(const TcpConnectionPtr &conn, std::string &jsonStr);
-
+    void handleJson(const TcpConnectionPtr &conn, const std::string &jsonStr);
+    void logicLoop();
     std::string user_id_;
     std::string user_email_;
     std::vector<Friend> firendList_;
@@ -50,6 +52,7 @@ public:
     Friend currentFriend_;
 
 private:
+    std::thread logicThread_;
     Neter neter_;
     UserService userService_;
     ChatService chatService_;

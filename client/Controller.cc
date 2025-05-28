@@ -60,6 +60,9 @@ void Controller::mainLoop()
     case State::CHAT_FRIEND:
       chatWithFriend();
       break;
+
+    case State::ADD_FRIEND:
+      showAddFriend();
     default:
       break;
     }
@@ -94,9 +97,17 @@ void Controller::showRegister()
   while (1)
   {
     int code = getValidInt("请输入验证码:");
-    int reg_errno = client_->userService_.registerCode(email, password, nickname, code);
+    client_->userService_.registerCode(email, password, nickname, code);
 
-    if (reg_errno == 0)
+    // 阻塞等待服务端回复
+    {
+      std::unique_lock<std::mutex> lock(reg_mtx_);
+      regCv_.wait(lock, [this]
+                  { return regResultSet_; });
+      regResultSet_ = false;
+    }
+
+    if (reg_errno_ == 0)
     {
       std::cout << "注册成功!" << std::endl;
       state_ = State::LOGINING;
@@ -104,8 +115,8 @@ void Controller::showRegister()
     }
     else
     {
-      std::cout << "错误：" << reg_errno << std::endl;
-      if (reg_errno != 1)
+      std::cout << "错误：" << reg_errno_ << std::endl;
+      if (reg_errno_ != 1)
       {
         state_ = State::REGISTERING;
         break;
@@ -127,9 +138,18 @@ void Controller::showLogin()
   {
     std::cout << "请输入密码:";
     std::cin >> password;
-    int login_errno = client_->userService_.login(email, password);
+    client_->userService_.login(email, password);
 
-    if (login_errno == 0)
+    // 阻塞等待服务端回复
+    {
+      std::unique_lock<std::mutex> lock(login_mtx_);
+
+      loginCv_.wait(lock, [this]
+                    { return loginResultSet_; });
+      loginResultSet_ = false;
+    }
+
+    if (login_errno_ == 0)
     {
       std::cout << "登录成功，用户 : " << client_->user_email_ << std::endl;
       state_ = State::LOGGED_IN;
@@ -137,8 +157,8 @@ void Controller::showLogin()
     }
     else
     {
-      std::cout << "错误:" << login_errno << std::endl;
-      if (login_errno != 1)
+      std::cout << "错误:" << login_errno_ << std::endl;
+      if (login_errno_ != 1)
       {
         state_ = State::LOGINING;
         break;
@@ -170,37 +190,45 @@ void Controller::flushLogs()
 void Controller::chatWithFriend()
 {
   system("clear");
-  std::atomic<bool> chatting(true);
-
-  std::thread inputThread([&]()
-                          {
-                            std::string content;
-                            while (chatting)
-                            {
-                              std::getline(std::cin, content);
-                              if(content.empty())continue;;
-                              if (content == "/exit")
-                              {
-                                chatting = false;
-                                state_ = State::LOGGED_IN;
-                                break;
-                              }
-                              client_->chatService_.sendMessage(client_->user_id_, client_->currentFriend_.id_, content);
-                              flushLogs();
-                            } });
-  while (chatting)
+    std::string content;
+  while (1)
   {
-    if (!client_->messageQueue_.isEmpty())
+    std::getline(std::cin, content);
+    if (content.empty())
+      continue;
+    ;
+    if (content == "/exit")
     {
-      json js = client_->messageQueue_.pop();
-      std::string jsonStr = js.dump();
-      client_->handleJson(client_->neter_.conn_, jsonStr);
-      flushLogs();
-      usleep(100);
+      state_ = State::LOGGED_IN;
+      break;
     }
+    client_->chatService_.sendMessage(client_->user_id_, client_->currentFriend_.id_, content);
+    flushLogs();
   }
-  if (inputThread.joinable())
-    inputThread.join();
+  // std::thread inputThread([this]()
+  //                        { this->chatInput(); });
+  /* while (chatting)
+   {
+     if (!client_->messageQueue_.isEmpty())
+     {
+       json js = client_->messageQueue_.pop();
+       std::string jsonStr = js.dump();
+       client_->handleJson(client_->neter_.conn_, jsonStr);
+       flushLogs();
+       usleep(100);
+     }
+   }*/
+  // if (inputThread.joinable())
+  //   inputThread.join();
+}
+
+void Controller::showAddFriend()
+{
+  std::cout << "要加的好友的邮箱:";
+  std::string email;
+  std::cin >> email;
+  client_->userService_.addFriend(email);
+  state_ = State::LOGGED_IN;
 }
 
 void Controller::showMenue()
@@ -218,6 +246,7 @@ void Controller::showMenue()
 void Controller::showFriends()
 {
   client_->userService_.getFriends();
+  sleep(1); //********************** */
   for (const auto &afriend : client_->firendList_)
   {
     int i = 1;

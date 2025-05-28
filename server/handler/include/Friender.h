@@ -13,3 +13,13 @@ private:
     std::vector<std::map<std::string, std::string>> getFriendsInfo(std::vector<std::map<std::string, std::string>> &friendsId);
     Service *service_;
 };
+
+class FriendAdder : public Handler
+{
+public:
+    FriendAdder(Service *service) : service_(service) {}
+    void handle(const TcpConnectionPtr &conn, json &js, Timestamp time);
+
+private:
+    Service *service_;
+};

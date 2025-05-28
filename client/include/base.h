@@ -2,7 +2,7 @@
 #include <nlohmann/json.hpp>
 #include "TcpConnection.h"
 using json = nlohmann::json;
-enum MsgType名
+enum MsgType
 {
     REG_MSG = 1,
     REG_MSG_ACK,

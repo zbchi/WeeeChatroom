@@ -16,7 +16,7 @@ void UserService::regiSter(std::string &email, std::string &password, std::strin
     neter_->sendJson(regInfo);
 }
 
-int UserService::registerCode(std::string &email, std::string &password, std::string &nickname, int code)
+void UserService::registerCode(std::string &email, std::string &password, std::string &nickname, int code)
 {
     json regInfo;
     regInfo["msgid"] = REG_MSG_ACK;
@@ -25,12 +25,9 @@ int UserService::registerCode(std::string &email, std::string &password, std::st
     regInfo["password"] = password;
     regInfo["code"] = code;
     neter_->sendJson(regInfo);
-
-    json response = client_->messageQueue_.pop();
-    return response["errno"];
 }
 
-int UserService::login(std::string &email, std::string &password)
+void UserService::login(std::string &email, std::string &password)
 {
     json loginInfo;
     loginInfo["msgid"] = LOGIN_MSG;
@@ -38,12 +35,28 @@ int UserService::login(std::string &email, std::string &password)
     loginInfo["password"] = password;
 
     neter_->sendJson(loginInfo);
+}
 
-    json response = client_->messageQueue_.pop();
-    client_->user_email_ = response["email"];
-    if (response["errno"] == 0)
-        client_->user_id_ = response["user_id"];
-    return response["errno"];
+void UserService::handleRegAck(const TcpConnectionPtr &conn, json &js)
+{
+    {
+        std::unique_lock<std::mutex> lock(client_->controller_.reg_mtx_);
+        client_->controller_.reg_errno_ = js["errno"];
+        client_->controller_.regResultSet_ = true;
+    }
+    client_->controller_.regCv_.notify_one();
+}
+void UserService::handleLoginAck(const TcpConnectionPtr &conn, json &js)
+{
+    client_->user_email_ = js["email"];
+    if (js["errno"] == 0)
+        client_->user_id_ = js["user_id"];
+    {
+        std::unique_lock<std::mutex> lock(client_->controller_.login_mtx_);
+        client_->controller_.login_errno_ = js["errno"];
+        client_->controller_.loginResultSet_ = true;
+    }
+    client_->controller_.loginCv_.notify_one();
 }
 
 void UserService::addFriend(std::string &friendEmail)
@@ -51,6 +64,7 @@ void UserService::addFriend(std::string &friendEmail)
     json addInfo;
     addInfo["msgid"] = ADD_FRIEND;
     addInfo["email"] = friendEmail;
+    addInfo["user_id"] = client_->user_id_;
     neter_->sendJson(addInfo);
 }
 
@@ -60,10 +74,13 @@ void UserService::getFriends()
     getInfo["msgid"] = GET_FRIENDS;
     getInfo["user_id"] = client_->user_id_;
     neter_->sendJson(getInfo);
-    json friendsList = client_->messageQueue_.pop();
+}
+
+void UserService::handleFriendsList(const TcpConnectionPtr &conn, json &js)
+{
 
     Friend f;
-    for (const auto &afriend : friendsList["friends"])
+    for (const auto &afriend : js["friends"])
     {
         f.id_ = afriend["id"];
         f.nickname_ = afriend["nickname"];

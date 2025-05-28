@@ -46,6 +46,10 @@ CREATE TABLE IF NOT EXISTS friends
     UNIQUE KEY unique_friendship(user_id,friend_id)
 );
 
+CREATE TABLE IF NOT EXISTS friend_requests
+{
+    id INT AUTO_INCREMENT PRIMARY KEY, 
+}
 
 CREATE TABLE IF NOT EXISTS `groups`
 (

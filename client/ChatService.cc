@@ -69,5 +69,7 @@ void ChatService::handleMessage(const TcpConnectionPtr &conn, json &js)
         std::lock_guard<std::mutex> lock(chatLogs_mutex_);
         client_->chatLogs_[friend_id].push_back(msg);
     }
-    std::cout << "收到了一条消息" << std::endl;
+    client_->controller_.flushLogs();
+    if (state_ == State::CHAT_FRIEND && friend_id == client_->currentFriend_.id_)
+        client_->controller_.flushLogs();
 }

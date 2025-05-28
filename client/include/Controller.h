@@ -1,6 +1,8 @@
 #pragma once
 #include <map>
 #include <Handler.h>
+#include <mutex>
+#include <condition_variable>
 
 enum class State
 {
@@ -11,7 +13,8 @@ enum class State
     SHOW_FREINDS,
     SHOW_GROUPS,
     CHAT_FRIEND,
-
+    ADD_FRIEND,
+    HANDLE_FRIEND,
 };
 extern State state_;
 class Client;
@@ -23,13 +26,24 @@ public:
     Controller(Neter *neter, Client *client) : client_(client), neter_(neter) {}
     void mainLoop();
 
-private:
+    int login_errno_ = -1;
+    int reg_errno_ = -1;
+    std::mutex login_mtx_;
+    std::mutex reg_mtx_;
+    std::condition_variable loginCv_;
+    std::condition_variable regCv_;
+    bool loginResultSet_ = false;
+    bool regResultSet_ = false;
+
     void flushLogs();
+    void chatInput();
+private:
     void showRegister();
     void showLogin();
     void showMenue();
     void showFriends();
     void chatWithFriend();
+    void showAddFriend();
     Client *client_;
     Neter *neter_;
 };

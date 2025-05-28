@@ -137,10 +137,16 @@ bool RegisterKiter::sendCode(std::string &email, int code)
         const std::string from = "From: <1662308219@qq.com>\r\n";
         const std::string to = "To: <" + email + ">\r\n";
         const std::string type = "Content-Type: text/html;\r\n";
-        const std::string subject = "Subject: Chatroom Verification Code\r\n";
-        const std::string body = "使用以下验证码以完成注册：<p style=\"font-size: 48px; color:rgb(0, 162, 255);\">" +
-                                 std::to_string(code) + "</p>\r\n";
-
+        const std::string subject = "Subject: WeeeChatRoom验证码\r\n";
+        const std::string body = R"(
+<div style="font-family: Arial, sans-serif; padding: 20px;">
+  <h2 style="color: #333;">欢迎注册！</h2>
+  <p style="font-size: 16px; color: #555;">请使用以下验证码完成注册：</p>
+  <div style="margin-top: 20px; padding: 15px; border: 2px dashed #00a2ff; width: fit-content; text-align: center; font-size: 36px; font-weight: bold; color: #00a2ff;">
+    )" + std::to_string(code) + R"(</div>
+  <p style="margin-top: 20px; font-size: 14px; color: #999;">如果不是您本人操作，请忽略此邮件。</p>
+</div>
+)";
         struct curl_slist *headers = NULL;
         headers = curl_slist_append(headers, from.c_str());
         headers = curl_slist_append(headers, to.c_str());

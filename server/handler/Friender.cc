@@ -50,3 +50,9 @@ std::vector<std::map<std::string, std::string>> FriendLister::getFriendsInfo(std
     std::string sql = "select * from users where id in (" + id_list.str() + ")";
     return mysql->queryResult(sql);
 }
+
+
+void FriendAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    
+}
