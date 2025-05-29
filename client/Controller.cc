@@ -66,15 +66,6 @@ void Controller::mainLoop()
     default:
       break;
     }
-    //}
-
-    while (!client_->messageQueue_.isEmpty())
-    {
-      std::cout << "-------------------" << std::endl;
-      json js = client_->messageQueue_.pop();
-      std::string jsonStr = js.dump();
-      client_->handleJson(client_->neter_.conn_, jsonStr);
-    }
   }
 }
 
@@ -128,7 +119,7 @@ void Controller::showRegister()
 void Controller::showLogin()
 {
   sleep(1);
-  system("clear");
+  // system("clear");
   std::cout << "LOGININININIIN" << std::endl;
 
   std::string email, password;
@@ -169,7 +160,7 @@ void Controller::showLogin()
 
 void Controller::flushLogs()
 {
-  system("clear");
+  // system("clear");
   {
     std::lock_guard<std::mutex> lock(client_->chatService_.chatLogs_mutex_);
     for (auto &chatlog : client_->chatLogs_[client_->currentFriend_.id_])
@@ -190,7 +181,8 @@ void Controller::flushLogs()
 void Controller::chatWithFriend()
 {
   system("clear");
-    std::string content;
+  flushLogs();
+  std::string content;
   while (1)
   {
     std::getline(std::cin, content);
@@ -224,18 +216,19 @@ void Controller::chatWithFriend()
 
 void Controller::showAddFriend()
 {
-  std::cout << "要加的好友的邮箱:";
-  std::string email;
-  std::cin >> email;
-  client_->userService_.addFriend(email);
+  std::cout << "要加的好友的id:";
+  std::string friend_id;
+  std::cin >> friend_id;
+  client_->friendService_.addFriend(friend_id);
   state_ = State::LOGGED_IN;
 }
 
 void Controller::showMenue()
 {
   sleep(1);
-  system("clear");
+  // system("clear");
   std::cout << "==============主菜单============" << std::endl;
+  // sleep(10);
   showFriends();
   int index = 0;
   client_->currentFriend_.setCurrentFriend(client_->firendList_[index]);
@@ -245,7 +238,7 @@ void Controller::showMenue()
 
 void Controller::showFriends()
 {
-  client_->userService_.getFriends();
+  client_->friendService_.getFriends();
   sleep(1); //********************** */
   for (const auto &afriend : client_->firendList_)
   {

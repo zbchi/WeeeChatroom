@@ -22,15 +22,16 @@ CREATE TABLE IF NOT EXISTS messages
 );
 
 CREATE TABLE IF NOT EXISTS offlineMessages
-{
+(
     id INT AUTO_INCREMENT PRIMARY KEY,
     sender_id INT NOT NULL,
     receiver_id INT NOT NULL,
     content TEXT NOT NULL,
+    json TEXT NOT NULL,
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN kEY (sender_id) REFERENCES users(id),
     FOREIGN KEY (receiver_id) REFERENCES users(id)
-}
+);
 
 
 CREATE TABLE IF NOT EXISTS friends
@@ -38,6 +39,7 @@ CREATE TABLE IF NOT EXISTS friends
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     friend_id INT NOT NULL,
+    json TEXT NOT NULL,
     status ENUM('pending','accepted','blocked')DEFAULT 'accepted',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
@@ -47,9 +49,17 @@ CREATE TABLE IF NOT EXISTS friends
 );
 
 CREATE TABLE IF NOT EXISTS friend_requests
-{
+(
     id INT AUTO_INCREMENT PRIMARY KEY, 
-}
+    from_user_id INT NOT NULL,
+    to_user_id INT NOT NULL,
+    content TEXT,
+    status ENUM('pending','accepted','rejected')DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (from_user_id) REFERENCES users(id),
+    FOREIGN KEY (to_user_id) REFERENCES users(id)
+);
 
 CREATE TABLE IF NOT EXISTS `groups`
 (

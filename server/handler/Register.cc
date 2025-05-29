@@ -75,15 +75,12 @@ bool RegisterKiter::storeCode(std::string &email, int code, int expireTime)
 int RegisterKiter::verifyCode(std::string &email, int inputCode)
 {
     auto mysql = MySQLConnPool::instance().getConnection();
-    char sql_c[128];
-    snprintf(sql_c, sizeof(sql_c), "select id from users where email = '%s'", email.c_str());
-    std::string sql(sql_c);
-    auto result = mysql->queryResult(sql);
-    /*if (!result.empty())
+    std::string user_id = mysql->getIdByEmail(email);
+    if (user_id != "")
     {
         LOG_DEBUG("%s已经注册", email.c_str());
         return 2;
-    }*/
+    }
 
     std::string key = "verify_email:" + email;
     Redis redis;

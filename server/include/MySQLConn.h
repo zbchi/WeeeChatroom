@@ -22,6 +22,10 @@ public:
     MYSQL_RES *query(const std::string &sql);
     MYSQL *getConnection();
     std::vector<std::map<std::string, std::string>> queryResult(const std::string &sql);
+
+    std::string getEmailById(std::string &user_id);
+    std::string getNicknameById(std::string& user_id);
+    std::string getIdByEmail(std::string &email);
 };
 
 class MySQLConnPool

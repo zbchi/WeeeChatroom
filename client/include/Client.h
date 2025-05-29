@@ -8,8 +8,10 @@
 #include "Neter.h"
 #include "UserService.h"
 #include "ChatService.h"
+#include "FriendService.h"
+
 #include "MessageQueue.h"
-#include "Handler.h"
+
 #include "Controller.h"
 using namespace mylib;
 using json = nlohmann::json;
@@ -28,11 +30,19 @@ public:
     }
 };
 
+class FriendRequest
+{
+public:
+    std::string from_user_id;
+    std::string nickname_;
+};
+
 class Client
 {
     friend class Controller;
     friend class UserService;
     friend class ChatService;
+    friend class FriendService;
 
 public:
     Client();
@@ -42,8 +52,10 @@ public:
     std::unordered_map<int, MsgHandler> msgHandlerMap_;
 
     MessageQueue messageQueue_;
+
     void handleJson(const TcpConnectionPtr &conn, const std::string &jsonStr);
     void logicLoop();
+
     std::string user_id_;
     std::string user_email_;
     std::vector<Friend> firendList_;
@@ -56,5 +68,6 @@ private:
     Neter neter_;
     UserService userService_;
     ChatService chatService_;
+    FriendService friendService_;
     Controller controller_;
 };

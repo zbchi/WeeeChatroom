@@ -10,3 +10,11 @@ void sendJson(const mylib::TcpConnectionPtr &conn, json &js)
     msg.append(jsonStr);
     conn->send(msg);
 }
+
+json makeResponse(int msgid, int errno_, std::string errmsg)
+{
+    return {
+        {"msgid", msgid},
+        {"errmsg", errmsg},
+        {"errno", errno_}};
+}

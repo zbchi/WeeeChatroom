@@ -51,8 +51,28 @@ std::vector<std::map<std::string, std::string>> FriendLister::getFriendsInfo(std
     return mysql->queryResult(sql);
 }
 
-
 void FriendAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
 {
-    
+    std::string to_user_id = js["to_user_id"];
+    std::string from_user_id = js["from_user_id"];
+    auto mysql = MySQLConnPool::instance().getConnection();
+    js["to_user_nickname"] = mysql->getNicknameById(to_user_id);
+
+    std::string jsonStr = js.dump();
+    std::cout << jsonStr << std::endl;
+
+    auto targetConn = service_->getConnectionPtr(to_user_id);
+    if (targetConn != nullptr)
+    { // 在线直接转发
+        sendJson(targetConn, js);
+    }
+    else
+    { // 离线存储申请记录
+        char sql[256];
+        snprintf(sql, sizeof(sql),
+                 "insert into friend_requests(to_user_id,from_user_id,json) values('%s','%s','%s')",
+                 to_user_id.c_str(), from_user_id.c_str(), js.dump().c_str());
+        mysql->update(std::string(sql));
+    }
 }
+

@@ -103,3 +103,35 @@ std::vector<std::map<std::string, std::string>> MySQLConn::queryResult(const std
     mysql_free_result(result);
     return resultVec;
 }
+
+std::string MySQLConn::getEmailById(std::string &user_id)
+{
+    char sql[128];
+    snprintf(sql, sizeof(sql), "select email from users where id = '%s'", user_id.c_str());
+    auto result = queryResult(std::string(sql));
+    if (result.empty())
+        return "";
+    else
+        return result[0]["email"];
+}
+
+std::string MySQLConn::getNicknameById(std::string &user_id)
+{
+    char sql[128];
+    snprintf(sql, sizeof(sql), "select nickname from users where id = '%s'", user_id.c_str());
+    auto result = queryResult(std::string(sql));
+    if (result.empty())
+        return "";
+    else
+        return result[0]["nickname"];
+}
+std::string MySQLConn::getIdByEmail(std::string &email)
+{
+    char sql[128];
+    snprintf(sql, sizeof(sql), "select id from users where email = '%s'", email.c_str());
+    auto result = queryResult(std::string(sql));
+    if (result.empty())
+        return "";
+    else
+        return result[0]["id"];
+}

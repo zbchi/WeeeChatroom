@@ -3,7 +3,7 @@ main.cc
 Neter.cc
 UserService.cc
 ChatService.cc
-
+FriendService.cc
 Controller.cc
 Client.cc
 )

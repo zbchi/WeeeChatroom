@@ -59,31 +59,4 @@ void UserService::handleLoginAck(const TcpConnectionPtr &conn, json &js)
     client_->controller_.loginCv_.notify_one();
 }
 
-void UserService::addFriend(std::string &friendEmail)
-{
-    json addInfo;
-    addInfo["msgid"] = ADD_FRIEND;
-    addInfo["email"] = friendEmail;
-    addInfo["user_id"] = client_->user_id_;
-    neter_->sendJson(addInfo);
-}
 
-void UserService::getFriends()
-{
-    json getInfo;
-    getInfo["msgid"] = GET_FRIENDS;
-    getInfo["user_id"] = client_->user_id_;
-    neter_->sendJson(getInfo);
-}
-
-void UserService::handleFriendsList(const TcpConnectionPtr &conn, json &js)
-{
-
-    Friend f;
-    for (const auto &afriend : js["friends"])
-    {
-        f.id_ = afriend["id"];
-        f.nickname_ = afriend["nickname"];
-        client_->firendList_.push_back(f);
-    }
-}

@@ -7,9 +7,10 @@
 #include "Logger.h"
 
 using namespace mylib;
-Client::Client() : neter_(this), userService_(&neter_, this),
+Client::Client() : neter_(this), controller_(&neter_, this),
                    chatService_(&neter_, this),
-                   controller_(&neter_, this)
+                   userService_(&neter_, this),
+                   friendService_(&neter_, this)
 {
 
     msgHandlerMap_[LOGIN_MSG_ACK] = [this](const TcpConnectionPtr &conn, json &js)
@@ -17,7 +18,7 @@ Client::Client() : neter_(this), userService_(&neter_, this),
     msgHandlerMap_[REG_MSG_ACK] = [this](const TcpConnectionPtr &conn, json &js)
     { this->userService_.handleRegAck(conn, js); };
     msgHandlerMap_[GET_FRIENDS] = [this](const TcpConnectionPtr &conn, json &js)
-    { this->userService_.handleFriendsList(conn, js); };
+    { this->friendService_.handleFriendsList(conn, js); };
     msgHandlerMap_[CHAT_MSG] = [this](const TcpConnectionPtr &conn, json &js)
     { this->chatService_.handleMessage(conn, js); };
 }

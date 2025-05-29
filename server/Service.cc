@@ -9,6 +9,7 @@
 #include "Chatter.h"
 // #include "Adder.h"
 
+#include "MySQLConn.h"
 #include "base.h"
 #include <arpa/inet.h>
 
@@ -53,6 +54,7 @@ void Service::onConnection(const TcpConnectionPtr &conn)
 {
     if (conn->connected())
     {
+
     }
     else
     {

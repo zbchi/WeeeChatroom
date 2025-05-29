@@ -3,6 +3,7 @@
 #include "TcpConnection.h"
 using json = nlohmann::json;
 void sendJson(const mylib::TcpConnectionPtr &conn, json &js);
+json makeResponse(int msgid, int errno_, std::string errmsg = "");
 enum MsgType
 {
     REG_MSG = 1,

@@ -15,10 +15,6 @@ public:
     void login(std::string &email, std::string &password);
     void handleLoginAck(const TcpConnectionPtr &conn, json &js);
     void handleRegAck(const TcpConnectionPtr &conn, json &js);
-    void addFriend(std::string &friendEmail);
-
-    void getFriends();
-    void handleFriendsList(const TcpConnectionPtr &conn, json &js);
 
 private:
     Neter *neter_;

@@ -34,13 +34,24 @@ void Loginer::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
         response["errmsg"] = "密码错误";
     }
     sendJson(conn, response);
+
+    if (response["errno"] == 0)
+    {
+        // 用户上线自动发送待发送的好友请求
+        std::string user_id = service_->getUserid(conn);
+        sendFriendRequestsOffLine(user_id, conn);
+        // 发送离线消息
+        sendMessageOffLine(user_id, conn);
+    }
 }
 
 int Loginer::verifyAccount(std::string &email, std::string &password, const TcpConnectionPtr &conn)
 {
     auto mysql = MySQLConnPool::instance().getConnection();
+
     char sql[128];
     snprintf(sql, sizeof(sql), "select * from users where email='%s'", email.c_str());
+
     auto result = mysql->queryResult(std::string(sql));
     if (result.empty())
     {
@@ -59,5 +70,39 @@ int Loginer::verifyAccount(std::string &email, std::string &password, const TcpC
     {
         LOG_DEBUG("密码错误");
         return 1;
+    }
+}
+
+void Loginer::sendFriendRequestsOffLine(std::string &to_user_id, const TcpConnectionPtr &conn)
+{
+    char sql[128];
+    snprintf(sql, sizeof(sql), "select json,id from friend_requests where to_user_id = %s", to_user_id.c_str());
+    auto mysql = MySQLConnPool::instance().getConnection();
+    auto result = mysql->queryResult(std::string(sql));
+
+    for (const auto &row : result)
+    {
+        json js = json::parse(row.at("json"));
+        sendJson(conn, js);
+
+        std::string delSql = "delet from friend_requests where id = " + row.at("id");
+        mysql->update(delSql);
+    }
+}
+
+void Loginer::sendMessageOffLine(std::string &to_user_id, const TcpConnectionPtr &conn)
+{
+    char sql[128];
+    snprintf(sql, sizeof(sql), "select json,id from offlineMessages where receiver_id = %s", to_user_id.c_str());
+    auto mysql = MySQLConnPool::instance().getConnection();
+    auto result = mysql->queryResult(std::string(sql));
+
+    for (const auto &row : result)
+    {
+        json js = json::parse(row.at("json"));
+        sendJson(conn, js);
+
+        std::string delSql = "delet from offlineMessages where id = " + row.at("id");
+        mysql->update(delSql);
     }
 }
