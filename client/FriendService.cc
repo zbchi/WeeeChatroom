@@ -33,6 +33,7 @@ void FriendService::handleFriendRequest(const TcpConnectionPtr &conn, json &js)
 
 void FriendService::getFriends()
 {
+
     json getInfo;
     getInfo["msgid"] = GET_FRIENDS;
     getInfo["user_id"] = client_->user_id_;
@@ -41,7 +42,7 @@ void FriendService::getFriends()
 
 void FriendService::handleFriendsList(const TcpConnectionPtr &conn, json &js)
 {
-
+    client_->friendList_.clear();
     Friend f;
     for (const auto &afriend : js["friends"])
     {

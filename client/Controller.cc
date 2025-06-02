@@ -242,16 +242,7 @@ void Controller::showMenue()
   std::cout << "4. 退出登录" << std::endl;
   std::cout << "请输入选项 (1-4): ";
 
-  int choice;
-  if (!(std::cin >> choice))
-  {
-    std::cout << "输入无效，请输入一个整数。" << std::endl;
-    std::cin.clear();
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    return;
-  }
-
-  std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  int choice = getValidInt("请输入选项(1-4):");
 
   switch (choice)
   {

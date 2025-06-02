@@ -68,11 +68,9 @@ void FriendAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     }
     else
     { // 离线存储申请记录
-        char sql[256];
-        snprintf(sql, sizeof(sql),
-                 "insert into friend_requests(to_user_id,from_user_id,json) values('%s','%s','%s')",
-                 to_user_id.c_str(), from_user_id.c_str(), js.dump().c_str());
-        mysql->update(std::string(sql));
+        mysql->insert("friend_requests", {{"to_user_id", to_user_id},
+                                          {"from_user_id", from_user_id},
+                                          {"json", js.dump()}});
     }
 }
 
@@ -84,15 +82,11 @@ void FriendAddAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp ti
     auto mysql = MySQLConnPool::instance().getConnection();
     if (response == "accept")
     {
-        char sql[256];
-        snprintf(sql, sizeof(sql),
-                 "insert into friends(user_id,friend_id) values('%s','%s')",
-                 from_user_id.c_str(), to_user_id.c_str());
-        mysql->update(std::string(sql));
-        snprintf(sql, sizeof(sql),
-                 "insert into friends(user_id,friend_id) values('%s','%s')",
-                 to_user_id.c_str(), from_user_id.c_str());
-        mysql->update(std::string(sql));
+        mysql->insert("friends", {{"user_id", from_user_id},
+                                  {"friend_id", to_user_id}});
+
+        mysql->insert("friends", {{"user_id", to_user_id},
+                                  {"friend_id", from_user_id}});
     }
     else if (response == "reject")
     {

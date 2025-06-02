@@ -181,11 +181,11 @@ bool RegisterKiter::inputAccount(std::string &email, std::string &password, std:
 {
 
     auto mysql = MySQLConnPool::instance().getConnection();
-    char sql[128];
-    snprintf(sql, sizeof(sql), "insert into users(email,nickname,password) values('%s','%s','%s')",
-             email.c_str(), nickname.c_str(), password.c_str());
+    bool isSuccess = mysql->insert("users", {{"email", email},
+                                             {"nickname", nickname},
+                                             {"password", password}});
 
-    if (mysql->update(std::string(sql)))
+    if (isSuccess)
         LOG_INFO("注册数据写入成功");
     else
     {

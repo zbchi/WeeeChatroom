@@ -21,13 +21,12 @@ void Chatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     }
     else
     { // 离线存储消息
-        char sql[4096];
-        snprintf(sql, sizeof(sql), "insert into offlineMessages(sender_id,receiver_id,content,json) values('%s','%s','%s','%s')",
-                 user_id.c_str(), receiver_id.c_str(), content.c_str(), js.dump().c_str());
-        mysql->update(std::string(sql));
+        mysql->insert("offlineMessages", {{"sender_id", user_id},
+                                          {"receiver_id", receiver_id},
+                                          {"content", content},
+                                          {"json", js.dump()}});
     }
-    char sql[4096];
-    snprintf(sql, sizeof(sql), "insert into messages(sender_id,receiver_id,content) values('%s','%s','%s')",
-             user_id.c_str(), receiver_id.c_str(), content.c_str());
-    mysql->update(std::string(sql));
+    mysql->insert("messages", {{"sender_id", user_id},
+                               {"receiver_id", receiver_id},
+                               {"content", content}});
 }

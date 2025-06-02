@@ -1,5 +1,6 @@
 #include "MySQLConn.h"
 #include "Logger.h"
+#include <sstream>
 MySQLConnPool &MySQLConnPool::instance()
 {
     static MySQLConnPool pool;
@@ -140,4 +141,27 @@ std::string MySQLConn::getIdByEmail(std::string &email)
         return "";
     else
         return result[0]["id"];
+}
+
+bool MySQLConn::insert(const std::string &table, const std::map<std::string, std::string> &data)
+{
+    std::stringstream columns, values;
+    for (auto it = data.begin(); it != data.end(); it++)
+    {
+        std::string escape;
+        escape.resize(it->second.size() * 2 + 1);
+        unsigned long len = mysql_real_escape_string(conn_, &escape[0], it->second.c_str(), it->second.size());
+        escape.resize(len);
+
+        columns << it->first;
+        values << "'" << escape << "'";
+        if (std::next(it) != data.end())
+        {
+            columns << ",";
+            values << ",";
+        }
+    }
+    std::stringstream sql;
+    sql << "insert into " << table << " (" << columns.str() << ") values (" << values.str() << ")";
+    return update(sql.str());
 }
