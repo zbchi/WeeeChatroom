@@ -57,6 +57,6 @@ void UserService::handleLoginAck(const TcpConnectionPtr &conn, json &js)
         client_->controller_.loginResultSet_ = true;
     }
     client_->controller_.loginCv_.notify_one();
+    // 获取好友列表
+    client_->friendService_.getFriends();
 }
-
-

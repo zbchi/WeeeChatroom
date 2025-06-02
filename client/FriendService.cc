@@ -19,7 +19,16 @@ void FriendService::addFriend(std::string &friend_id)
 
 void FriendService::handleFriendRequest(const TcpConnectionPtr &conn, json &js)
 {
-    
+    std::string from_user_id = js["from_user_id"];
+    std::string from_user_nickname = js["from_user_nickname"];
+    std::string timestamp = js["timestamp"];
+
+    // 将好友请求存入friendRequests_
+    FriendRequest rq{from_user_id, from_user_nickname, timestamp, client_->user_id_};
+    {
+        std::lock_guard<std::mutex> lock(friendRequests_mutex_);
+        client_->friendRequests_.push_back(rq);
+    }
 }
 
 void FriendService::getFriends()
@@ -38,6 +47,28 @@ void FriendService::handleFriendsList(const TcpConnectionPtr &conn, json &js)
     {
         f.id_ = afriend["id"];
         f.nickname_ = afriend["nickname"];
-        client_->firendList_.push_back(f);
+        f.user_id_ = client_->user_id_;
+        client_->friendList_.push_back(f);
+    }
+}
+
+void FriendService::responseFriendRequest(FriendRequest &friendRequest, char *response)
+{
+    json acceptInfo;
+    acceptInfo["msgid"] = ADD_FRIEND_ACK;
+    acceptInfo["from_user_id"] = friendRequest.from_user_id;
+    acceptInfo["to_user_id"] = friendRequest.user_id_;
+    acceptInfo["response"] = std::string(response);
+    neter_->sendJson(acceptInfo);
+
+    for (auto it = client_->friendRequests_.begin(); it != client_->friendRequests_.end();)
+    {
+        if (it->from_user_id == friendRequest.from_user_id &&
+            it->user_id_ == friendRequest.user_id_)
+        {
+            it = client_->friendRequests_.erase(it);
+        }
+        else
+            it++;
     }
 }

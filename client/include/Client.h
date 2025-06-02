@@ -16,27 +16,6 @@
 using namespace mylib;
 using json = nlohmann::json;
 
-class Friend
-{
-public:
-    std::string id_;
-    std::string nickname_;
-    bool isOnline_;
-    void setCurrentFriend(Friend &friendObj)
-    {
-        id_ = friendObj.id_;
-        nickname_ = friendObj.nickname_;
-        isOnline_ = friendObj.isOnline_;
-    }
-};
-
-class FriendRequest
-{
-public:
-    std::string from_user_id;
-    std::string nickname_;
-};
-
 class Client
 {
     friend class Controller;
@@ -58,8 +37,9 @@ public:
 
     std::string user_id_;
     std::string user_email_;
-    std::vector<Friend> firendList_;
+    std::vector<Friend> friendList_;
     std::unordered_map<std::string, ChatLog> chatLogs_;
+    std::vector<FriendRequest> friendRequests_;
 
     Friend currentFriend_;
 

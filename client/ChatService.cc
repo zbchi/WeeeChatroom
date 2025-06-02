@@ -43,13 +43,13 @@ void ChatService::sendMessage(std::string &sender_id, std::string &reciver_id, s
     json sendInfo;
     sendInfo["msgid"] = CHAT_MSG;
     sendInfo["sender_id"] = sender_id;
-    sendInfo["reciver_id"] = reciver_id; // friend_id
+    sendInfo["receiver_id"] = reciver_id; // friend_id
     sendInfo["content"] = fixInvalidUtf8(content);
     std::string timestamp = Timestamp::now().toFormattedString();
     sendInfo["timestamp"] = timestamp;
 
     // 将发送单条消息存入chatLogs_
-    ChatMessage msg{sender_id, content, timestamp};
+    ChatMessage msg{sender_id, content, timestamp, client_->user_id_};
     {
         std::lock_guard<std::mutex> lock(chatLogs_mutex_);
         client_->chatLogs_[reciver_id].push_back(msg);
@@ -64,12 +64,11 @@ void ChatService::handleMessage(const TcpConnectionPtr &conn, json &js)
     std::string timestamp = js["timestamp"];
 
     // 将收到消息存入chatLogs_
-    ChatMessage msg{friend_id, content, timestamp};
+    ChatMessage msg{friend_id, content, timestamp, client_->user_id_};
     {
         std::lock_guard<std::mutex> lock(chatLogs_mutex_);
         client_->chatLogs_[friend_id].push_back(msg);
     }
-    client_->controller_.flushLogs();
     if (state_ == State::CHAT_FRIEND && friend_id == client_->currentFriend_.id_)
         client_->controller_.flushLogs();
 }

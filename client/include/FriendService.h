@@ -1,20 +1,53 @@
 #pragma once
 #include <string>
+#include <mutex>
 #include "Handler.h"
 class Neter;
 class Client;
+class FriendRequest;
 class FriendService
 {
 public:
     FriendService(Neter *neter, Client *client) : neter_(neter),
-                                                client_(client) {}
+                                                  client_(client) {}
+
+    void getFriends();
+    void handleFriendsList(const TcpConnectionPtr &conn, json &js);
 
     void addFriend(std::string &friend_id);
     void handleFriendRequest(const TcpConnectionPtr &conn, json &js);
-    void getFriends();
-    void handleFriendsList(const TcpConnectionPtr &conn, json &js);
+    void responseFriendRequest(FriendRequest &friendRequest, char*response);
+    void removeFriendRequest(FriendRequest &friendRequest);
+
+    std::mutex friendRequests_mutex_;
 
 private:
     Neter *neter_;
     Client *client_;
+};
+
+class Friend
+{
+public:
+    std::string id_;
+    std::string nickname_;
+    bool isOnline_;
+    void setCurrentFriend(Friend &friendObj)
+    {
+        id_ = friendObj.id_;
+        nickname_ = friendObj.nickname_;
+        isOnline_ = friendObj.isOnline_;
+    }
+
+    std::string user_id_;
+};
+
+class FriendRequest
+{
+public:
+    std::string from_user_id;
+    std::string nickname_;
+
+    std::string timestamp_;
+    std::string user_id_;
 };

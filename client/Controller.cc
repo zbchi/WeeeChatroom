@@ -41,8 +41,6 @@ void Controller::mainLoop()
 
   while (1)
   {
-    // if (state_ != lastState_)
-    //{
     lastState_ = state_;
     switch (state_)
     {
@@ -57,12 +55,23 @@ void Controller::mainLoop()
     case State::LOGGED_IN:
       showMenue();
       break;
+
+    case State::SHOW_FREINDS:
+      showFriends();
+      break;
+
     case State::CHAT_FRIEND:
       chatWithFriend();
       break;
 
     case State::ADD_FRIEND:
       showAddFriend();
+      break;
+
+    case State::HANDLE_FRIEND_REQUEST:
+      showHandleFriendRequest();
+      break;
+
     default:
       break;
     }
@@ -160,7 +169,7 @@ void Controller::showLogin()
 
 void Controller::flushLogs()
 {
-  // system("clear");
+  system("clear");
   {
     std::lock_guard<std::mutex> lock(client_->chatService_.chatLogs_mutex_);
     for (auto &chatlog : client_->chatLogs_[client_->currentFriend_.id_])
@@ -174,6 +183,19 @@ void Controller::flushLogs()
         std::cout << "[" << client_->currentFriend_.nickname_ << "]:";
 
       std::cout << chatlog.content << std::endl;
+    }
+  }
+}
+
+void Controller::flushRequests()
+{
+  system("clear");
+  {
+    int i = 1;
+    for (const auto &request : client_->friendRequests_)
+    {
+      std::cout << i << ".昵称:" << request.nickname_ << "  id:" << request.from_user_id << "  时间:" << request.timestamp_ << std::endl;
+      i++;
     }
   }
 }
@@ -197,25 +219,11 @@ void Controller::chatWithFriend()
     client_->chatService_.sendMessage(client_->user_id_, client_->currentFriend_.id_, content);
     flushLogs();
   }
-  // std::thread inputThread([this]()
-  //                        { this->chatInput(); });
-  /* while (chatting)
-   {
-     if (!client_->messageQueue_.isEmpty())
-     {
-       json js = client_->messageQueue_.pop();
-       std::string jsonStr = js.dump();
-       client_->handleJson(client_->neter_.conn_, jsonStr);
-       flushLogs();
-       usleep(100);
-     }
-   }*/
-  // if (inputThread.joinable())
-  //   inputThread.join();
 }
 
 void Controller::showAddFriend()
 {
+  system("clear");
   std::cout << "要加的好友的id:";
   std::string friend_id;
   std::cin >> friend_id;
@@ -225,25 +233,106 @@ void Controller::showAddFriend()
 
 void Controller::showMenue()
 {
-  sleep(1);
-  // system("clear");
-  std::cout << "==============主菜单============" << std::endl;
-  // sleep(10);
-  showFriends();
-  int index = 0;
-  client_->currentFriend_.setCurrentFriend(client_->firendList_[index]);
+  system("clear");
+  client_->friendService_.getFriends();
+  std::cout << "\n=== 主菜单 ===" << std::endl;
+  std::cout << "1. 与好友聊天" << std::endl;
+  std::cout << "2. 添加好友" << std::endl;
+  std::cout << "3. 处理好友请求" << std::endl;
+  std::cout << "4. 退出登录" << std::endl;
+  std::cout << "请输入选项 (1-4): ";
+
+  int choice;
+  if (!(std::cin >> choice))
+  {
+    std::cout << "输入无效，请输入一个整数。" << std::endl;
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    return;
+  }
+
+  std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+  switch (choice)
+  {
+  case 1:
+    state_ = State::SHOW_FREINDS;
+    break;
+  case 2:
+    state_ = State::ADD_FRIEND;
+    break;
+  case 3:
+    state_ = State::HANDLE_FRIEND_REQUEST;
+    break;
+  case 4:
+    state_ = State::LOGINING;
+    break;
+  default:
+    std::cout << "无效选项，请选择 1 到 4。" << std::endl;
+    break;
+  }
+}
+void Controller::showFriends()
+{
+  system("clear");
+  if (client_->friendList_.empty())
+  {
+    std::cout << "没有可用的好友。" << std::endl;
+    return;
+  }
+
+  for (size_t i = 0; i < client_->friendList_.size(); ++i)
+    std::cout << (i + 1) << ". " << client_->friendList_[i].nickname_ << std::endl;
+
+  std::cout << "请输入要选择的好友编号 (1-" << client_->friendList_.size() << "): ";
+  int choice;
+  std::cin >> choice;
+
+  if (std::cin.fail() || choice < 1 || choice > static_cast<int>(client_->friendList_.size()))
+  {
+    std::cout << "无效的选择，请输入 1 到 "
+              << client_->friendList_.size() << " 之间的数字。" << std::endl;
+    std::cin.clear();                                                   // 清除错误状态
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // 清除输入缓冲区
+    return;
+  }
+
+  if (choice == 0)
+  {
+    state_ = State::LOGGED_IN;
+    return;
+  }
+
+  client_->currentFriend_.setCurrentFriend(client_->friendList_[choice - 1]);
 
   state_ = State::CHAT_FRIEND;
 }
 
-void Controller::showFriends()
+void Controller::showHandleFriendRequest()
 {
-  client_->friendService_.getFriends();
-  sleep(1); //********************** */
-  for (const auto &afriend : client_->firendList_)
+  system("clear");
+  while (1)
   {
-    int i = 1;
-    std::cout << i << "." << afriend.nickname_ << std::endl;
-    i++;
+    std::lock_guard<std::mutex> lock(client_->friendService_.friendRequests_mutex_);
+    flushRequests();
+    int i;
+    std::cin >> i;
+    if (i == 0)
+    {
+      state_ = State::LOGGED_IN;
+      return;
+    }
+
+    while (1)
+    {
+      int j;
+      std::cin >> j;
+      if (j == 0)
+        break;
+      if (j == 1)
+        client_->friendService_.responseFriendRequest(client_->friendRequests_[i - 1], "accept");
+      else if (j == 2)
+        client_->friendService_.responseFriendRequest(client_->friendRequests_[i - 1], "reject");
+    }
   }
 }

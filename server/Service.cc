@@ -23,6 +23,7 @@ Service::Service() : threadPool_(16),
     handlers_[GET_FRIENDS] = std::make_shared<FriendLister>(this);
     handlers_[CHAT_MSG] = std::make_shared<Chatter>(this);
     handlers_[ADD_FRIEND] = std::make_shared<FriendAdder>(this);
+    handlers_[ADD_FRIEND_ACK] = std::make_shared<FriendAddAcker>(this);
     // handlers_[ADD_GROUP] = std::make_shared<AdderGroup>(this);
 
     server_.setConnectionCallback([this](const TcpConnectionPtr &conn)
@@ -54,7 +55,6 @@ void Service::onConnection(const TcpConnectionPtr &conn)
 {
     if (conn->connected())
     {
-
     }
     else
     {

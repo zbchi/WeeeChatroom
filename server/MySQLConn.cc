@@ -62,7 +62,13 @@ bool MySQLConn::connect(const std::string &host, int port,
 
 bool MySQLConn::update(const std::string &sql)
 {
-    return mysql_query(conn_, sql.c_str()) == 0;
+    if (mysql_query(conn_, sql.c_str()) != 0)
+    {
+        const char *errorMsg = mysql_error(conn_);
+        LOG_ERROR("MySQL UPDATE 失败:%s  执行语句:%s ", errorMsg, sql.c_str());
+        return false;
+    }
+    return true;
 }
 
 MYSQL_RES *MySQLConn::query(const std::string &sql)

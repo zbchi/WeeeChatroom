@@ -85,7 +85,7 @@ void Loginer::sendFriendRequestsOffLine(std::string &to_user_id, const TcpConnec
         json js = json::parse(row.at("json"));
         sendJson(conn, js);
 
-        std::string delSql = "delet from friend_requests where id = " + row.at("id");
+        std::string delSql = "delete from friend_requests where id = " + row.at("id");
         mysql->update(delSql);
     }
 }
@@ -102,7 +102,7 @@ void Loginer::sendMessageOffLine(std::string &to_user_id, const TcpConnectionPtr
         json js = json::parse(row.at("json"));
         sendJson(conn, js);
 
-        std::string delSql = "delet from offlineMessages where id = " + row.at("id");
+        std::string delSql = "delete from offlineMessages where id = " + row.at("id");
         mysql->update(delSql);
     }
 }

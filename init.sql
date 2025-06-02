@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS friends
     user_id INT NOT NULL,
     friend_id INT NOT NULL,
     json TEXT NOT NULL,
-    status ENUM('pending','accepted','blocked')DEFAULT 'accepted',
+    status ENUM('pending','accepted','rejected')DEFAULT 'accepted',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (user_id) REFERENCES users(id),
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS friend_requests
     id INT AUTO_INCREMENT PRIMARY KEY, 
     from_user_id INT NOT NULL,
     to_user_id INT NOT NULL,
-    content TEXT,
+    json TEXT NOT NULL,
     status ENUM('pending','accepted','rejected')DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 

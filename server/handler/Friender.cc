@@ -56,7 +56,7 @@ void FriendAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     std::string to_user_id = js["to_user_id"];
     std::string from_user_id = js["from_user_id"];
     auto mysql = MySQLConnPool::instance().getConnection();
-    js["to_user_nickname"] = mysql->getNicknameById(to_user_id);
+    js["from_user_nickname"] = mysql->getNicknameById(from_user_id);
 
     std::string jsonStr = js.dump();
     std::cout << jsonStr << std::endl;
@@ -76,3 +76,26 @@ void FriendAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     }
 }
 
+void FriendAddAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    std::string response = js["response"];
+    std::string from_user_id = js["from_user_id"];
+    std::string to_user_id = js["to_user_id"];
+    auto mysql = MySQLConnPool::instance().getConnection();
+    if (response == "accept")
+    {
+        char sql[256];
+        snprintf(sql, sizeof(sql),
+                 "insert into friends(user_id,friend_id) values('%s','%s')",
+                 from_user_id.c_str(), to_user_id.c_str());
+        mysql->update(std::string(sql));
+        snprintf(sql, sizeof(sql),
+                 "insert into friends(user_id,friend_id) values('%s','%s')",
+                 to_user_id.c_str(), from_user_id.c_str());
+        mysql->update(std::string(sql));
+    }
+    else if (response == "reject")
+    {
+        std::cout << "rejectrejectrejectrejectreject" << std::endl;
+    }
+}

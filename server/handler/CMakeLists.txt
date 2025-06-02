@@ -1,7 +1,6 @@
 add_library(handler_lib STATIC
 Loginer.cc
 Register.cc
-Adder.cc
 Friender.cc
 Chatter.cc)
 
@@ -19,7 +18,4 @@ netlib
 CURL::libcurl
 ${HIREDIS_LIB}
 mysqlclient
-
-
-
 )

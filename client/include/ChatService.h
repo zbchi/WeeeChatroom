@@ -28,6 +28,8 @@ struct ChatMessage
     std::string sender_id;
     std::string content;
     std::string timestamp;
+
+    std::string user_id_;
 };
 
 using ChatLog = std::vector<ChatMessage>;

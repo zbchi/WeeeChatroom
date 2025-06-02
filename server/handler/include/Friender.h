@@ -23,3 +23,13 @@ public:
 private:
     Service *service_;
 };
+
+class FriendAddAcker : public Handler
+{
+public:
+    FriendAddAcker(Service *service) : service_(service) {}
+    void handle(const TcpConnectionPtr &conn, json &js, Timestamp time);
+
+private:
+    Service *service_;
+};
