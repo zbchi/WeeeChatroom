@@ -8,9 +8,16 @@
 #include "Redis.h"
 #include "MySQLConn.h"
 #include <curl/curl.h>
+#include <vector>
 void FriendLister::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
 {
     std::string user_id = js["user_id"];
+    sendFriendList(user_id);
+}
+
+void FriendLister::sendFriendList(std::string &user_id)
+{
+    auto conn = service_->getConnectionPtr(user_id);
     auto friendsId = getFriendsId(user_id);
     auto friends = getFriendsInfo(friendsId);
 
@@ -29,26 +36,24 @@ void FriendLister::handle(const TcpConnectionPtr &conn, json &js, Timestamp time
 
 std::vector<std::map<std::string, std::string>> FriendLister::getFriendsId(std::string user_id_str)
 {
-    int user_id = std::stoi(user_id_str);
+
     auto mysql = MySQLConnPool::instance().getConnection();
-    char sql[128];
-    snprintf(sql, sizeof(sql), "select friend_id from friends where status='accepted' and user_id=%d", user_id);
-    return mysql->queryResult(std::string(sql));
+    return mysql->select("friends", {{"status", "accepted"},
+                                     {"user_id", user_id_str}});
 }
 
 std::vector<std::map<std::string, std::string>> FriendLister::getFriendsInfo(std::vector<std::map<std::string, std::string>> &friendsId)
 {
     auto mysql = MySQLConnPool::instance().getConnection();
 
-    std::stringstream id_list;
-    for (size_t i = 0; i < friendsId.size(); i++)
+    std::vector<std::string> id_list;
+    for (const auto &friend_map : friendsId)
     {
-        if (i > 0)
-            id_list << ",";
-        id_list << friendsId[i]["friend_id"];
+        std::cout << friend_map.at("friend_id");
+        id_list.push_back(friend_map.at("friend_id"));
     }
-    std::string sql = "select * from users where id in (" + id_list.str() + ")";
-    return mysql->queryResult(sql);
+
+    return mysql->select("users", {}, {{"id", id_list}});
 }
 
 void FriendAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
@@ -76,6 +81,7 @@ void FriendAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
 
 void FriendAddAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
 {
+    // 处理好友请求的回应
     std::string response = js["response"];
     std::string from_user_id = js["from_user_id"];
     std::string to_user_id = js["to_user_id"];
@@ -92,4 +98,15 @@ void FriendAddAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp ti
     {
         std::cout << "rejectrejectrejectrejectreject" << std::endl;
     }
+
+    // 更新用户好友列表
+    FriendLister list(service_);
+    list.sendFriendList(from_user_id);
+    list.sendFriendList(to_user_id);
+}
+
+void FriendDeleter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    std::string from_user_id = js["from_user_id"];
+    std::string to_user_id = js["to_user_id"];
 }

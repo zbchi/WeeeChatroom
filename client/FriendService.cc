@@ -17,6 +17,15 @@ void FriendService::addFriend(std::string &friend_id)
     neter_->sendJson(addInfo);
 }
 
+void FriendService::delFriend(std::string &friend_id)
+{
+    json delInfo;
+    delInfo["msgid"] = DEL_FRIEND;
+    delInfo["to_user_id"] = friend_id;
+    delInfo["from_user_id"] = client_->user_id_;
+    neter_->sendJson(delInfo);
+}
+
 void FriendService::handleFriendRequest(const TcpConnectionPtr &conn, json &js)
 {
     std::string from_user_id = js["from_user_id"];

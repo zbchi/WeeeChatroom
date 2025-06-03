@@ -35,7 +35,7 @@ void Loginer::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     }
     sendJson(conn, response);
 
-    if (response["errno"] == 0)
+    if (errno_verify == 0)
     {
         // 用户上线自动发送待发送的好友请求
         std::string user_id = service_->getUserid(conn);
@@ -49,10 +49,8 @@ int Loginer::verifyAccount(std::string &email, std::string &password, const TcpC
 {
     auto mysql = MySQLConnPool::instance().getConnection();
 
-    char sql[128];
-    snprintf(sql, sizeof(sql), "select * from users where email='%s'", email.c_str());
+    auto result = mysql->select("users", {{"email", email}});
 
-    auto result = mysql->queryResult(std::string(sql));
     if (result.empty())
     {
         LOG_DEBUG("%s未注册", email.c_str());
@@ -75,34 +73,28 @@ int Loginer::verifyAccount(std::string &email, std::string &password, const TcpC
 
 void Loginer::sendFriendRequestsOffLine(std::string &to_user_id, const TcpConnectionPtr &conn)
 {
-    char sql[128];
-    snprintf(sql, sizeof(sql), "select json,id from friend_requests where to_user_id = %s", to_user_id.c_str());
     auto mysql = MySQLConnPool::instance().getConnection();
-    auto result = mysql->queryResult(std::string(sql));
+    auto result = mysql->select("friend_requests", {{"to_user_id", to_user_id}});
 
     for (const auto &row : result)
     {
         json js = json::parse(row.at("json"));
         sendJson(conn, js);
 
-        std::string delSql = "delete from friend_requests where id = " + row.at("id");
-        mysql->update(delSql);
+        mysql->del("friend_requests", {{"id", row.at("id")}});
     }
 }
 
 void Loginer::sendMessageOffLine(std::string &to_user_id, const TcpConnectionPtr &conn)
 {
-    char sql[128];
-    snprintf(sql, sizeof(sql), "select json,id from offlineMessages where receiver_id = %s", to_user_id.c_str());
     auto mysql = MySQLConnPool::instance().getConnection();
-    auto result = mysql->queryResult(std::string(sql));
+    auto result = mysql->select("offlineMessages", {{"receiver_id", to_user_id}});
 
     for (const auto &row : result)
     {
         json js = json::parse(row.at("json"));
         sendJson(conn, js);
 
-        std::string delSql = "delete from offlineMessages where id = " + row.at("id");
-        mysql->update(delSql);
+        mysql->del("offlineMessages", {{"id", row.at("id")}});
     }
 }

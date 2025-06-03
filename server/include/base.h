@@ -13,6 +13,7 @@ enum MsgType
     GET_FRIENDS,
     CHAT_MSG,
     ADD_FRIEND,
+    DEL_FRIEND,
     ADD_FRIEND_ACK,
     ADD_GROUP,
 };

@@ -13,11 +13,11 @@ namespace mylib
 #define LOG_INFO(fmt, ...) \
     mylib::Logger::log(mylib::Logger::SourceFile(__FILE__), __LINE__, mylib::Logger::INFO, __func__, fmt, ##__VA_ARGS__)
 #define LOG_WARN(fmt, ...) \
-    mylib::Logger::log(mylib::Logger::SourceFile(__FILE__), __LINE__, mylib::Logger::WARN, fmt, ##__VA_ARGS__)
+    mylib::Logger::log(mylib::Logger::SourceFile(__FILE__), __LINE__, mylib::Logger::WARN, __func__, fmt, ##__VA_ARGS__)
 #define LOG_ERROR(fmt, ...) \
-    mylib::Logger::log(mylib::Logger::SourceFile(__FILE__), __LINE__, mylib::Logger::ERROR, fmt, ##__VA_ARGS__)
+    mylib::Logger::log(mylib::Logger::SourceFile(__FILE__), __LINE__, mylib::Logger::ERROR, __func__, fmt, ##__VA_ARGS__)
 #define LOG_FATAL(fmt, ...) \
-    mylib::Logger::log(mylib::Logger::SourceFile(__FILE__), __LINE__, mylib::Logger::FATAL, fmt, ##__VA_ARGS__)
+    mylib::Logger::log(mylib::Logger::SourceFile(__FILE__), __LINE__, mylib::Logger::FATAL, __func__, fmt, ##__VA_ARGS__)
 #define LOG_SYSERR(fmt, ...) \
     mylib::Logger::logSys(mylib::Logger::SourceFile(__FILE__), __LINE__, false, fmt, ##__VA_ARGS__)
 #define LOG_SYSFATAL(fmt, ...) \

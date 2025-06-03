@@ -10,6 +10,7 @@ class MySQLConn
 {
 private:
     MYSQL *conn_;
+    std::string escapeStr(const std::string &input);
 
 public:
     MySQLConn();
@@ -19,10 +20,17 @@ public:
                  const std::string &user, const std::string &password,
                  const std::string &db);
     bool update(const std::string &sql);
+    std::string join(const std::vector<std::string> &vec, const std::string &delimiter);
     MYSQL_RES *query(const std::string &sql);
     MYSQL *getConnection();
     std::vector<std::map<std::string, std::string>> queryResult(const std::string &sql);
+
     bool insert(const std::string &table, const std::map<std::string, std::string> &data);
+    bool del(const std::string &table, const std::map<std::string, std::string> &conditions);
+
+    std::vector<std::map<std::string, std::string>>
+    select(const std::string &table, const std::map<std::string, std::string> &conditions = {},
+           const std::map<std::string, std::vector<std::string>> &in_conditions = {});
     std::string getEmailById(std::string &user_id);
     std::string getNicknameById(std::string &user_id);
     std::string getIdByEmail(std::string &email);

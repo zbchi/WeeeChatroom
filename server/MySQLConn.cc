@@ -61,6 +61,27 @@ bool MySQLConn::connect(const std::string &host, int port,
     return ret != nullptr;
 }
 
+std::string MySQLConn::escapeStr(const std::string &input)
+{
+    std::string escape;
+    escape.resize(input.size() * 2 + 1);
+    unsigned long len = mysql_real_escape_string(conn_, &escape[0], input.c_str(), input.size());
+    escape.resize(len);
+    return escape;
+}
+
+std::string MySQLConn::join(const std::vector<std::string> &vec, const std::string &delimiter)
+{
+    std::stringstream ss;
+    for (size_t i = 0; i < vec.size(); i++)
+    {
+        ss << vec[i];
+        if (i < vec.size() - 1)
+            ss << delimiter;
+    }
+    return ss.str();
+}
+
 bool MySQLConn::update(const std::string &sql)
 {
     if (mysql_query(conn_, sql.c_str()) != 0)
@@ -88,12 +109,18 @@ std::vector<std::map<std::string, std::string>> MySQLConn::queryResult(const std
 {
     std::vector<std::map<std::string, std::string>> resultVec;
     if (mysql_query(conn_, sql.c_str()) != 0)
+    {
+        const char *errorMsg = mysql_error(conn_);
+        LOG_ERROR("MySQL 查询失败: %s, 执行语句: %s", errorMsg, sql.c_str());
         return resultVec;
-
+    }
     MYSQL_RES *result = mysql_store_result(conn_);
     if (result == nullptr)
+    {
+        const char *errorMsg = mysql_error(conn_);
+        LOG_ERROR("MySQL 获取结果集失败: %s, 执行语句: %s", errorMsg, sql.c_str());
         return resultVec;
-
+    }
     int numFields = mysql_num_fields(result);
     MYSQL_FIELD *fields = mysql_fetch_field(result);
 
@@ -113,34 +140,19 @@ std::vector<std::map<std::string, std::string>> MySQLConn::queryResult(const std
 
 std::string MySQLConn::getEmailById(std::string &user_id)
 {
-    char sql[128];
-    snprintf(sql, sizeof(sql), "select email from users where id = '%s'", user_id.c_str());
-    auto result = queryResult(std::string(sql));
-    if (result.empty())
-        return "";
-    else
-        return result[0]["email"];
+    auto result = select("users", {{"id", user_id}});
+    return result[0]["email"];
 }
 
 std::string MySQLConn::getNicknameById(std::string &user_id)
 {
-    char sql[128];
-    snprintf(sql, sizeof(sql), "select nickname from users where id = '%s'", user_id.c_str());
-    auto result = queryResult(std::string(sql));
-    if (result.empty())
-        return "";
-    else
-        return result[0]["nickname"];
+    auto result = select("users", {{"id", user_id}});
+    return result[0]["nickname"];
 }
 std::string MySQLConn::getIdByEmail(std::string &email)
 {
-    char sql[128];
-    snprintf(sql, sizeof(sql), "select id from users where email = '%s'", email.c_str());
-    auto result = queryResult(std::string(sql));
-    if (result.empty())
-        return "";
-    else
-        return result[0]["id"];
+    auto result = select("users", {{"email", email}});
+    return result[0]["id"];
 }
 
 bool MySQLConn::insert(const std::string &table, const std::map<std::string, std::string> &data)
@@ -148,13 +160,8 @@ bool MySQLConn::insert(const std::string &table, const std::map<std::string, std
     std::stringstream columns, values;
     for (auto it = data.begin(); it != data.end(); it++)
     {
-        std::string escape;
-        escape.resize(it->second.size() * 2 + 1);
-        unsigned long len = mysql_real_escape_string(conn_, &escape[0], it->second.c_str(), it->second.size());
-        escape.resize(len);
-
         columns << it->first;
-        values << "'" << escape << "'";
+        values << "'" << escapeStr(it->second) << "'";
         if (std::next(it) != data.end())
         {
             columns << ",";
@@ -164,4 +171,59 @@ bool MySQLConn::insert(const std::string &table, const std::map<std::string, std
     std::stringstream sql;
     sql << "insert into " << table << " (" << columns.str() << ") values (" << values.str() << ")";
     return update(sql.str());
+}
+
+bool MySQLConn::del(const std::string &table, const std::map<std::string, std::string> &conditions)
+{
+    std::stringstream where;
+    for (auto it = conditions.begin(); it != conditions.end(); it++)
+    {
+        where << it->first << " = '" << escapeStr(it->second) << "'";
+        if (std::next(it) != conditions.end())
+            where << " and ";
+    }
+    std::stringstream sql;
+    sql << "delete from " << table << " where " << where.str();
+    return update(sql.str());
+}
+
+std::vector<std::map<std::string, std::string>> MySQLConn::
+    select(const std::string &table, const std::map<std::string, std::string> &conditions,
+           const std::map<std::string, std::vector<std::string>> &in_conditions)
+{
+    std::stringstream sql;
+    sql << "select * from " << table;
+
+    std::vector<std::string> where_clauses;
+    if (!conditions.empty())
+    {
+        std::stringstream where;
+        for (auto it = conditions.begin(); it != conditions.end(); it++)
+        {
+            where << it->first << " = '" << escapeStr(it->second) << "'";
+            if (std::next(it) != conditions.end())
+            {
+                where << " and ";
+            }
+        }
+        where_clauses.push_back(where.str());
+    }
+
+    if (!in_conditions.empty())
+    {
+        for (const auto &in_condition : in_conditions)
+        {
+            std::vector<std::string> escape;
+            for (const auto &value : in_condition.second)
+            {
+                escape.push_back("'" + escapeStr(value) + "'");
+            }
+            where_clauses.push_back(in_condition.first + " in (" + join(escape, ",") + ")");
+        }
+    }
+
+    if (!where_clauses.empty())
+        sql << " where " << join(where_clauses, " and ");
+
+    return queryResult(sql.str());
 }

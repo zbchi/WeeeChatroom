@@ -10,10 +10,6 @@
 State state_ = State::LOGINING;
 State lastState_ = State::INIT;
 
-void clearStdin()
-{
-  tcflush(STDIN_FILENO, TCIFLUSH);
-}
 int getValidInt(const std::string &prompt)
 {
   int value;
@@ -26,7 +22,7 @@ int getValidInt(const std::string &prompt)
     {
       std::cin.clear();
       std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-      std::cout << "输入无效，请输入一个整数！" << std::endl;
+      std::cout << "输入无效" << std::endl;
     }
     else
     {
@@ -66,6 +62,10 @@ void Controller::mainLoop()
 
     case State::ADD_FRIEND:
       showAddFriend();
+      break;
+
+    case State::DEL_FRIEND:
+      showDelFriend();
       break;
 
     case State::HANDLE_FRIEND_REQUEST:
@@ -231,6 +231,40 @@ void Controller::showAddFriend()
   state_ = State::LOGGED_IN;
 }
 
+void Controller::showDelFriend()
+{
+  system("clear");
+  if (client_->friendList_.empty())
+  {
+    std::cout << "没有可用的好友。" << std::endl;
+    return;
+  }
+
+  for (size_t i = 0; i < client_->friendList_.size(); ++i)
+    std::cout << (i + 1) << ". " << client_->friendList_[i].nickname_ << std::endl;
+
+  std::cout << "请输入要选择的好友编号 (1-" << client_->friendList_.size() << "): ";
+  int choice;
+
+  choice = getValidInt("");
+
+  if (choice == 0)
+  {
+    state_ = State::LOGGED_IN;
+    return;
+  }
+
+  if (choice < 1 || choice > static_cast<int>(client_->friendList_.size()))
+  {
+    std::cout << "无效的选择，请输入 1 到 "
+              << client_->friendList_.size() << " 之间的数字。" << std::endl;
+    return;
+  }
+
+  client_->friendService_.delFriend(client_->friendList_[choice - 1].id_);
+  state_ = State::LOGGED_IN;
+}
+
 void Controller::showMenue()
 {
   system("clear");
@@ -277,20 +311,19 @@ void Controller::showFriends()
 
   std::cout << "请输入要选择的好友编号 (1-" << client_->friendList_.size() << "): ";
   int choice;
-  std::cin >> choice;
 
-  if (std::cin.fail() || choice < 1 || choice > static_cast<int>(client_->friendList_.size()))
-  {
-    std::cout << "无效的选择，请输入 1 到 "
-              << client_->friendList_.size() << " 之间的数字。" << std::endl;
-    std::cin.clear();                                                   // 清除错误状态
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // 清除输入缓冲区
-    return;
-  }
+  choice = getValidInt("");
 
   if (choice == 0)
   {
     state_ = State::LOGGED_IN;
+    return;
+  }
+
+  if (choice < 1 || choice > static_cast<int>(client_->friendList_.size()))
+  {
+    std::cout << "无效的选择，请输入 1 到 "
+              << client_->friendList_.size() << " 之间的数字。" << std::endl;
     return;
   }
 
