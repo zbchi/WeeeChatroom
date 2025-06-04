@@ -9,6 +9,7 @@
 #include "UserService.h"
 #include "ChatService.h"
 #include "FriendService.h"
+#include "GroupService.h"
 
 #include "MessageQueue.h"
 
@@ -38,7 +39,8 @@ public:
     std::string user_id_;
     std::string user_email_;
     std::vector<Friend> friendList_;
-    std::unordered_map<std::string, ChatLog> chatLogs_;
+    std::unordered_map<std::string, ChatLog> chatLogs_;         // map< freind_id,vector<log> >
+    std::unordered_map<std::string, std::string> unreadCounts_; // map< friend_id,unreadCount >
     std::vector<FriendRequest> friendRequests_;
 
     Friend currentFriend_;
@@ -49,5 +51,7 @@ private:
     UserService userService_;
     ChatService chatService_;
     FriendService friendService_;
+    GroupService groupService_;
+
     Controller controller_;
 };

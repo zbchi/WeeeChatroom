@@ -93,6 +93,16 @@ CREATE TABLE IF NOT EXISTS group_messages
     FOREIGN KEY (sender_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS unread_counts
+(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    friend_id INT,
+    unread_count INT DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (friend_id) REFERENCES users(id)
+);
+
 CREATE USER 'zb'@'localhost' IDENTIFIED BY '1662308219@Zb';
 GRANT ALL PRIVILEGES ON chatdb.* To 'zb'@'localhost';
 FLUSH PRIVILEGES;

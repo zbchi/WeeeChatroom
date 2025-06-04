@@ -18,6 +18,8 @@ void FriendLister::handle(const TcpConnectionPtr &conn, json &js, Timestamp time
 void FriendLister::sendFriendList(std::string &user_id)
 {
     auto conn = service_->getConnectionPtr(user_id);
+    if (conn == nullptr)
+        return;
     auto friendsId = getFriendsId(user_id);
     auto friends = getFriendsInfo(friendsId);
 
@@ -109,4 +111,15 @@ void FriendDeleter::handle(const TcpConnectionPtr &conn, json &js, Timestamp tim
 {
     std::string from_user_id = js["from_user_id"];
     std::string to_user_id = js["to_user_id"];
+
+    auto mysql = MySQLConnPool::instance().getConnection();
+    mysql->del("friends", {{"user_id", from_user_id},
+                           {"friend_id", to_user_id}});
+    mysql->del("friends", {{"user_id", to_user_id},
+                           {"friend_id", from_user_id}});
+
+    // 更新用户好友列表
+    FriendLister list(service_);
+    list.sendFriendList(from_user_id);
+    list.sendFriendList(to_user_id);
 }

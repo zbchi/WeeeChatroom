@@ -2,7 +2,9 @@ add_library(handler_lib STATIC
 Loginer.cc
 Register.cc
 Friender.cc
-Chatter.cc)
+Chatter.cc
+Grouper.cc
+)
 
 include_directories(/user/include/mysql)
 find_package(CURL REQUIRED)

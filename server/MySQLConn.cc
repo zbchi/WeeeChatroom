@@ -224,6 +224,5 @@ std::vector<std::map<std::string, std::string>> MySQLConn::
 
     if (!where_clauses.empty())
         sql << " where " << join(where_clauses, " and ");
-
     return queryResult(sql.str());
 }

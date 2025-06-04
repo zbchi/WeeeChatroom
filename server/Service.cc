@@ -7,6 +7,7 @@
 #include "Loginer.h"
 #include "Friender.h"
 #include "Chatter.h"
+#include "Grouper.h"
 // #include "Adder.h"
 
 #include "MySQLConn.h"
@@ -25,6 +26,7 @@ Service::Service() : threadPool_(1),
     handlers_[ADD_FRIEND] = std::make_shared<FriendAdder>(this);
     handlers_[DEL_FRIEND] = std::make_shared<FriendDeleter>(this);
     handlers_[ADD_FRIEND_ACK] = std::make_shared<FriendAddAcker>(this);
+    handlers_[CREATE_GROUP] = std::make_shared<GroupCreater>(this);
     // handlers_[ADD_GROUP] = std::make_shared<AdderGroup>(this);
 
     server_.setConnectionCallback([this](const TcpConnectionPtr &conn)

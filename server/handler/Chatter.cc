@@ -20,13 +20,17 @@ void Chatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
         sendJson(targetConn, js);
     }
     else
-    { // 离线存储消息
+    { // 离线存储离线消息
         mysql->insert("offlineMessages", {{"sender_id", user_id},
                                           {"receiver_id", receiver_id},
                                           {"content", content},
                                           {"json", js.dump()}});
     }
+    //存储消息
     mysql->insert("messages", {{"sender_id", user_id},
                                {"receiver_id", receiver_id},
                                {"content", content}});
+
+    //更新未读消息数
+    
 }

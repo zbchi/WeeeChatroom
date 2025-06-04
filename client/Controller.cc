@@ -72,6 +72,9 @@ void Controller::mainLoop()
       showHandleFriendRequest();
       break;
 
+    case State::CREATE_GROUP:
+      showCreateGroup();
+
     default:
       break;
     }
@@ -274,9 +277,11 @@ void Controller::showMenue()
   std::cout << "2. 添加好友" << std::endl;
   std::cout << "3. 处理好友请求" << std::endl;
   std::cout << "4. 退出登录" << std::endl;
-  std::cout << "请输入选项 (1-4): ";
+  std::cout << "5. 删除好友" << std::endl;
+  std::cout << "6. 创建群聊" << std::endl;
+  std::cout << "请输入选项 (1-5): ";
 
-  int choice = getValidInt("请输入选项(1-4):");
+  int choice = getValidInt("请输入选项(1-5):");
 
   switch (choice)
   {
@@ -292,8 +297,14 @@ void Controller::showMenue()
   case 4:
     state_ = State::LOGINING;
     break;
+  case 5:
+    state_ = State::DEL_FRIEND;
+    break;
+  case 6:
+    state_ = State::CREATE_GROUP;
+    break;
   default:
-    std::cout << "无效选项，请选择 1 到 4。" << std::endl;
+    std::cout << "无效选项，请选择 1 到 5。" << std::endl;
     break;
   }
 }
@@ -347,16 +358,31 @@ void Controller::showHandleFriendRequest()
       return;
     }
 
+    std::cout << "1.接受  2.拒绝" << std::endl;
     while (1)
     {
       int j;
       std::cin >> j;
       if (j == 0)
+      {
+        state_ = State::LOGGED_IN;
         break;
+      }
       if (j == 1)
         client_->friendService_.responseFriendRequest(client_->friendRequests_[i - 1], "accept");
       else if (j == 2)
         client_->friendService_.responseFriendRequest(client_->friendRequests_[i - 1], "reject");
     }
   }
+}
+
+void Controller::showCreateGroup()
+{
+  std::cout << " 群名:";
+  std::string name, description;
+  std::cin >> name;
+  std::cout << " 描述:";
+  std::cin >> description;
+  client_->groupService_.createGroup(name, description);
+  state_ = State::LOGGED_IN;
 }

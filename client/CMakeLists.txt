@@ -4,6 +4,8 @@ Neter.cc
 UserService.cc
 ChatService.cc
 FriendService.cc
+GroupService.cc
+
 Controller.cc
 Client.cc
 )
