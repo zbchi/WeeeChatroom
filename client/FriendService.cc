@@ -42,7 +42,6 @@ void FriendService::handleFriendRequest(const TcpConnectionPtr &conn, json &js)
 
 void FriendService::getFriends()
 {
-
     json getInfo;
     getInfo["msgid"] = GET_FRIENDS;
     getInfo["user_id"] = client_->user_id_;
@@ -57,9 +56,13 @@ void FriendService::handleFriendsList(const TcpConnectionPtr &conn, json &js)
     {
         f.id_ = afriend["id"];
         f.nickname_ = afriend["nickname"];
+        f.isOnline_ = afriend["isOnline"];
         f.user_id_ = client_->user_id_;
         client_->friendList_.push_back(f);
     }
+
+    if (state_ == State::SHOW_FREINDS)
+        client_->controller_.flushFriends();
 }
 
 void FriendService::responseFriendRequest(FriendRequest &friendRequest, char *response)

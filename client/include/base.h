@@ -15,4 +15,6 @@ enum MsgType
     ADD_FRIEND_ACK,
     CREATE_GROUP,
     ADD_GROUP,
+    ADD_GROUP_ACK,
+    GET_GROUPS,
 };

@@ -23,6 +23,7 @@ class Client
     friend class UserService;
     friend class ChatService;
     friend class FriendService;
+    friend class GroupService;
 
 public:
     Client();
@@ -39,11 +40,15 @@ public:
     std::string user_id_;
     std::string user_email_;
     std::vector<Friend> friendList_;
+    std::vector<Group> groupList_;
     std::unordered_map<std::string, ChatLog> chatLogs_;         // map< freind_id,vector<log> >
+    std::unordered_map<std::string, ChatLog> groupChatLogs_;    //   map<  group_id,vector<log>  >
     std::unordered_map<std::string, std::string> unreadCounts_; // map< friend_id,unreadCount >
     std::vector<FriendRequest> friendRequests_;
+    std::vector<GroupAddRequest> groupAddRequests_;
 
     Friend currentFriend_;
+    Group currentGroup_;
 
 private:
     std::thread logicThread_;

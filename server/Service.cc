@@ -27,7 +27,8 @@ Service::Service() : threadPool_(1),
     handlers_[DEL_FRIEND] = std::make_shared<FriendDeleter>(this);
     handlers_[ADD_FRIEND_ACK] = std::make_shared<FriendAddAcker>(this);
     handlers_[CREATE_GROUP] = std::make_shared<GroupCreater>(this);
-    // handlers_[ADD_GROUP] = std::make_shared<AdderGroup>(this);
+    handlers_[ADD_GROUP] = std::make_shared<GroupAdder>(this);
+    handlers_[GET_GROUPS] = std::make_shared<GroupLister>(this);
 
     server_.setConnectionCallback([this](const TcpConnectionPtr &conn)
                                   { this->onConnection(conn); });

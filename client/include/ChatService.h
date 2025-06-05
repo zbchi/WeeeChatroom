@@ -29,6 +29,9 @@ struct ChatMessage
     std::string content;
     std::string timestamp;
 
+    std::string sender_nickname;
+    bool is_group = false;
+
     std::string user_id_;
 };
 

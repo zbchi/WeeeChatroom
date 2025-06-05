@@ -6,7 +6,6 @@
 #include "base.h"
 
 #include "Redis.h"
-#include "MySQLConn.h"
 #include <curl/curl.h>
 #include <vector>
 void FriendLister::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
@@ -29,29 +28,31 @@ void FriendLister::sendFriendList(std::string &user_id)
     {
         json u;
         u["id"] = user.at("id");
+        if (service_->getConnectionPtr(user.at("id")) == nullptr)
+            u["isOnline"] = false;
+        else
+            u["isOnline"] = true;
         u["nickname"] = user.at("nickname");
         friendList["friends"].push_back(u);
     }
-
     sendJson(conn, friendList);
 }
 
-std::vector<std::map<std::string, std::string>> FriendLister::getFriendsId(std::string user_id_str)
+Result FriendLister::getFriendsId(std::string &user_id)
 {
-
     auto mysql = MySQLConnPool::instance().getConnection();
     return mysql->select("friends", {{"status", "accepted"},
-                                     {"user_id", user_id_str}});
+                                     {"user_id", user_id}});
 }
 
-std::vector<std::map<std::string, std::string>> FriendLister::getFriendsInfo(std::vector<std::map<std::string, std::string>> &friendsId)
+Result FriendLister::getFriendsInfo(Result &friendsId)
 {
     auto mysql = MySQLConnPool::instance().getConnection();
 
     std::vector<std::string> id_list;
     for (const auto &friend_map : friendsId)
     {
-        std::cout << friend_map.at("friend_id");
+        // std::cout << friend_map.at("friend_id");
         id_list.push_back(friend_map.at("friend_id"));
     }
 

@@ -20,6 +20,7 @@ public:
     void responseFriendRequest(FriendRequest &friendRequest, char *response);
 
     std::mutex friendRequests_mutex_;
+    std::mutex friendList_mutex_;
 
 private:
     Neter *neter_;
@@ -38,7 +39,6 @@ public:
         nickname_ = friendObj.nickname_;
         isOnline_ = friendObj.isOnline_;
     }
-
     std::string user_id_;
 };
 

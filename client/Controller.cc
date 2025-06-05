@@ -74,6 +74,18 @@ void Controller::mainLoop()
 
     case State::CREATE_GROUP:
       showCreateGroup();
+      break;
+
+    case State::ADD_GROUP:
+      showAddGroup();
+      break;
+
+    case State::HANDLE_GROUP_REQUEST:
+      showHandleGroupRequest();
+      break;
+
+    case State::SHOW_GROUPS:
+      showGroups();
 
     default:
       break;
@@ -193,14 +205,20 @@ void Controller::flushLogs()
 void Controller::flushRequests()
 {
   system("clear");
+  int i = 1;
+  for (const auto &request : client_->friendRequests_)
   {
-    int i = 1;
-    for (const auto &request : client_->friendRequests_)
-    {
-      std::cout << i << ".昵称:" << request.nickname_ << "  id:" << request.from_user_id << "  时间:" << request.timestamp_ << std::endl;
-      i++;
-    }
+    std::cout << i << ".昵称:" << request.nickname_ << "  id:" << request.from_user_id << "  时间:" << request.timestamp_ << std::endl;
+    i++;
   }
+}
+
+void Controller::flushGroupRequests()
+{
+  system("clear");
+  int i = 1;
+  for (const auto &request : client_->groupAddRequests_)
+    std::cout << i << ".群名:" << request.group_name << "  用户昵称:" << request.nickname << "  时间" << request.timestamp << std::endl;
 }
 
 void Controller::chatWithFriend()
@@ -270,8 +288,7 @@ void Controller::showDelFriend()
 
 void Controller::showMenue()
 {
-  system("clear");
-  client_->friendService_.getFriends();
+  // system("clear");
   std::cout << "\n=== 主菜单 ===" << std::endl;
   std::cout << "1. 与好友聊天" << std::endl;
   std::cout << "2. 添加好友" << std::endl;
@@ -279,6 +296,9 @@ void Controller::showMenue()
   std::cout << "4. 退出登录" << std::endl;
   std::cout << "5. 删除好友" << std::endl;
   std::cout << "6. 创建群聊" << std::endl;
+  std::cout << "7. 加入群聊" << std::endl;
+  std::cout << "8. 处理加群申请" << std::endl;
+  std::cout << "9. 展示群聊" << std::endl;
   std::cout << "请输入选项 (1-5): ";
 
   int choice = getValidInt("请输入选项(1-5):");
@@ -303,6 +323,17 @@ void Controller::showMenue()
   case 6:
     state_ = State::CREATE_GROUP;
     break;
+  case 7:
+    state_ = State::ADD_GROUP;
+    break;
+  case 8:
+    state_ = State::HANDLE_GROUP_REQUEST;
+    break;
+
+  case 9:
+    state_ = State::SHOW_GROUPS;
+    break;
+
   default:
     std::cout << "无效选项，请选择 1 到 5。" << std::endl;
     break;
@@ -310,17 +341,8 @@ void Controller::showMenue()
 }
 void Controller::showFriends()
 {
-  system("clear");
-  if (client_->friendList_.empty())
-  {
-    std::cout << "没有可用的好友。" << std::endl;
-    return;
-  }
-
-  for (size_t i = 0; i < client_->friendList_.size(); ++i)
-    std::cout << (i + 1) << ". " << client_->friendList_[i].nickname_ << std::endl;
-
-  std::cout << "请输入要选择的好友编号 (1-" << client_->friendList_.size() << "): ";
+  client_->friendService_.getFriends();
+  flushFriends();
   int choice;
 
   choice = getValidInt("");
@@ -339,7 +361,6 @@ void Controller::showFriends()
   }
 
   client_->currentFriend_.setCurrentFriend(client_->friendList_[choice - 1]);
-
   state_ = State::CHAT_FRIEND;
 }
 
@@ -385,4 +406,91 @@ void Controller::showCreateGroup()
   std::cin >> description;
   client_->groupService_.createGroup(name, description);
   state_ = State::LOGGED_IN;
+}
+
+void Controller::showAddGroup()
+{
+  std::cout << "要加入的群id:";
+  std::string group_id;
+  std::cin >> group_id;
+  client_->groupService_.addGroup(group_id);
+  state_ = State::LOGGED_IN;
+}
+
+void Controller::showHandleGroupRequest()
+{
+  system("clear");
+  while (1)
+  {
+    std::lock_guard<std::mutex> lock(client_->friendService_.friendRequests_mutex_);
+    flushGroupRequests();
+    int i;
+    std::cin >> i;
+    if (i == 0)
+    {
+      state_ = State::LOGGED_IN;
+      return;
+    }
+  }
+}
+
+void Controller::flushFriends()
+{
+  system("clear");
+  if (client_->friendList_.empty())
+  {
+    std::cout << "没有可用的好友。" << std::endl;
+    return;
+  }
+
+  for (size_t i = 0; i < client_->friendList_.size(); ++i)
+  {
+    std::cout << (i + 1) << ". " << client_->friendList_[i].nickname_ << "  ";
+    if (client_->friendList_[i].isOnline_)
+      std::cout << "在线" << std::endl;
+    else
+      std::cout << "离线" << std::endl;
+  }
+  std::cout << "请输入要选择的好友编号 (1-" << client_->friendList_.size() << "): ";
+}
+
+void Controller::showGroups()
+{
+  client_->groupService_.getGroups();
+  flushGroups();
+  int choice;
+
+  choice = getValidInt("");
+
+  if (choice == 0)
+  {
+    state_ = State::LOGGED_IN;
+    return;
+  }
+
+  if (choice < 1 || choice > static_cast<int>(client_->groupList_.size()))
+  {
+    std::cout << "无效的选择，请输入 1 到 "
+              << client_->groupList_.size() << " 之间的数字。" << std::endl;
+    return;
+  }
+
+  client_->currentFriend_.setCurrentFriend(client_->friendList_[choice - 1]);
+  state_ = State::CHAT_GROUP;
+}
+
+void Controller::flushGroups()
+{
+  // system("clear");
+  if (client_->groupList_.empty())
+  {
+    std::cout << "没有可用的。" << std::endl;
+    return;
+  }
+
+  for (size_t i = 0; i < client_->groupList_.size(); ++i)
+  {
+    std::cout << (i + 1) << ". " << client_->groupList_[i].group_name << "  ";
+  }
+  std::cout << "请输入要选择的群聊编号 (1-" << client_->groupList_.size() << "): ";
 }

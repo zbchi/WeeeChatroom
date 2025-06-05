@@ -11,7 +11,8 @@ public:
 private:
     int verifyAccount(std::string &email, std::string &password, const TcpConnectionPtr &conn);
 
-    void sendFriendRequestsOffLine(std::string &to_user_id, const TcpConnectionPtr &conn);
+    void sendFriendRequestOffLine(std::string &to_user_id, const TcpConnectionPtr &conn);
     void sendMessageOffLine(std::string &to_user_id, const TcpConnectionPtr &conn);
+    void sendGroupRequestOffLine(std::string &to_user_id, const TcpConnectionPtr &conn);
     Service *service_;
 };

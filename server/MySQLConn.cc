@@ -105,7 +105,7 @@ MYSQL *MySQLConn::getConnection()
     return conn_;
 }
 
-std::vector<std::map<std::string, std::string>> MySQLConn::queryResult(const std::string &sql)
+Result MySQLConn::queryResult(const std::string &sql)
 {
     std::vector<std::map<std::string, std::string>> resultVec;
     if (mysql_query(conn_, sql.c_str()) != 0)
@@ -157,39 +157,57 @@ std::string MySQLConn::getIdByEmail(std::string &email)
 
 bool MySQLConn::insert(const std::string &table, const std::map<std::string, std::string> &data)
 {
-    std::stringstream columns, values;
-    for (auto it = data.begin(); it != data.end(); it++)
+    std::vector<std::string> columns, values;
+    for (const auto &pair : data)
     {
-        columns << it->first;
-        values << "'" << escapeStr(it->second) << "'";
-        if (std::next(it) != data.end())
-        {
-            columns << ",";
-            values << ",";
-        }
+        columns.push_back(pair.first);
+        values.push_back("'" + escapeStr(pair.second) + "'");
     }
     std::stringstream sql;
-    sql << "insert into " << table << " (" << columns.str() << ") values (" << values.str() << ")";
+    sql << "insert into " << table << " (" << join(columns, ",") << ") values (" << join(values, ",") << ")";
     return update(sql.str());
 }
 
 bool MySQLConn::del(const std::string &table, const std::map<std::string, std::string> &conditions)
 {
-    std::stringstream where;
-    for (auto it = conditions.begin(); it != conditions.end(); it++)
-    {
-        where << it->first << " = '" << escapeStr(it->second) << "'";
-        if (std::next(it) != conditions.end())
-            where << " and ";
-    }
+    std::vector<std::string> where;
+    for (const auto &pair : conditions)
+        where.push_back(pair.first + " = '" + escapeStr(pair.second) + "'");
+
     std::stringstream sql;
-    sql << "delete from " << table << " where " << where.str();
+    sql << "delete from " << table << " where " << join(where, " and ");
     return update(sql.str());
 }
 
-std::vector<std::map<std::string, std::string>> MySQLConn::
-    select(const std::string &table, const std::map<std::string, std::string> &conditions,
-           const std::map<std::string, std::vector<std::string>> &in_conditions)
+bool MySQLConn::update(const std::string &table, const std::map<std::string, std::string> &updates,
+                       const std::map<std::string, std::string> &conditions)
+{
+    std::vector<std::string> set;
+    for (auto it = updates.begin(); it != updates.end(); ++it)
+        set.push_back(it->first + " = '" + escapeStr(it->second) + "'");
+
+    std::stringstream sql;
+    sql << "update " << table << " set " << join(set, ", ");
+
+    if (!conditions.empty())
+    {
+        std::vector<std::string> where_clauses;
+        std::stringstream where;
+        for (auto it = conditions.begin(); it != conditions.end(); ++it)
+        {
+            where << it->first << " = '" << escapeStr(it->second) << "'";
+            if (std::next(it) != conditions.end())
+                where << " and ";
+        }
+        where_clauses.push_back(where.str());
+        sql << " where " << join(where_clauses, " and ");
+    }
+    return update(sql.str());
+}
+
+Result MySQLConn::select(const std::string &table,
+                         const std::map<std::string, std::string> &conditions,
+                         const std::map<std::string, std::vector<std::string>> &in_conditions)
 {
     std::stringstream sql;
     sql << "select * from " << table;
@@ -202,9 +220,7 @@ std::vector<std::map<std::string, std::string>> MySQLConn::
         {
             where << it->first << " = '" << escapeStr(it->second) << "'";
             if (std::next(it) != conditions.end())
-            {
                 where << " and ";
-            }
         }
         where_clauses.push_back(where.str());
     }
@@ -215,9 +231,7 @@ std::vector<std::map<std::string, std::string>> MySQLConn::
         {
             std::vector<std::string> escape;
             for (const auto &value : in_condition.second)
-            {
                 escape.push_back("'" + escapeStr(value) + "'");
-            }
             where_clauses.push_back(in_condition.first + " in (" + join(escape, ",") + ")");
         }
     }

@@ -17,6 +17,8 @@ enum MsgType
     ADD_FRIEND_ACK,
     CREATE_GROUP,
     ADD_GROUP,
+    ADD_GROUP_ACk,
+    GET_GROUPS,
 };
 
 struct User

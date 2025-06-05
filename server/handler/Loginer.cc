@@ -39,9 +39,11 @@ void Loginer::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     {
         // 用户上线自动发送待发送的好友请求
         std::string user_id = service_->getUserid(conn);
-        sendFriendRequestsOffLine(user_id, conn);
+        sendFriendRequestOffLine(user_id, conn);
         // 发送离线消息
         sendMessageOffLine(user_id, conn);
+        // 发送离线管理员加群申请
+        sendGroupRequestOffLine(user_id, conn);
     }
 }
 
@@ -71,11 +73,10 @@ int Loginer::verifyAccount(std::string &email, std::string &password, const TcpC
     }
 }
 
-void Loginer::sendFriendRequestsOffLine(std::string &to_user_id, const TcpConnectionPtr &conn)
+void Loginer::sendFriendRequestOffLine(std::string &to_user_id, const TcpConnectionPtr &conn)
 {
     auto mysql = MySQLConnPool::instance().getConnection();
     auto result = mysql->select("friend_requests", {{"to_user_id", to_user_id}});
-
     for (const auto &row : result)
     {
         json js = json::parse(row.at("json"));
@@ -89,12 +90,24 @@ void Loginer::sendMessageOffLine(std::string &to_user_id, const TcpConnectionPtr
 {
     auto mysql = MySQLConnPool::instance().getConnection();
     auto result = mysql->select("offlineMessages", {{"receiver_id", to_user_id}});
-
     for (const auto &row : result)
     {
         json js = json::parse(row.at("json"));
         sendJson(conn, js);
 
         mysql->del("offlineMessages", {{"id", row.at("id")}});
+    }
+}
+
+void Loginer::sendGroupRequestOffLine(std::string &to_user_id, const TcpConnectionPtr &conn)
+{
+    auto mysql = MySQLConnPool::instance().getConnection();
+    auto result = mysql->select("group_requests", {{"to_user_id", to_user_id}});
+    for (const auto &row : result)
+    {
+        json js = json::parse(row.at("json"));
+        sendJson(conn, js);
+
+        mysql->del("group_requests", {{"id", row.at("id")}});
     }
 }

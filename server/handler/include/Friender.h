@@ -1,5 +1,6 @@
 #pragma once
 #include "Handler.h"
+#include "MySQLConn.h"
 using namespace mylib;
 class Service;
 class FriendAddAcker;
@@ -15,8 +16,8 @@ public:
     void sendFriendList(std::string &user_id);
 
 private:
-    std::vector<std::map<std::string, std::string>> getFriendsId(std::string user_id);
-    std::vector<std::map<std::string, std::string>> getFriendsInfo(std::vector<std::map<std::string, std::string>> &friendsId);
+    Result getFriendsId(std::string &user_id);
+    Result getFriendsInfo(Result &friendsId);
     Service *service_;
 };
 

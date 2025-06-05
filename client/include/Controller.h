@@ -13,10 +13,13 @@ enum class State
     SHOW_FREINDS,
     SHOW_GROUPS,
     CHAT_FRIEND,
+    CHAT_GROUP,
     ADD_FRIEND,
     DEL_FRIEND,
     HANDLE_FRIEND_REQUEST,
     CREATE_GROUP,
+    ADD_GROUP,
+    HANDLE_GROUP_REQUEST,
 };
 extern State state_;
 class Client;
@@ -38,7 +41,10 @@ public:
     bool regResultSet_ = false;
 
     void flushLogs();
+    void flushFriends();
     void flushRequests();
+    void flushGroupRequests();
+    void flushGroups();
 
 private:
     void showRegister();
@@ -50,6 +56,9 @@ private:
     void showDelFriend();
     void showHandleFriendRequest();
     void showCreateGroup();
+    void showAddGroup();
+    void showHandleGroupRequest();
+    void showGroups();
     Client *client_;
     Neter *neter_;
 };

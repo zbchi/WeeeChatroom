@@ -61,6 +61,21 @@ CREATE TABLE IF NOT EXISTS friend_requests
     FOREIGN KEY (to_user_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS group_requests
+(
+    id INT AUTO_INCREMENT PRIMARY KEY, 
+    from_user_id INT NOT NULL,
+    to_user_id INT,
+    group_id INT NOT NULL,
+    json TEXT NOT NULL,
+    status ENUM('pending','accepted','rejected')DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (to_user_id) REFERENCES users(id),
+    FOREIGN KEY (from_user_id) REFERENCES users(id),
+    FOREIGN KEY (group_id) REFERENCES `groups`(id)
+);
+
 CREATE TABLE IF NOT EXISTS `groups`
 (
     id INT AUTO_INCREMENT PRIMARY KEY,
