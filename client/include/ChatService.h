@@ -12,11 +12,15 @@ class ChatService
 {
 public:
     ChatService(Neter *neter, Client *client) : neter_(neter), client_(client) {}
-    void sendMessage(std::string &sender_id, std::string &reciver_id, std::string &content);
+    void sendMessage(std::string &content);
     void handleMessage(const TcpConnectionPtr &conn, json &js);
+    void sendGroupMessage(std::string &content);
+    void handleGroupMessage(const TcpConnectionPtr &conn, json &js);
+
     std::string fixInvalidUtf8(const std::string &input);
 
     std::mutex chatLogs_mutex_;
+    std::mutex groupChatLogs_mutex_;
 
 private:
     Neter *neter_;
@@ -28,10 +32,6 @@ struct ChatMessage
     std::string sender_id;
     std::string content;
     std::string timestamp;
-
-    std::string sender_nickname;
-    bool is_group = false;
-
     std::string user_id_;
 };
 

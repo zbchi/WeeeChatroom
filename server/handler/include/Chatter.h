@@ -11,3 +11,13 @@ public:
 private:
     Service *service_;
 };
+
+class GroupChatter : public Handler
+{
+public:
+    GroupChatter(Service *service) : service_(service) {}
+    void handle(const TcpConnectionPtr &conn, json &js, Timestamp time);
+
+private:
+    Service *service_;
+};

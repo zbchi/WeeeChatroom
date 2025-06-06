@@ -3,7 +3,7 @@
 #include <Handler.h>
 #include <mutex>
 #include <condition_variable>
-
+#include "base.h"
 enum class State
 {
     INIT,
@@ -31,16 +31,11 @@ public:
     Controller(Neter *neter, Client *client) : client_(client), neter_(neter) {}
     void mainLoop();
 
-    int login_errno_ = -1;
-    int reg_errno_ = -1;
-    std::mutex login_mtx_;
-    std::mutex reg_mtx_;
-    std::condition_variable loginCv_;
-    std::condition_variable regCv_;
-    bool loginResultSet_ = false;
-    bool regResultSet_ = false;
+    Waiter loginWaiter_;
+    Waiter registerWaiter_;
 
     void flushLogs();
+    void flushGroupLogs();
     void flushFriends();
     void flushRequests();
     void flushGroupRequests();
@@ -52,6 +47,7 @@ private:
     void showMenue();
     void showFriends();
     void chatWithFriend();
+    void chatWithGroup();
     void showAddFriend();
     void showDelFriend();
     void showHandleFriendRequest();

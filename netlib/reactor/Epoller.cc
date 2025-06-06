@@ -49,7 +49,7 @@ Timestamp Epoller::poll(int timeoutMs, ChannelList *activeChannels)
     }
     else
     {
-        LOG_SYSERR("Epoller::poll()");
+        // LOG_SYSERR("Epoller::poll()");
     }
     return now;
 }

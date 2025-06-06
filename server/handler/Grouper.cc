@@ -26,8 +26,8 @@ void GroupAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     std::string group_id = js["group_id"];
     std::string from_user_id = js["from_user_id"];
     auto mysql = MySQLConnPool::instance().getConnection();
-    auto admins = mysql->select("group_members", {{"group_id", group_id},
-                                                  {"role", "admin"}});
+    auto admins = mysql->select("group_members", {{"group_id", group_id}},
+                                {{"role", {"admin", "owner"}}});
 
     auto name = mysql->select("`groups`", {{"id", group_id}});
     js["group_name"] = name[0].at("name");
@@ -55,6 +55,48 @@ void GroupAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
 
 void GroupAddAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
 {
+    // 处理加群请求的回应
+    std::string response = js["response"];
+    std::string from_user_id = js["from_user_id"];
+    std::string group_id = js["group_id"];
+    auto mysql = MySQLConnPool::instance().getConnection();
+    if (response == "accept")
+    {
+        mysql->insert("group_members", {{"group_id", group_id},
+                                        {"user_id", from_user_id}});
+    }
+    else if (response == "reject")
+    {
+        std::cout << "rejectrejectrejectrejectrejectrejectreject" << std::endl;
+    }
+    // 更新用户群列表
+    GroupLister list(service_);
+    list.sendGroupList(from_user_id);
+
+    // 广播给所有管理员
+    json notice;
+    notice["msgid"] = ADD_GROUP_REMOVE;
+    notice["from_user_id"] = from_user_id;
+    notice["group_id"] = group_id;
+
+    auto admins = mysql->select("group_members", {{"group_id", group_id}},
+                                {{"role", {"admin", "owner"}}});
+
+    for (const auto &admin : admins)
+    {
+        std::string admin_id = admin.at("user_id");
+        auto targetConn = service_->getConnectionPtr(admin_id);
+        if (targetConn != nullptr) // 在线直接转发
+        {
+            sendJson(targetConn, notice);
+        }
+        else // 离线存储加remove的json通知，待管理员上线后发
+        {
+            notice["to_user_id"] = admin_id;
+            mysql->insert("remove_jsons", {{"to_user_id", admin_id},
+                                           {"json", notice.dump()}});
+        }
+    }
 }
 
 void GroupLister::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
@@ -69,6 +111,8 @@ void GroupLister::sendGroupList(std::string &user_id)
     if (conn == nullptr)
         return;
     auto groupsId = getGroupsId(user_id);
+    if (groupsId.empty())
+        return;
     auto groups = getGroupsInfo(groupsId);
 
     json groupList;

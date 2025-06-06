@@ -39,22 +39,12 @@ void UserService::login(std::string &email, std::string &password)
 
 void UserService::handleRegAck(const TcpConnectionPtr &conn, json &js)
 {
-    {
-        std::unique_lock<std::mutex> lock(client_->controller_.reg_mtx_);
-        client_->controller_.reg_errno_ = js["errno"];
-        client_->controller_.regResultSet_ = true;
-    }
-    client_->controller_.regCv_.notify_one();
+    client_->controller_.registerWaiter_.notify(js["errno"]);
 }
 void UserService::handleLoginAck(const TcpConnectionPtr &conn, json &js)
 {
     client_->user_email_ = js["email"];
     if (js["errno"] == 0)
         client_->user_id_ = js["user_id"];
-    {
-        std::unique_lock<std::mutex> lock(client_->controller_.login_mtx_);
-        client_->controller_.login_errno_ = js["errno"];
-        client_->controller_.loginResultSet_ = true;
-    }
-    client_->controller_.loginCv_.notify_one();
+    client_->controller_.loginWaiter_.notify(js["errno"]);
 }

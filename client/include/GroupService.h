@@ -37,8 +37,10 @@ public:
     void handleGroupList(const TcpConnectionPtr &conn, json &js);
     void responseGroupRequest(GroupAddRequest &groupAddRequest, char *response);
     std::mutex groupAddRequests_mutex_;
+    void handleGroupRequestRemove(const TcpConnectionPtr &conn, json &js);
 
 private:
+    void removeGroupAddRequest(std::string &group_id, std::string &from_user_id);
     Neter *neter_;
     Client *client_;
 };

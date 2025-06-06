@@ -12,13 +12,15 @@ enum MsgType
     LOGIN_MSG_ACK,
     GET_FRIENDS,
     CHAT_MSG,
+    CHAT_GROUP_MSG,
     ADD_FRIEND,
     DEL_FRIEND,
     ADD_FRIEND_ACK,
     CREATE_GROUP,
     ADD_GROUP,
-    ADD_GROUP_ACk,
+    ADD_GROUP_ACK,
     GET_GROUPS,
+    ADD_GROUP_REMOVE,
 };
 
 struct User

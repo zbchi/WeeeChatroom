@@ -20,6 +20,8 @@ void FriendLister::sendFriendList(std::string &user_id)
     if (conn == nullptr)
         return;
     auto friendsId = getFriendsId(user_id);
+    if (friendsId.empty())
+        return;
     auto friends = getFriendsInfo(friendsId);
 
     json friendList;

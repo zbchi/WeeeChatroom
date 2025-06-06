@@ -26,11 +26,45 @@ void Chatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
                                           {"content", content},
                                           {"json", js.dump()}});
     }
-    //存储消息
+    // 存储消息
     mysql->insert("messages", {{"sender_id", user_id},
                                {"receiver_id", receiver_id},
                                {"content", content}});
 
-    //更新未读消息数
-    
+    // 更新未读消息数
+}
+
+void GroupChatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    std::string sender_id = js["sender_id"];
+    std::string group_id = js["group_id"];
+    std::string content = js["content"];
+
+    auto mysql = MySQLConnPool::instance().getConnection();
+    auto members = mysql->select("group_members", {{"group_id", group_id}});
+    // 遍历群成员id
+    for (const auto &member : members)
+    {
+        std::string member_id = member.at("user_id");
+        if (member_id != sender_id)
+        {
+            auto targetConn = service_->getConnectionPtr(member_id);
+            if (targetConn != nullptr) // 在线直接转发
+            {
+                sendJson(targetConn, js);
+            }
+            else // 离线存储离线消息
+            {
+                mysql->insert("offlineMessages", {{"sender_id", sender_id},
+                                                  {"receiver_id", member_id},
+                                                  {"content", content},
+                                                  {"json", js.dump()}});
+            }
+        }
+        mysql->insert("group_messages", {{"group_id", group_id},
+                                         {"sender_id", sender_id},
+                                         {"content", content}});
+    }
+
+    // 更新未读消息数
 }

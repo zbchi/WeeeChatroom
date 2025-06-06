@@ -60,6 +60,10 @@ void Controller::mainLoop()
       chatWithFriend();
       break;
 
+    case State::CHAT_GROUP:
+      chatWithGroup();
+      break;
+
     case State::ADD_FRIEND:
       showAddFriend();
       break;
@@ -115,14 +119,9 @@ void Controller::showRegister()
     client_->userService_.registerCode(email, password, nickname, code);
 
     // 阻塞等待服务端回复
-    {
-      std::unique_lock<std::mutex> lock(reg_mtx_);
-      regCv_.wait(lock, [this]
-                  { return regResultSet_; });
-      regResultSet_ = false;
-    }
-
-    if (reg_errno_ == 0)
+    registerWaiter_.wait();
+    int reg_errno = registerWaiter_.result;
+    if (reg_errno == 0)
     {
       std::cout << "注册成功!" << std::endl;
       state_ = State::LOGINING;
@@ -130,8 +129,8 @@ void Controller::showRegister()
     }
     else
     {
-      std::cout << "错误：" << reg_errno_ << std::endl;
-      if (reg_errno_ != 1)
+      std::cout << "错误：" << reg_errno << std::endl;
+      if (reg_errno != 1)
       {
         state_ = State::REGISTERING;
         break;
@@ -156,15 +155,9 @@ void Controller::showLogin()
     client_->userService_.login(email, password);
 
     // 阻塞等待服务端回复
-    {
-      std::unique_lock<std::mutex> lock(login_mtx_);
-
-      loginCv_.wait(lock, [this]
-                    { return loginResultSet_; });
-      loginResultSet_ = false;
-    }
-
-    if (login_errno_ == 0)
+    loginWaiter_.wait();
+    int login_errno = loginWaiter_.result;
+    if (login_errno == 0)
     {
       std::cout << "登录成功，用户 : " << client_->user_email_ << std::endl;
       state_ = State::LOGGED_IN;
@@ -172,8 +165,8 @@ void Controller::showLogin()
     }
     else
     {
-      std::cout << "错误:" << login_errno_ << std::endl;
-      if (login_errno_ != 1)
+      std::cout << "错误:" << login_errno << std::endl;
+      if (login_errno != 1)
       {
         state_ = State::LOGINING;
         break;
@@ -237,7 +230,7 @@ void Controller::chatWithFriend()
       state_ = State::LOGGED_IN;
       break;
     }
-    client_->chatService_.sendMessage(client_->user_id_, client_->currentFriend_.id_, content);
+    client_->chatService_.sendMessage(content);
     flushLogs();
   }
 }
@@ -422,7 +415,7 @@ void Controller::showHandleGroupRequest()
   system("clear");
   while (1)
   {
-    std::lock_guard<std::mutex> lock(client_->friendService_.friendRequests_mutex_);
+    std::lock_guard<std::mutex> lock(client_->groupService_.groupAddRequests_mutex_);
     flushGroupRequests();
     int i;
     std::cin >> i;
@@ -430,6 +423,22 @@ void Controller::showHandleGroupRequest()
     {
       state_ = State::LOGGED_IN;
       return;
+    }
+
+    std::cout << "1.接受  2.拒绝" << std::endl;
+    while (1)
+    {
+      int j;
+      std::cin >> j;
+      if (j == 0)
+      {
+        state_ = State::LOGGED_IN;
+        break;
+      }
+      if (j == 1)
+        client_->groupService_.responseGroupRequest(client_->groupAddRequests_[i - 1], "accept");
+      else if (j == 2)
+        client_->groupService_.responseGroupRequest(client_->groupAddRequests_[i - 1], "reject");
     }
   }
 }
@@ -451,7 +460,7 @@ void Controller::flushFriends()
     else
       std::cout << "离线" << std::endl;
   }
-  std::cout << "请输入要选择的好友编号 (1-" << client_->friendList_.size() << "): ";
+  std::cout << "请输入要选择的好友编号 (1-" << client_->friendList_.size() << "): " << std::endl;
 }
 
 void Controller::showGroups()
@@ -475,22 +484,62 @@ void Controller::showGroups()
     return;
   }
 
-  client_->currentFriend_.setCurrentFriend(client_->friendList_[choice - 1]);
+  client_->currentGroup_.setCurrentGroup(client_->groupList_[choice - 1]);
   state_ = State::CHAT_GROUP;
 }
 
 void Controller::flushGroups()
 {
-  // system("clear");
+  system("clear");
   if (client_->groupList_.empty())
   {
     std::cout << "没有可用的。" << std::endl;
     return;
   }
-
   for (size_t i = 0; i < client_->groupList_.size(); ++i)
   {
-    std::cout << (i + 1) << ". " << client_->groupList_[i].group_name << "  ";
+    std::cout << (i + 1) << ". " << client_->groupList_[i].group_name << std::endl;
   }
-  std::cout << "请输入要选择的群聊编号 (1-" << client_->groupList_.size() << "): ";
+  std::cout << "请输入要选择的群聊编号 (1-" << client_->groupList_.size() << "): " << std::endl;
+}
+
+void Controller::chatWithGroup()
+{
+  system("clear");
+  flushGroupLogs();
+  std::string content;
+  while (1)
+  {
+    std::getline(std::cin, content);
+    if (content.empty())
+      continue;
+    ;
+    if (content == "/exit")
+    {
+      state_ = State::LOGGED_IN;
+      break;
+    }
+    client_->chatService_.sendGroupMessage(content);
+    flushGroupLogs();
+  }
+}
+
+void Controller::flushGroupLogs()
+{
+  system("clear");
+  {
+    std::lock_guard<std::mutex> lock(client_->chatService_.groupChatLogs_mutex_);
+    for (auto &chatlog : client_->groupChatLogs_[client_->currentGroup_.group_id_])
+    {
+
+      std::cout << "[" << chatlog.timestamp << "]";
+
+      if (chatlog.sender_id == client_->user_id_)
+        std::cout << "[我]:";
+      else
+        std::cout << "[" << chatlog.sender_id << "]:";
+
+      std::cout << chatlog.content << std::endl;
+    }
+  }
 }

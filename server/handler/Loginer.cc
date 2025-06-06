@@ -44,6 +44,8 @@ void Loginer::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
         sendMessageOffLine(user_id, conn);
         // 发送离线管理员加群申请
         sendGroupRequestOffLine(user_id, conn);
+        // 发送离线移除group add request
+        // sendGroupRequestRemoveOffline(user_id,conn);
     }
 }
 

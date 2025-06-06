@@ -76,6 +76,14 @@ CREATE TABLE IF NOT EXISTS group_requests
     FOREIGN KEY (group_id) REFERENCES `groups`(id)
 );
 
+CREATE TABLE IF NOT EXISTS remove_jsons
+(
+    id INT AUTO_INCREMENT PRIMARY KEY, 
+    to_user_id INT,
+    json TEXT NOT NULL,
+    FOREIGN KEY (to_user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS `groups`
 (
     id INT AUTO_INCREMENT PRIMARY KEY,

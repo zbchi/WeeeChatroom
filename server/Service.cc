@@ -29,6 +29,8 @@ Service::Service() : threadPool_(1),
     handlers_[CREATE_GROUP] = std::make_shared<GroupCreater>(this);
     handlers_[ADD_GROUP] = std::make_shared<GroupAdder>(this);
     handlers_[GET_GROUPS] = std::make_shared<GroupLister>(this);
+    handlers_[ADD_GROUP_ACK] = std::make_shared<GroupAddAcker>(this);
+    handlers_[CHAT_GROUP_MSG] = std::make_shared<GroupChatter>(this);
 
     server_.setConnectionCallback([this](const TcpConnectionPtr &conn)
                                   { this->onConnection(conn); });

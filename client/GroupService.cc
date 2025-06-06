@@ -54,6 +54,8 @@ void GroupService::responseGroupRequest(GroupAddRequest &groupAddRequest, char *
     acceptInfo["group_id"] = groupAddRequest.group_id;
     acceptInfo["from_user_id"] = groupAddRequest.from_user_id;
     acceptInfo["response"] = std::string(response);
+    neter_->sendJson(acceptInfo);
+    removeGroupAddRequest(groupAddRequest.group_id, groupAddRequest.from_user_id);
 }
 
 void GroupService::handleGroupList(const TcpConnectionPtr &conn, json &js)
@@ -68,4 +70,26 @@ void GroupService::handleGroupList(const TcpConnectionPtr &conn, json &js)
     }
     if (state_ == State::SHOW_GROUPS)
         client_->controller_.flushGroups();
+}
+
+void GroupService::removeGroupAddRequest(std::string &group_id, std::string &from_user_id)
+{
+    for (auto it = client_->groupAddRequests_.begin(); it != client_->groupAddRequests_.end();)
+    {
+        if (it->group_id == group_id &&
+            it->from_user_id == from_user_id)
+        {
+            it = client_->groupAddRequests_.erase(it);
+        }
+        else
+            it++;
+    }
+}
+
+void GroupService::handleGroupRequestRemove(const TcpConnectionPtr &conn, json &js)
+{
+    std::string from_user_id = js["from_user_id"];
+    std::string group_id = js["group_id"];
+    std::lock_guard<std::mutex> lock(groupAddRequests_mutex_);
+    removeGroupAddRequest(group_id, from_user_id);
 }
