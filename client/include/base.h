@@ -21,6 +21,7 @@ enum MsgType
     ADD_GROUP_ACK,
     GET_GROUPS,
     ADD_GROUP_REMOVE,
+    GET_GROUPINFO
 };
 
 class Waiter

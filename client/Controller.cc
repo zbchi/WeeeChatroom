@@ -90,6 +90,10 @@ void Controller::mainLoop()
 
     case State::SHOW_GROUPS:
       showGroups();
+      break;
+    case State::SHOW_MEMBERS:
+      showGroupMembers();
+      break;
 
     default:
       break;
@@ -485,6 +489,8 @@ void Controller::showGroups()
   }
 
   client_->currentGroup_.setCurrentGroup(client_->groupList_[choice - 1]);
+  client_->groupService_.getGroupInfo();
+  GroupInfoWaiter_.wait();
   state_ = State::CHAT_GROUP;
 }
 
@@ -537,9 +543,21 @@ void Controller::flushGroupLogs()
       if (chatlog.sender_id == client_->user_id_)
         std::cout << "[我]:";
       else
-        std::cout << "[" << chatlog.sender_id << "]:";
+        std::cout << "[" << client_->currentGroup_.group_members[chatlog.sender_id].nickname_ << "]:";
 
       std::cout << chatlog.content << std::endl;
     }
   }
+}
+
+void Controller::showGroupMembers()
+{
+  int i = 0;
+  for (const auto &pair : client_->currentGroup_.group_members)
+  {
+    std::cout << i + 1 << ".名字:" << pair.second.nickname_
+              << "  职位:" << pair.second.role_ << "  ID:" << pair.second.id_ << std::endl;
+    i++;
+  }
+  int choice = getValidInt("");
 }

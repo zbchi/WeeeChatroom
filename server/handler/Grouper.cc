@@ -143,3 +143,26 @@ Result GroupLister::getGroupsInfo(Result &groupsId)
     }
     return mysql->select("`groups`", {}, {{"id", id_list}});
 }
+
+void GroupInfoSender::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    std::string group_id = js["group_id"];
+    auto mysql = MySQLConnPool::instance().getConnection();
+    auto membersId = mysql->select("group_members", {{"group_id", group_id}});
+
+    json membersInfo;
+    membersInfo["msgid"] = GET_GROUPINFO;
+
+    for (const auto &memberId : membersId)
+    {
+        json m;
+        std::string user_id = memberId.at("user_id");
+        m["user_id"] = user_id;
+        m["role"] = memberId.at("role");
+        auto member_info = mysql->select("users", {{"id", user_id}});
+        m["nickname"] = member_info[0].at("nickname");
+
+        membersInfo["members"].push_back(m);
+    }
+    sendJson(conn, membersInfo);
+}

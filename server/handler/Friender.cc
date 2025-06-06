@@ -35,6 +35,7 @@ void FriendLister::sendFriendList(std::string &user_id)
         else
             u["isOnline"] = true;
         u["nickname"] = user.at("nickname");
+
         friendList["friends"].push_back(u);
     }
     sendJson(conn, friendList);

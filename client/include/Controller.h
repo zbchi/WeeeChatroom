@@ -20,6 +20,7 @@ enum class State
     CREATE_GROUP,
     ADD_GROUP,
     HANDLE_GROUP_REQUEST,
+    SHOW_MEMBERS,
 };
 extern State state_;
 class Client;
@@ -33,6 +34,7 @@ public:
 
     Waiter loginWaiter_;
     Waiter registerWaiter_;
+    Waiter GroupInfoWaiter_;
 
     void flushLogs();
     void flushGroupLogs();
@@ -55,6 +57,7 @@ private:
     void showAddGroup();
     void showHandleGroupRequest();
     void showGroups();
+    void showGroupMembers();
     Client *client_;
     Neter *neter_;
 };

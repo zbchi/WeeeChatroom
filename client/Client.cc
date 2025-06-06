@@ -32,6 +32,8 @@ Client::Client() : neter_(this), controller_(&neter_, this),
     { this->groupService_.handleGroupRequestRemove(conn, js); };
     msgHandlerMap_[CHAT_GROUP_MSG] = [this](const TcpConnectionPtr &conn, json &js)
     { this->chatService_.handleGroupMessage(conn, js); };
+    msgHandlerMap_[GET_GROUPINFO] = [this](const TcpConnectionPtr &conn, json &js)
+    { this->groupService_.handleGroupInfo(conn, js); };
 }
 
 void Client::start()

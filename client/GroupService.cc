@@ -93,3 +93,24 @@ void GroupService::handleGroupRequestRemove(const TcpConnectionPtr &conn, json &
     std::lock_guard<std::mutex> lock(groupAddRequests_mutex_);
     removeGroupAddRequest(group_id, from_user_id);
 }
+
+void GroupService::getGroupInfo()
+{
+    json getInfo;
+    getInfo["msgid"] = GET_GROUPINFO;
+    getInfo["group_id"] = client_->currentGroup_.group_id_;
+    neter_->sendJson(getInfo);
+}
+
+void GroupService::handleGroupInfo(const TcpConnectionPtr &conn, json &js)
+{
+    GroupMember m;
+    for (const auto &amember : js["members"])
+    {
+        m.id_ = amember["user_id"];
+        m.nickname_ = amember["nickname"];
+        m.role_ = amember["role"];
+        client_->currentGroup_.group_members[m.id_] = m;
+    }
+    client_->controller_.GroupInfoWaiter_.notify(1);
+}
