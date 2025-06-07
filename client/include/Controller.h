@@ -21,6 +21,7 @@ enum class State
     ADD_GROUP,
     HANDLE_GROUP_REQUEST,
     SHOW_MEMBERS,
+    EXIT_GROUP,
 };
 extern State state_;
 class Client;
@@ -58,6 +59,7 @@ private:
     void showHandleGroupRequest();
     void showGroups();
     void showGroupMembers();
+    void showExitGroup();
     Client *client_;
     Neter *neter_;
 };

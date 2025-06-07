@@ -69,6 +69,7 @@ void GroupAddAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp tim
     {
         std::cout << "rejectrejectrejectrejectrejectrejectreject" << std::endl;
     }
+
     // 更新用户群列表
     GroupLister list(service_);
     list.sendGroupList(from_user_id);
@@ -111,8 +112,7 @@ void GroupLister::sendGroupList(std::string &user_id)
     if (conn == nullptr)
         return;
     auto groupsId = getGroupsId(user_id);
-    if (groupsId.empty())
-        return;
+
     auto groups = getGroupsInfo(groupsId);
 
     json groupList;
@@ -135,6 +135,8 @@ Result GroupLister::getGroupsId(std::string &user_id)
 
 Result GroupLister::getGroupsInfo(Result &groupsId)
 {
+    if (groupsId.empty())
+        return {};
     auto mysql = MySQLConnPool::instance().getConnection();
     std::vector<std::string> id_list;
     for (const auto &group_map : groupsId)
@@ -165,4 +167,50 @@ void GroupInfoSender::handle(const TcpConnectionPtr &conn, json &js, Timestamp t
         membersInfo["members"].push_back(m);
     }
     sendJson(conn, membersInfo);
+}
+
+void GroupExiter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    std::string group_id = js["group_id"];
+    std::string user_id = js["user_id"];
+    auto mysql = MySQLConnPool::instance().getConnection();
+    auto result = mysql->select("group_members", {{"group_id", group_id},
+                                                  {"user_id", user_id}});
+
+    std::string role = result[0].at("role");
+    if (role == "member" || role == "admin")
+    {
+        mysql->del("group_members", {{"group_id", group_id},
+                                     {"user_id", user_id}});
+    }
+    else if (role == "owner")
+    { // 如果解散，更新群成员的群列表
+        auto member_ids = mysql->select("group_members", {{"group_id", group_id}});
+        GroupLister list(service_);
+        for (auto &member_id : member_ids)
+            list.sendGroupList(member_id.at("user_id"));
+        // 删库跑路
+        mysql->del("group_members", {{"group_id", group_id}});
+        mysql->del("group_messages", {{"group_id", group_id}});
+        mysql->del("`groups`", {{"id", group_id}});
+    }
+}
+
+void MemberKicker::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    std::string kick_user_id = js["kick_user_id"];
+    std::string user_id = js["user_id"];
+    std::string group_id = js["group_id"];
+    auto mysql = MySQLConnPool::instance().getConnection();
+    auto result = mysql->select("group_members", {{"user_id", user_id},
+                                                  {"group_id", group_id}});
+    std::string role = result[0].at("role");
+    if (role != "member")
+    {
+        mysql->del("group_members", {{"group_id", group_id},
+                                     {"user_id", kick_user_id}});
+        // 更新被ti的群列表
+        GroupLister list(service_);
+        list.sendGroupList(kick_user_id);
+    }
 }

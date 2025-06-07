@@ -95,6 +95,10 @@ void Controller::mainLoop()
       showGroupMembers();
       break;
 
+    case State::EXIT_GROUP:
+      showExitGroup();
+      break;
+
     default:
       break;
     }
@@ -491,7 +495,7 @@ void Controller::showGroups()
   client_->currentGroup_.setCurrentGroup(client_->groupList_[choice - 1]);
   client_->groupService_.getGroupInfo();
   GroupInfoWaiter_.wait();
-  state_ = State::CHAT_GROUP;
+  state_ = State::SHOW_MEMBERS;
 }
 
 void Controller::flushGroups()
@@ -552,12 +556,37 @@ void Controller::flushGroupLogs()
 
 void Controller::showGroupMembers()
 {
+  std::vector<std::string> member_ids;
   int i = 0;
-  for (const auto &pair : client_->currentGroup_.group_members)
+  for (auto &pair : client_->currentGroup_.group_members)
   {
     std::cout << i + 1 << ".名字:" << pair.second.nickname_
               << "  职位:" << pair.second.role_ << "  ID:" << pair.second.id_ << std::endl;
     i++;
+    member_ids.push_back(pair.second.id_);
   }
   int choice = getValidInt("");
+  if (choice < 1 || choice > static_cast<int>(member_ids.size()))
+  {
+    std::cout << "无效的编号！" << std::endl;
+    return;
+  }
+
+  if (client_->currentGroup_.group_members[client_->user_id_].role_ != "member")
+  {
+    client_->groupService_.kickMember(member_ids[choice - 1]);
+  }
+  state_ = State::SHOW_GROUPS;
+}
+
+void Controller::showExitGroup()
+{
+  if (client_->currentGroup_.group_members[client_->user_id_].role_ == "owner")
+    std::cout << "你是群主，将要解散，确认马" << std::endl;
+  else
+    std::cout << "将要退出群聊，确认马" << std::endl;
+
+  int choice = getValidInt("");
+  if (choice == 1)
+    client_->groupService_.exitGroup();
 }

@@ -114,3 +114,22 @@ void GroupService::handleGroupInfo(const TcpConnectionPtr &conn, json &js)
     }
     client_->controller_.GroupInfoWaiter_.notify(1);
 }
+
+void GroupService::exitGroup()
+{
+    json exitInfo;
+    exitInfo["msgid"] = EXIT_GROUP;
+    exitInfo["user_id"] = client_->user_id_;
+    exitInfo["group_id"] = client_->currentGroup_.group_id_;
+    neter_->sendJson(exitInfo);
+}
+
+void GroupService::kickMember(std::string &user_id)
+{
+    json kickInfo;
+    kickInfo["msgid"] = KICK_MEMBER;
+    kickInfo["kick_user_id"] = user_id;
+    kickInfo["user_id"] = client_->user_id_;
+    kickInfo["group_id"] = client_->currentGroup_.group_id_;
+    neter_->sendJson(kickInfo);
+}

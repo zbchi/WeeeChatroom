@@ -42,6 +42,8 @@ public:
     std::mutex groupAddRequests_mutex_;
     void handleGroupRequestRemove(const TcpConnectionPtr &conn, json &js);
     void handleGroupInfo(const TcpConnectionPtr &conn, json &js);
+    void exitGroup();
+    void kickMember(std::string &user_id);
 
 private:
     void removeGroupAddRequest(std::string &group_id, std::string &from_user_id);

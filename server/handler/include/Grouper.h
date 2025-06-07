@@ -56,3 +56,23 @@ public:
 private:
     Service *service_;
 };
+
+class GroupExiter : public Handler
+{
+public:
+    GroupExiter(Service *service) : service_(service) {}
+    void handle(const TcpConnectionPtr &conn, json &js, Timestamp time);
+
+private:
+    Service *service_;
+};
+
+class MemberKicker : public Handler
+{
+public:
+    MemberKicker(Service *service) : service_(service) {}
+    void handle(const TcpConnectionPtr &conn, json &js, Timestamp time);
+
+private:
+    Service *service_;
+};

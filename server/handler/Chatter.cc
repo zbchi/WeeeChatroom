@@ -23,7 +23,6 @@ void Chatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     { // 离线存储离线消息
         mysql->insert("offlineMessages", {{"sender_id", user_id},
                                           {"receiver_id", receiver_id},
-                                          {"content", content},
                                           {"json", js.dump()}});
     }
     // 存储消息
