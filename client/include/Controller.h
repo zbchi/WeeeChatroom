@@ -22,6 +22,7 @@ enum class State
     HANDLE_GROUP_REQUEST,
     SHOW_MEMBERS,
     EXIT_GROUP,
+    DESTORY_GROUP,
 };
 extern State state_;
 class Client;
@@ -45,9 +46,9 @@ public:
     void flushGroups();
 
 private:
-    void showRegister();
+    void showMainMenu();
     void showLogin();
-    void showMenue();
+    void showRegister();
     void showFriends();
     void chatWithFriend();
     void chatWithGroup();
@@ -60,6 +61,11 @@ private:
     void showGroups();
     void showGroupMembers();
     void showExitGroup();
+    void showDestroyGroup();
+
+    void showGroupMenu();
+    void showFriendMenu();
+    void showSystemMenu();
     Client *client_;
     Neter *neter_;
 };
