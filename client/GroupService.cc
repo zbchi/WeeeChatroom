@@ -133,3 +133,23 @@ void GroupService::kickMember(std::string &user_id)
     kickInfo["group_id"] = client_->currentGroup_.group_id_;
     neter_->sendJson(kickInfo);
 }
+
+void GroupService::addAdmin(std::string &to_user_id)
+{
+    json addInfo;
+    addInfo["msgid"] = ADD_ADMIN;
+    addInfo["to_user_id"] = to_user_id;
+    addInfo["group_id"] = client_->currentGroup_.group_id_;
+    addInfo["user_id"] = client_->user_id_;
+    neter_->sendJson(addInfo);
+}
+
+void GroupService::removeAdmin(std::string &to_user_id)
+{
+    json rmInfo;
+    rmInfo["msgid"] = REMOVE_ADMIN;
+    rmInfo["to_user_id"] = to_user_id;
+    rmInfo["group_id"] = client_->currentGroup_.group_id_;
+    rmInfo["user_id"] = client_->user_id_;
+    neter_->sendJson(rmInfo);
+}

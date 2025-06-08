@@ -34,6 +34,8 @@ Service::Service() : threadPool_(1),
     handlers_[GET_GROUPINFO] = std::make_shared<GroupInfoSender>(this);
     handlers_[EXIT_GROUP] = std::make_shared<GroupExiter>(this);
     handlers_[KICK_MEMBER] = std::make_shared<MemberKicker>(this);
+    handlers_[ADD_ADMIN] = std::make_shared<AdminAdder>(this);
+    handlers_[REMOVE_ADMIN] = std::make_shared<AdminRemover>(this);
 
     server_.setConnectionCallback([this](const TcpConnectionPtr &conn)
                                   { this->onConnection(conn); });

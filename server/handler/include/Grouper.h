@@ -76,3 +76,23 @@ public:
 private:
     Service *service_;
 };
+
+class AdminAdder : public Handler
+{
+public:
+    AdminAdder(Service *service) : service_(service) {}
+    void handle(const TcpConnectionPtr &conn, json &js, Timestamp time);
+
+private:
+    Service *service_;
+};
+
+class AdminRemover : public Handler
+{
+public:
+    AdminRemover(Service *service) : service_(service) {}
+    void handle(const TcpConnectionPtr &conn, json &js, Timestamp time);
+
+private:
+    Service *service_;
+};

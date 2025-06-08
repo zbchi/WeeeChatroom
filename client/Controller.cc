@@ -89,6 +89,7 @@ void Controller::mainLoop()
         case State::DESTORY_GROUP:
             showDestroyGroup();
             break;
+
         default:
             break;
         }
@@ -549,6 +550,7 @@ void Controller::showGroupMembers()
 ╚════════════════════════════════╝
 )";
     std::vector<std::string> member_ids;
+    std::vector<std::string> roles;
     int i = 0;
     for (const auto &pair : client_->currentGroup_.group_members)
     {
@@ -556,7 +558,8 @@ void Controller::showGroupMembers()
                   << " | 🏷 角色: " << pair.second.role_
                   << " | 🆔: " << pair.second.id_ << "\n";
         member_ids.push_back(pair.second.id_);
-        i++;
+        roles.push_back(pair.second.role_);
+        ++i;
     }
 
     if (member_ids.empty())
@@ -566,7 +569,13 @@ void Controller::showGroupMembers()
         return;
     }
 
-    int choice = getValidInt("🔢 选择成员编号 (踢人，仅限管理员): ");
+    int choice = getValidInt("🔢 选择成员编号进行管理 (0 返回): ");
+    if (choice == 0)
+    {
+        state_ = State::SHOW_GROUPS;
+        return;
+    }
+
     if (choice < 1 || choice > static_cast<int>(member_ids.size()))
     {
         std::cout << "❌ 无效编号\n";
@@ -574,20 +583,59 @@ void Controller::showGroupMembers()
         return;
     }
 
-    // 当前用户是管理员及以上才能踢人
-    if (client_->currentGroup_.group_members[client_->user_id_].role_ != "member")
+    std::string target_id = member_ids[choice - 1];
+    std::string target_role = roles[choice - 1];
+    std::string my_role = client_->currentGroup_.group_members[client_->user_id_].role_;
+
+    // 群主 or 管理员才有权限管理他人
+    if (my_role == "member")
     {
-        std::cout << "⚠️ 确认踢出该成员？(1=是): ";
-        int confirm = getValidInt("");
-        if (confirm == 1)
-        {
-            client_->groupService_.kickMember(member_ids[choice - 1]);
-            std::cout << "✅ 已踢出成员。\n";
-        }
+        std::cout << "🚫 你没有管理权限。\n";
+        state_ = State::SHOW_GROUPS;
+        return;
     }
-    else
+
+    std::cout << R"(
+选择操作:
+1. ❌ 踢出成员
+2. ⬆️ 设为管理员
+3. ⬇️ 取消管理员
+0. 返回
+)";
+    int action = getValidInt("输入操作编号: ");
+    switch (action)
     {
-        std::cout << "🚫 没有权限踢人。\n";
+    case 0:
+        break;
+    case 1:
+        client_->groupService_.kickMember(target_id);
+        std::cout << "✅ 已踢出成员。\n";
+        break;
+    case 2:
+        if (target_role == "admin" || target_role == "owner")
+        {
+            std::cout << "⚠️ 对方已经是管理员或群主。\n";
+        }
+        else
+        {
+            client_->groupService_.addAdmin(target_id);
+            std::cout << "✅ 已设为管理员。\n";
+        }
+        break;
+    case 3:
+        if (target_role != "admin")
+        {
+            std::cout << "⚠️ 对方不是管理员，无法取消。\n";
+        }
+        else
+        {
+            client_->groupService_.removeAdmin(target_id);
+            std::cout << "✅ 已取消管理员。\n";
+        }
+        break;
+    default:
+        std::cout << "❌ 无效操作。\n";
+        break;
     }
 
     state_ = State::SHOW_GROUPS;

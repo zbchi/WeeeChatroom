@@ -24,6 +24,8 @@ enum MsgType
     GET_GROUPINFO,
     EXIT_GROUP,
     KICK_MEMBER,
+    ADD_ADMIN,
+    REMOVE_ADMIN,
 };
 
 struct User

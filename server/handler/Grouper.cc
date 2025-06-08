@@ -26,10 +26,12 @@ void GroupAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     std::string group_id = js["group_id"];
     std::string from_user_id = js["from_user_id"];
     auto mysql = MySQLConnPool::instance().getConnection();
+    auto name = mysql->select("`groups`", {{"id", group_id}});
+    if (name.empty())
+        return;
     auto admins = mysql->select("group_members", {{"group_id", group_id}},
                                 {{"role", {"admin", "owner"}}});
 
-    auto name = mysql->select("`groups`", {{"id", group_id}});
     js["group_name"] = name[0].at("name");
     auto user_name = mysql->select("users", {{"id", from_user_id}});
     js["nickname"] = user_name[0].at("nickname");
@@ -204,13 +206,56 @@ void MemberKicker::handle(const TcpConnectionPtr &conn, json &js, Timestamp time
     auto mysql = MySQLConnPool::instance().getConnection();
     auto result = mysql->select("group_members", {{"user_id", user_id},
                                                   {"group_id", group_id}});
+    auto kick_result = mysql->select("group_members", {{"user_id", kick_user_id},
+                                                       {"group_id", group_id}});
     std::string role = result[0].at("role");
-    if (role != "member")
+    std::string kick_role = kick_result[0].at("role");
+    if ((role != "member" && kick_role == "member") || role == "owner")
     {
         mysql->del("group_members", {{"group_id", group_id},
                                      {"user_id", kick_user_id}});
         // 更新被ti的群列表
         GroupLister list(service_);
         list.sendGroupList(kick_user_id);
+    }
+}
+
+void AdminAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    std::string to_user_id = js["to_user_id"];
+    std::string group_id = js["group_id"];
+    std::string user_id = js["user_id"];
+    auto mysql = MySQLConnPool::instance().getConnection();
+    auto result = mysql->select("`groups`", {{"creator_id", user_id},
+                                             {"id", group_id}}); // 判断是不是群主
+    auto role_result = mysql->select("group_members", {{"user_id", to_user_id},
+                                                       {"group_id", group_id}});
+    std::string role = role_result[0].at("role");
+
+    if (!result.empty() && to_user_id != user_id && role == "member")
+    {
+        mysql->update("group_members", {{"role", "admin"}},
+                      {{"group_id", group_id},
+                       {"user_id", to_user_id}});
+    }
+}
+
+void AdminRemover::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    std::string to_user_id = js["to_user_id"];
+    std::string group_id = js["group_id"];
+    std::string user_id = js["user_id"];
+    auto mysql = MySQLConnPool::instance().getConnection();
+    auto result = mysql->select("`groups`", {{"creator_id", user_id},
+                                             {"id", group_id}});
+
+    auto role_result = mysql->select("group_members", {{"user_id", to_user_id},
+                                                       {"group_id", group_id}});
+    std::string role = role_result[0].at("role");
+    if (!result.empty() && to_user_id != user_id && role == "admin")
+    {
+        mysql->update("group_members", {{"role", "member"}},
+                      {{"group_id", group_id},
+                       {"user_id", to_user_id}});
     }
 }

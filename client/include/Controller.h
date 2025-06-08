@@ -23,6 +23,7 @@ enum class State
     SHOW_MEMBERS,
     EXIT_GROUP,
     DESTORY_GROUP,
+    ADD_ADMIN,
 };
 extern State state_;
 class Client;

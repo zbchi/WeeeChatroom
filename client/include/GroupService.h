@@ -44,6 +44,8 @@ public:
     void handleGroupInfo(const TcpConnectionPtr &conn, json &js);
     void exitGroup();
     void kickMember(std::string &user_id);
+    void addAdmin(std::string &to_user_id);
+    void removeAdmin(std::string &to_user_id);
 
 private:
     void removeGroupAddRequest(std::string &group_id, std::string &from_user_id);
