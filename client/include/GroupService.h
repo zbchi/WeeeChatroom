@@ -47,6 +47,9 @@ public:
     void addAdmin(std::string &to_user_id);
     void removeAdmin(std::string &to_user_id);
 
+    Waiter groupListWaiter_;
+    Waiter groupInfoWaiter_;
+
 private:
     void removeGroupAddRequest(std::string &group_id, std::string &from_user_id);
     Neter *neter_;

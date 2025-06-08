@@ -2,7 +2,7 @@
 #include <nlohmann/json.hpp>
 #include "TcpConnection.h"
 using json = nlohmann::json;
-void sendJson(const mylib::TcpConnectionPtr &conn, json &js);
+void sendJson(const mylib::TcpConnectionPtr &conn, const json &js);
 json makeResponse(int msgid, int errno_, std::string errmsg = "");
 enum MsgType
 {
@@ -12,6 +12,7 @@ enum MsgType
     LOGIN_MSG_ACK,
     GET_FRIENDS,
     CHAT_MSG,
+    CHAT_MSG_ACK,
     CHAT_GROUP_MSG,
     ADD_FRIEND,
     DEL_FRIEND,

@@ -38,7 +38,7 @@ std::string ChatService::fixInvalidUtf8(const std::string &input)
     return result;
 }
 
-void ChatService::sendMessage(std::string &content)
+int ChatService::sendMessage(std::string &content)
 {
     json sendInfo;
     sendInfo["msgid"] = CHAT_MSG;
@@ -55,6 +55,9 @@ void ChatService::sendMessage(std::string &content)
         client_->chatLogs_[client_->currentFriend_.id_].push_back(msg);
     }
     neter_->sendJson(sendInfo);
+
+    chatMessageWaiter_.wait();
+    return chatMessageWaiter_.getResult();
 }
 
 void ChatService::handleMessage(const TcpConnectionPtr &conn, json &js)
@@ -107,4 +110,10 @@ void ChatService::handleGroupMessage(const TcpConnectionPtr &conn, json &js)
     }
     if (state_ == State::CHAT_GROUP && group_id == client_->currentGroup_.group_id_)
         client_->controller_.flushGroupLogs();
+}
+
+void ChatService::handleMessageAck(const TcpConnectionPtr &conn, json &js)
+{
+    int chat_errno = js["errno"];
+    chatMessageWaiter_.notify(chat_errno);
 }

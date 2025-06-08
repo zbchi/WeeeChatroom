@@ -10,6 +10,8 @@ void GroupService::getGroups()
     getInfo["msgid"] = GET_GROUPS;
     getInfo["user_id"] = client_->user_id_;
     neter_->sendJson(getInfo);
+
+    groupListWaiter_.wait();
 }
 
 void GroupService::createGroup(std::string &groupname, std::string &description)
@@ -68,8 +70,7 @@ void GroupService::handleGroupList(const TcpConnectionPtr &conn, json &js)
         g.group_name = agroup["name"];
         client_->groupList_.push_back(g);
     }
-    if (state_ == State::SHOW_GROUPS)
-        client_->controller_.flushGroups();
+    groupListWaiter_.notify(1);
 }
 
 void GroupService::removeGroupAddRequest(std::string &group_id, std::string &from_user_id)
@@ -100,6 +101,7 @@ void GroupService::getGroupInfo()
     getInfo["msgid"] = GET_GROUPINFO;
     getInfo["group_id"] = client_->currentGroup_.group_id_;
     neter_->sendJson(getInfo);
+    groupInfoWaiter_.wait();
 }
 
 void GroupService::handleGroupInfo(const TcpConnectionPtr &conn, json &js)
@@ -112,7 +114,7 @@ void GroupService::handleGroupInfo(const TcpConnectionPtr &conn, json &js)
         m.role_ = amember["role"];
         client_->currentGroup_.group_members[m.id_] = m;
     }
-    client_->controller_.GroupInfoWaiter_.notify(1);
+    groupInfoWaiter_.notify(0);
 }
 
 void GroupService::exitGroup()

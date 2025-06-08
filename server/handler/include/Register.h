@@ -11,7 +11,7 @@ protected:
     static bool sendCode(std::string &email, int code);
     static int verifyCode(std::string &email, int inputCode);
 
-    static bool inputAccount(std::string &email, std::string &password, std::string &nickname, json &response);
+    static bool inputAccount(std::string &email, std::string &password, std::string &nickname);
 };
 
 class Register : public Handler, protected RegisterKiter

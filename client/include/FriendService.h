@@ -2,6 +2,7 @@
 #include <string>
 #include <mutex>
 #include "Handler.h"
+#include "base.h"
 class Neter;
 class Client;
 class FriendRequest;
@@ -21,6 +22,8 @@ public:
 
     std::mutex friendRequests_mutex_;
     std::mutex friendList_mutex_;
+
+    Waiter friendListWaiter_;
 
 private:
     Neter *neter_;

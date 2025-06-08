@@ -46,8 +46,11 @@ void Controller::mainLoop()
         case State::LOGINING:
             showLogin();
             break;
-        case State::LOGGED_IN:
+        case State::MAIN_MENU:
             showMainMenu();
+            break;
+        case State::CHAT_PANEL:
+            showChatPanel();
             break;
         case State::SHOW_FREINDS:
             showFriends();
@@ -103,7 +106,7 @@ void Controller::showMainMenu()
 ╔════════════════════════╗
 ║        主菜单          ║
 ╚════════════════════════╝
-
+[0] 📬 消息中心（聊天面板）
 [1] 👤 好友相关功能
 [2] 👥 群聊相关功能
 [3] ⚙️ 系统设置/退出
@@ -111,6 +114,9 @@ void Controller::showMainMenu()
     int choice = getValidInt("请输入选项 (1-3): ");
     switch (choice)
     {
+    case 0:
+        state_ = State::CHAT_PANEL;
+        break;
     case 1:
         showFriendMenu();
         break;
@@ -123,6 +129,95 @@ void Controller::showMainMenu()
     default:
         std::cout << "❌ 无效选项\n";
         break;
+    }
+}
+
+void Controller::showChatPanel()
+{
+    client_->friendService_.getFriends();
+    client_->groupService_.getGroups();
+
+    clearScreen();
+    std::cout << R"(
+╔════════════════════════════════╗
+║       📬 消息中心（聊天面板）   ║
+╚════════════════════════════════╝
+)";
+
+    std::vector<std::string> types; // "friend"/"group"
+    std::vector<std::string> ids;
+    int index = 1;
+
+    for (const auto &f : client_->friendList_)
+    {
+        std::cout << index << ". 👤 " << f.nickname_ << " [好友]" << (f.isOnline_ ? " 🟢在线" : " 🔴离线") << "\n";
+        types.push_back("friend");
+        ids.push_back(f.id_);
+        ++index;
+    }
+
+    for (const auto &g : client_->groupList_)
+    {
+        std::cout << index << ". 👥 " << g.group_name << " [群聊]\n";
+        types.push_back("group");
+        ids.push_back(g.group_id_);
+        ++index;
+    }
+
+    if (index == 1)
+    {
+        std::cout << "⚠️ 暂无好友或群聊，请先添加。\n";
+    }
+
+    std::cout << "\n其他操作:\n"
+              << "[91] 好友请求 (" << client_->friendRequests_.size() << ")\n"
+              << "[92] 群聊请求 (" << client_->groupAddRequests_.size() << ")\n"
+              << "[0] 返回主菜单\n";
+
+    int choice = getValidInt("\n🔢 选择聊天对象编号或操作指令: ");
+    if (choice == 0)
+    {
+        state_ = State::MAIN_MENU;
+    }
+    else if (choice == 91)
+    {
+        state_ = State::HANDLE_FRIEND_REQUEST;
+    }
+    else if (choice == 92)
+    {
+        state_ = State::HANDLE_GROUP_REQUEST;
+    }
+    else if (choice >= 1 && choice < index)
+    {
+        if (types[choice - 1] == "friend")
+        {
+            for (auto &f : client_->friendList_)
+            {
+                if (f.id_ == ids[choice - 1])
+                {
+                    client_->currentFriend_.setCurrentFriend(f);
+                    state_ = State::CHAT_FRIEND;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            for (auto &g : client_->groupList_)
+            {
+                if (g.group_id_ == ids[choice - 1])
+                {
+                    client_->currentGroup_.setCurrentGroup(g);
+                    client_->groupService_.getGroupInfo();
+                    state_ = State::CHAT_GROUP;
+                    break;
+                }
+            }
+        }
+    }
+    else
+    {
+        std::cout << "❌ 无效选择。\n";
     }
 }
 
@@ -156,7 +251,7 @@ void Controller::showFriendMenu()
         state_ = State::HANDLE_FRIEND_REQUEST;
         break;
     case 0:
-        state_ = State::LOGGED_IN;
+        state_ = State::MAIN_MENU;
         break;
     default:
         std::cout << "❌ 无效选项\n";
@@ -194,7 +289,7 @@ void Controller::showGroupMenu()
         state_ = State::SHOW_GROUPS;
         break;
     case 0:
-        state_ = State::LOGGED_IN;
+        state_ = State::MAIN_MENU;
         break;
     default:
         std::cout << "❌ 无效选项\n";
@@ -220,7 +315,7 @@ void Controller::showSystemMenu()
         state_ = State::LOGINING;
         break;
     case 0:
-        state_ = State::LOGGED_IN;
+        state_ = State::MAIN_MENU;
         break;
     default:
         std::cout << "❌ 无效选项\n";
@@ -249,10 +344,7 @@ void Controller::showRegister()
     while (true)
     {
         int code = getValidInt("📩 输入验证码: ");
-        client_->userService_.registerCode(email, password, nickname, code);
-
-        registerWaiter_.wait();
-        int reg_errno = registerWaiter_.result;
+        int reg_errno = client_->userService_.registerCode(email, password, nickname, code);
         if (reg_errno == 0)
         {
             std::cout << "✅ 注册成功!\n";
@@ -287,14 +379,12 @@ void Controller::showLogin()
     {
         std::cout << "🔐 密码: ";
         std::cin >> password;
-        client_->userService_.login(email, password);
+        int login_errno = client_->userService_.login(email, password);
 
-        loginWaiter_.wait();
-        int login_errno = loginWaiter_.result;
         if (login_errno == 0)
         {
             std::cout << "✅ 登录成功，欢迎 " << client_->user_email_ << "\n";
-            state_ = State::LOGGED_IN;
+            state_ = State::CHAT_PANEL;
             break;
         }
         else
@@ -316,7 +406,7 @@ void Controller::showFriends()
     int choice = getValidInt("");
     if (choice == 0)
     {
-        state_ = State::LOGGED_IN;
+        state_ = State::MAIN_MENU;
         return;
     }
     if (choice < 1 || choice > static_cast<int>(client_->friendList_.size()))
@@ -341,11 +431,13 @@ void Controller::chatWithFriend()
             continue;
         if (content == "/exit")
         {
-            state_ = State::LOGGED_IN;
+            state_ = State::MAIN_MENU;
             break;
         }
-        client_->chatService_.sendMessage(content);
+        int chat_errno = client_->chatService_.sendMessage(content);
         flushLogs();
+        if (chat_errno == 1)
+            std::cout << "❌发送失败(你们已不是好友)" << std::endl;
     }
 }
 
@@ -362,7 +454,7 @@ void Controller::chatWithGroup()
             continue;
         if (content == "/exit")
         {
-            state_ = State::LOGGED_IN;
+            state_ = State::MAIN_MENU;
             break;
         }
         client_->chatService_.sendGroupMessage(content);
@@ -377,7 +469,7 @@ void Controller::showAddFriend()
     std::string friend_id;
     std::cin >> friend_id;
     client_->friendService_.addFriend(friend_id);
-    state_ = State::LOGGED_IN;
+    state_ = State::MAIN_MENU;
 }
 
 void Controller::showDelFriend()
@@ -398,7 +490,7 @@ void Controller::showDelFriend()
         return;
     }
     client_->friendService_.delFriend(client_->friendList_[choice - 1].id_);
-    state_ = State::LOGGED_IN;
+    state_ = State::MAIN_MENU;
 }
 
 void Controller::showCreateGroup()
@@ -410,7 +502,7 @@ void Controller::showCreateGroup()
     std::cout << "📝 群描述: ";
     std::cin >> desc;
     client_->groupService_.createGroup(name, desc);
-    state_ = State::LOGGED_IN;
+    state_ = State::MAIN_MENU;
 }
 
 void Controller::showAddGroup()
@@ -420,7 +512,7 @@ void Controller::showAddGroup()
     std::cout << "🔗 输入要加入的群ID: ";
     std::cin >> gid;
     client_->groupService_.addGroup(gid);
-    state_ = State::LOGGED_IN;
+    state_ = State::MAIN_MENU;
 }
 void Controller::showHandleFriendRequest()
 {
@@ -434,7 +526,7 @@ void Controller::showHandleFriendRequest()
         int i = getValidInt("🔢 选择请求编号 (0 返回): ");
         if (i == 0)
         {
-            state_ = State::LOGGED_IN;
+            state_ = State::MAIN_MENU;
             return;
         }
 
@@ -448,7 +540,7 @@ void Controller::showHandleFriendRequest()
         int action = getValidInt("请选择操作: ");
         if (action == 0)
         {
-            state_ = State::LOGGED_IN;
+            state_ = State::MAIN_MENU;
             return;
         }
         else if (action == 1)
@@ -478,7 +570,7 @@ void Controller::showHandleGroupRequest()
         int i = getValidInt("🔢 选择请求编号 (0 返回): ");
         if (i == 0)
         {
-            state_ = State::LOGGED_IN;
+            state_ = State::MAIN_MENU;
             return;
         }
 
@@ -492,7 +584,7 @@ void Controller::showHandleGroupRequest()
         int action = getValidInt("请选择操作: ");
         if (action == 0)
         {
-            state_ = State::LOGGED_IN;
+            state_ = State::MAIN_MENU;
             return;
         }
         else if (action == 1)
@@ -517,7 +609,7 @@ void Controller::showGroups()
     int choice = getValidInt("");
     if (choice == 0)
     {
-        state_ = State::LOGGED_IN;
+        state_ = State::MAIN_MENU;
         return;
     }
     if (choice < 1 || choice > static_cast<int>(client_->groupList_.size()))
@@ -528,7 +620,6 @@ void Controller::showGroups()
 
     client_->currentGroup_.setCurrentGroup(client_->groupList_[choice - 1]);
     client_->groupService_.getGroupInfo();
-    GroupInfoWaiter_.wait();
     state_ = State::SHOW_MEMBERS;
 }
 void Controller::showExitGroup()
@@ -538,7 +629,7 @@ void Controller::showExitGroup()
     int ch = getValidInt("");
     if (ch == 1)
         client_->groupService_.exitGroup();
-    state_ = State::LOGGED_IN;
+    state_ = State::MAIN_MENU;
 }
 
 void Controller::showGroupMembers()
@@ -659,7 +750,7 @@ void Controller::showDestroyGroup()
         client_->groupService_.exitGroup();
         std::cout << "✅ 操作已完成。\n";
     }
-    state_ = State::LOGGED_IN;
+    state_ = State::MAIN_MENU;
 }
 
 void Controller::flushLogs()

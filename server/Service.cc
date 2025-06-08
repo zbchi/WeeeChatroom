@@ -14,7 +14,7 @@
 #include "base.h"
 #include <arpa/inet.h>
 
-Service::Service() : threadPool_(1),
+Service::Service() : threadPool_(16),
                      listenAddr_(8000),
                      server_(&loop_, listenAddr_)
 {

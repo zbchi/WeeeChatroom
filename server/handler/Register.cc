@@ -24,34 +24,16 @@ void RegisterAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp tim
     std::string password = js["password"].get<std::string>();
     std::string nickname = js["nickname"].get<std::string>();
 
-    json response;
-    response["msgid"] = REG_MSG_ACK;
-
     int errno_verify = verifyCode(email, inputCode);
     if (errno_verify == 0)
     {
-        if (inputAccount(email, password, nickname, response))
-        {
-            response["errno"] = 0;
-            response["errmsg"] = "";
-        }
+        if (inputAccount(email, password, nickname))
+            errno_verify = 0;
         else
-        {
-            response["errno"] = -1;
-            response["errmsg"] = "注册失败";
-        }
+            errno_verify = -1;
     }
-    else if (errno_verify == 2)
-    {
-        response["errno"] = 2;
-        response["errmsg"] = "该邮箱已注册";
-    }
-    else if (errno_verify == 1)
-    {
-        response["errno"] = 1;
-        response["errmsg"] = "验证码错误";
-    }
-    sendJson(conn, response);
+    //-1注册失败   1验证码错误  2该邮箱已注册
+    sendJson(conn, makeResponse(REG_MSG_ACK, errno_verify));
 }
 
 int RegisterKiter::gVerificationCode()
@@ -177,7 +159,7 @@ bool RegisterKiter::sendCode(std::string &email, int code)
     return false;
 }
 
-bool RegisterKiter::inputAccount(std::string &email, std::string &password, std::string &nickname, json &response)
+bool RegisterKiter::inputAccount(std::string &email, std::string &password, std::string &nickname)
 {
 
     auto mysql = MySQLConnPool::instance().getConnection();
@@ -192,7 +174,5 @@ bool RegisterKiter::inputAccount(std::string &email, std::string &password, std:
         LOG_ERROR("注册数据写入失败");
         return false;
     }
-    response["id"] = mysql_insert_id(mysql->getConnection());
-
     return true;
 }

@@ -12,6 +12,7 @@ enum MsgType
     LOGIN_MSG_ACK,
     GET_FRIENDS,
     CHAT_MSG,
+    CHAT_MSG_ACK,
     CHAT_GROUP_MSG,
     ADD_FRIEND,
     DEL_FRIEND,
@@ -50,10 +51,18 @@ public:
         }
         cv_.notify_one();
     }
+
     void reset()
     {
         std::lock_guard<std::mutex> lock(mutex_);
         ready = false;
         result = -1;
+    }
+
+    int getResult()
+    {
+        int temp = result;
+        reset();
+        return temp;
     }
 };

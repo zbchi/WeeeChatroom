@@ -9,7 +9,8 @@ enum class State
     INIT,
     REGISTERING,
     LOGINING,
-    LOGGED_IN,
+    MAIN_MENU,
+    CHAT_PANEL,
     SHOW_FREINDS,
     SHOW_GROUPS,
     CHAT_FRIEND,
@@ -35,9 +36,7 @@ public:
     Controller(Neter *neter, Client *client) : client_(client), neter_(neter) {}
     void mainLoop();
 
-    Waiter loginWaiter_;
-    Waiter registerWaiter_;
-    Waiter GroupInfoWaiter_;
+    
 
     void flushLogs();
     void flushGroupLogs();
@@ -48,6 +47,7 @@ public:
 
 private:
     void showMainMenu();
+    void showChatPanel();
     void showLogin();
     void showRegister();
     void showFriends();

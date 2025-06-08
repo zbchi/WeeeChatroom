@@ -46,6 +46,7 @@ void FriendService::getFriends()
     getInfo["msgid"] = GET_FRIENDS;
     getInfo["user_id"] = client_->user_id_;
     neter_->sendJson(getInfo);
+    friendListWaiter_.wait();
 }
 
 void FriendService::handleFriendsList(const TcpConnectionPtr &conn, json &js)
@@ -60,9 +61,7 @@ void FriendService::handleFriendsList(const TcpConnectionPtr &conn, json &js)
         f.user_id_ = client_->user_id_;
         client_->friendList_.push_back(f);
     }
-
-    if (state_ == State::SHOW_FREINDS)
-        client_->controller_.flushFriends();
+    friendListWaiter_.notify(0);
 }
 
 void FriendService::responseFriendRequest(FriendRequest &friendRequest, char *response)

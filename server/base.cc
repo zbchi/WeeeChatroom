@@ -1,6 +1,6 @@
 #include "base.h"
 
-void sendJson(const mylib::TcpConnectionPtr &conn, json &js)
+void sendJson(const mylib::TcpConnectionPtr &conn, const json &js)
 {
     std::string jsonStr = js.dump();
     int len = static_cast<int>(jsonStr.size());
