@@ -14,6 +14,7 @@ enum MsgType
     CHAT_MSG,
     CHAT_MSG_ACK,
     CHAT_GROUP_MSG,
+    CHAT_GROUP_MSG_ACK,
     ADD_FRIEND,
     DEL_FRIEND,
     ADD_FRIEND_ACK,

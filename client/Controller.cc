@@ -7,6 +7,7 @@
 #include <mutex>
 
 #include <unistd.h>
+
 State state_ = State::LOGINING;
 void clearScreen()
 {
@@ -138,27 +139,32 @@ void Controller::showChatPanel()
     client_->groupService_.getGroups();
 
     clearScreen();
-    std::cout << R"(
-╔════════════════════════════════╗
-║       📬 消息中心（聊天面板）   ║
-╚════════════════════════════════╝
-)";
+    std::cout << MAGENTA << BOLD << R"(
+┌═════════════════════════════════════┐
+│            📬 消息中心              │
+└═════════════════════════════════════┘
+)" << RESET;
 
-    std::vector<std::string> types; // "friend"/"group"
+    std::vector<std::string> types;
     std::vector<std::string> ids;
     int index = 1;
 
+    std::cout << YELLOW << "好友列表:\n"
+              << RESET;
     for (const auto &f : client_->friendList_)
     {
-        std::cout << index << ". 👤 " << f.nickname_ << " [好友]" << (f.isOnline_ ? " 🟢在线" : " 🔴离线") << "\n";
+        std::cout << BLUE << index << ". 👤 " << f.nickname_ << " "
+                  << (f.isOnline_ ? GREEN "● 在线" : RED "○ 离线") << RESET << "\n";
         types.push_back("friend");
         ids.push_back(f.id_);
         ++index;
     }
 
+    std::cout << YELLOW << "\n群聊列表:\n"
+              << RESET;
     for (const auto &g : client_->groupList_)
     {
-        std::cout << index << ". 👥 " << g.group_name << " [群聊]\n";
+        std::cout << BLUE << index << ". 👥 " << g.group_name << RESET << "\n";
         types.push_back("group");
         ids.push_back(g.group_id_);
         ++index;
@@ -166,15 +172,18 @@ void Controller::showChatPanel()
 
     if (index == 1)
     {
-        std::cout << "⚠️ 暂无好友或群聊，请先添加。\n";
+        std::cout << YELLOW << "⚠️ 暂无好友或群聊，快去添加吧！\n"
+                  << RESET;
     }
 
-    std::cout << "\n其他操作:\n"
+    std::cout << CYAN << "\n快捷操作:\n"
               << "[91] 好友请求 (" << client_->friendRequests_.size() << ")\n"
               << "[92] 群聊请求 (" << client_->groupAddRequests_.size() << ")\n"
-              << "[0] 返回主菜单\n";
+              << "[0] 返回主菜单\n"
+              << RESET;
+    std::cout << GRADIENT_END << "➤ 选择编号或快捷键: " << RESET;
 
-    int choice = getValidInt("\n🔢 选择聊天对象编号或操作指令: ");
+    int choice = getValidInt("");
     if (choice == 0)
     {
         state_ = State::MAIN_MENU;
@@ -217,7 +226,8 @@ void Controller::showChatPanel()
     }
     else
     {
-        std::cout << "❌ 无效选择。\n";
+        std::cout << RED << "⚠️ 无效选择\n"
+                  << RESET;
     }
 }
 
@@ -435,8 +445,9 @@ void Controller::chatWithFriend()
             break;
         }
         int chat_errno = client_->chatService_.sendMessage(content);
-        flushLogs();
-        if (chat_errno == 1)
+        if (chat_errno == 0)
+            flushLogs();
+        else if (chat_errno == 1)
             std::cout << "❌发送失败(你们已不是好友)" << std::endl;
     }
 }
@@ -457,8 +468,11 @@ void Controller::chatWithGroup()
             state_ = State::MAIN_MENU;
             break;
         }
-        client_->chatService_.sendGroupMessage(content);
-        flushGroupLogs();
+        int chat_errno = client_->chatService_.sendGroupMessage(content);
+        if (chat_errno == 0)
+            flushGroupLogs();
+        else if (chat_errno == 1)
+            std::cout << "❌发送失败(你已不在此群聊)" << std::endl;
     }
 }
 
@@ -756,43 +770,74 @@ void Controller::showDestroyGroup()
 void Controller::flushLogs()
 {
     clearScreen();
-    std::cout << R"(
-╔════════════════════════╗
-║       聊天记录         ║
-╚════════════════════════╝
-)";
+    std::string displayName = client_->currentFriend_.nickname_;
+    displayName.resize(20, ' ');
+    std::cout << GREEN << BOLD << R"(
+╔═════════════════════════════════════╗
+║     💬 )" << displayName
+              << R"( 💬      ║
+╚═════════════════════════════════════╝
+)" << RESET;
+    std::cout << CYAN << "当前好友: " << client_->currentFriend_.nickname_ << "\n"
+              << RESET;
+    std::cout << YELLOW << "输入 /exit 退出聊天\n"
+              << RESET;
+
     std::lock_guard<std::mutex> lock(client_->chatService_.chatLogs_mutex_);
     for (const auto &log : client_->chatLogs_[client_->currentFriend_.id_])
     {
-        std::cout << "[" << log.timestamp << "] ";
         if (log.sender_id == client_->user_id_)
-            std::cout << "🧑‍💻 我: ";
+        {
+            std::cout << GREEN << "┌─ 我 ───/──┐\n"
+                      << "│ " << log.content << "\n"
+                      << "└────────────┘ " << CYAN << log.timestamp << "\n"
+                      << RESET;
+        }
         else
-            std::cout << client_->currentFriend_.nickname_ << ": ";
-        std::cout << log.content << "\n";
+        {
+            std::cout << "┌─ " << client_->currentFriend_.nickname_ << " ─┐\n"
+                      << "│ " << log.content << "\n"
+                      << "└────────────┘ " << CYAN << log.timestamp << "\n"
+                      << RESET;
+        }
     }
 }
 
 void Controller::flushGroupLogs()
 {
     clearScreen();
-    std::cout << R"(
-╔════════════════════════╗
-║       群聊记录         ║
-╚════════════════════════╝
-)";
+    std::string displayName = client_->currentGroup_.group_name;
+    displayName.resize(20, ' ');
+    std::cout << GREEN << BOLD << R"(
+╔═════════════════════════════════════╗
+║     💬 )" << displayName
+              << R"( 💬        ║
+╚═════════════════════════════════════╝
+)" << RESET;
+
+    std::cout << CYAN << "当前群聊: " << client_->currentGroup_.group_name << "\n"
+              << RESET;
+    std::cout << YELLOW << "输入 /exit 退出聊天\n"
+              << RESET;
     std::lock_guard<std::mutex> lock(client_->chatService_.groupChatLogs_mutex_);
     for (const auto &log : client_->groupChatLogs_[client_->currentGroup_.group_id_])
     {
-        std::cout << "[" << log.timestamp << "] ";
         if (log.sender_id == client_->user_id_)
-            std::cout << "🧑‍💻 我: ";
+        {
+            std::cout << GREEN << "┌─ 我 ─────┐\n"
+                      << "│ " << log.content << "\n"
+                      << "└────────────┘ " << CYAN << log.timestamp << "\n"
+                      << RESET;
+        }
         else
-            std::cout << client_->currentGroup_.group_members[log.sender_id].nickname_ << ": ";
-        std::cout << log.content << "\n";
+        {
+            std::cout << "┌─ " << client_->currentGroup_.group_members[log.sender_id].nickname_ << " ─┐\n"
+                      << "│ " << log.content << "\n"
+                      << "└────────────┘ " << CYAN << log.timestamp << "\n"
+                      << RESET;
+        }
     }
 }
-
 void Controller::flushFriends()
 {
     clearScreen();

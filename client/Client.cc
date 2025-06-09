@@ -36,6 +36,8 @@ Client::Client() : neter_(this), controller_(&neter_, this),
     { this->groupService_.handleGroupInfo(conn, js); };
     msgHandlerMap_[CHAT_MSG_ACK] = [this](const TcpConnectionPtr &conn, json &js)
     { this->chatService_.handleMessageAck(conn, js); };
+    msgHandlerMap_[CHAT_GROUP_MSG_ACK] = [this](const TcpConnectionPtr &conn, json &js)
+    { this->chatService_.handleGroupMessageAck(conn, js); };
 }
 
 void Client::start()

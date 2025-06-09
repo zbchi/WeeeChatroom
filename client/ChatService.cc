@@ -7,6 +7,7 @@
 #include "Client.h"
 #include "Timestamp.h"
 using namespace mylib;
+
 std::string ChatService::fixInvalidUtf8(const std::string &input)
 {
     std::string result;
@@ -16,23 +17,21 @@ std::string ChatService::fixInvalidUtf8(const std::string &input)
         unsigned char c = input[i];
         size_t len = 0;
         if (c <= 0x7F)
-            len = 1; // ASCII
+            len = 1;
         else if ((c & 0xE0) == 0xC0)
-            len = 2; // 2-byte
+            len = 2;
         else if ((c & 0xF0) == 0xE0)
-            len = 3; // 3-byte
+            len = 3;
         else if ((c & 0xF8) == 0xF0)
-            len = 4; // 4-byte
+            len = 4;
         else
         {
             i++;
             continue;
-        } // invalid leading byte
+        }
 
         if (i + len <= input.size())
-        {
             result.append(input.substr(i, len));
-        }
         i += len;
     }
     return result;
@@ -57,7 +56,10 @@ int ChatService::sendMessage(std::string &content)
     neter_->sendJson(sendInfo);
 
     chatMessageWaiter_.wait();
-    return chatMessageWaiter_.getResult();
+    int result = chatMessageWaiter_.getResult();
+    if (result == 0)
+        storeChatLog(client_->user_id_, client_->currentFriend_.id_, sendInfo);
+    return result;
 }
 
 void ChatService::handleMessage(const TcpConnectionPtr &conn, json &js)
@@ -72,11 +74,12 @@ void ChatService::handleMessage(const TcpConnectionPtr &conn, json &js)
         std::lock_guard<std::mutex> lock(chatLogs_mutex_);
         client_->chatLogs_[friend_id].push_back(msg);
     }
+    storeChatLog(client_->user_id_, friend_id, js);
     if (state_ == State::CHAT_FRIEND && friend_id == client_->currentFriend_.id_)
         client_->controller_.flushLogs();
 }
 
-void ChatService::sendGroupMessage(std::string &content)
+int ChatService::sendGroupMessage(std::string &content)
 {
     json sendInfo;
     sendInfo["msgid"] = CHAT_GROUP_MSG;
@@ -93,6 +96,11 @@ void ChatService::sendGroupMessage(std::string &content)
         client_->groupChatLogs_[client_->currentGroup_.group_id_].push_back(msg);
     }
     neter_->sendJson(sendInfo);
+    chatGroupMessageWaiter_.wait();
+    int result = chatGroupMessageWaiter_.getResult();
+    if (result == 0)
+        storeChatLog(client_->user_id_, client_->currentGroup_.group_id_, sendInfo, true);
+    return result;
 }
 
 void ChatService::handleGroupMessage(const TcpConnectionPtr &conn, json &js)
@@ -108,6 +116,7 @@ void ChatService::handleGroupMessage(const TcpConnectionPtr &conn, json &js)
         std::lock_guard<std::mutex> lock(groupChatLogs_mutex_);
         client_->groupChatLogs_[group_id].push_back(msg);
     }
+    storeChatLog(client_->user_id_, group_id, js, true);
     if (state_ == State::CHAT_GROUP && group_id == client_->currentGroup_.group_id_)
         client_->controller_.flushGroupLogs();
 }
@@ -116,4 +125,30 @@ void ChatService::handleMessageAck(const TcpConnectionPtr &conn, json &js)
 {
     int chat_errno = js["errno"];
     chatMessageWaiter_.notify(chat_errno);
+}
+
+void ChatService::handleGroupMessageAck(const TcpConnectionPtr &conn, json &js)
+{
+    int chat_errno = js["errno"];
+    chatGroupMessageWaiter_.notify(chat_errno);
+}
+
+std::string ChatService::getLogPath(std::string &user_id, std::string &friend_id, bool is_group)
+{
+    fs::path exe_path = fs::canonical("/proc/self/exe");
+    fs::path exe_dir = exe_path.parent_path();
+    fs::path log_dir = exe_dir / "chat_logs";
+    if (is_group)
+        return (log_dir / ("g_" + user_id + "_" + friend_id + ".log")).string();
+    else
+        return (log_dir / (user_id + "_" + friend_id + ".log")).string();
+}
+
+void ChatService::storeChatLog(std::string &user_id, std::string &peer_id, json &js, bool is_group)
+{
+    std::string path = getLogPath(user_id, peer_id, is_group);
+    std::ofstream ofs(path, std::ios::app);
+    fs::create_directories(fs::path(path).parent_path());
+    if (ofs.is_open())
+        ofs << js.dump() << "\n";
 }
