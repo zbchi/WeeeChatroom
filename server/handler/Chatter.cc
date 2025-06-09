@@ -71,7 +71,6 @@ void GroupChatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time
                 {
                     mysql->insert("offlineMessages", {{"sender_id", sender_id},
                                                       {"receiver_id", member_id},
-                                                      {"content", content},
                                                       {"json", js.dump()}});
                 }
             }

@@ -152,3 +152,49 @@ void ChatService::storeChatLog(std::string &user_id, std::string &peer_id, json 
     if (ofs.is_open())
         ofs << js.dump() << "\n";
 }
+
+ChatLogs ChatService::loadChatLogs(std::string &user_id,
+                                   std::string &peer_id,
+                                   size_t count,
+                                   size_t offset,
+                                   bool is_group)
+{
+    std::ifstream ifs(getLogPath(user_id, peer_id, is_group));
+    if (!ifs.is_open())
+        return {};
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(ifs, line))
+        lines.push_back(line);
+
+    ChatLogs logs;
+    size_t total = lines.size();
+    if (offset >= total)
+        return {};
+    size_t start = (total > offset + count) ? total - offset - count : 0;
+    size_t end = total - offset;
+    for (size_t i = start; i < end; i++)
+    {
+        json js = json::parse(lines[i]);
+        std::string content = js["content"];
+        std::string timestamp = js["timestamp"];
+        std::string sender_id = js["sender_id"];
+        logs.push_back(ChatMessage{sender_id, content, timestamp, user_id});
+    }
+    return logs;
+}
+
+void ChatService::loadInitChatLogs(std::string &peer_id, bool is_group)
+{
+    ChatLogs logs = loadChatLogs(client_->user_id_, peer_id, 20, 0, is_group);
+    if (is_group)
+    {
+        std::lock_guard<std::mutex> lock(groupChatLogs_mutex_);
+        client_->groupChatLogs_[peer_id] = logs;
+    }
+    else
+    {
+        std::lock_guard<std::mutex> lock(chatLogs_mutex_);
+        client_->chatLogs_[peer_id] = logs;
+    }
+}

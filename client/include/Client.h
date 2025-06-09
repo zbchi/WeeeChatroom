@@ -41,8 +41,8 @@ public:
     std::string user_email_;
     std::vector<Friend> friendList_;
     std::vector<Group> groupList_;
-    std::unordered_map<std::string, ChatLog> chatLogs_;         // map< freind_id,vector<log> >
-    std::unordered_map<std::string, ChatLog> groupChatLogs_;    //   map<  group_id,vector<log>  >
+    std::unordered_map<std::string, ChatLogs> chatLogs_;         // map< freind_id,vector<log> >
+    std::unordered_map<std::string, ChatLogs> groupChatLogs_;    //   map<  group_id,vector<log>  >
     std::unordered_map<std::string, std::string> unreadCounts_; // map< friend_id,unreadCount >
     std::vector<FriendRequest> friendRequests_;
     std::vector<GroupAddRequest> groupAddRequests_;

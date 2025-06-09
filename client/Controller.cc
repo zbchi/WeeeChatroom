@@ -430,6 +430,7 @@ void Controller::showFriends()
 
 void Controller::chatWithFriend()
 {
+    client_->chatService_.loadInitChatLogs(client_->currentFriend_.id_);
     clearScreen();
     std::cout << "💬 与好友聊天（输入 /exit 退出）\n";
     flushLogs();
@@ -454,6 +455,7 @@ void Controller::chatWithFriend()
 
 void Controller::chatWithGroup()
 {
+    client_->chatService_.loadInitChatLogs(client_->currentGroup_.group_id_, true);
     clearScreen();
     std::cout << "💬 群聊中（输入 /exit 退出）\n";
     flushGroupLogs();
