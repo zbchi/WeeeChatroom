@@ -31,12 +31,8 @@ public:
     void handleMessageAck(const TcpConnectionPtr &conn, json &js);
     void handleGroupMessageAck(const TcpConnectionPtr &conn, json &js);
 
-    ChatLogs loadChatLogs(std::string &user_id,
-                          std::string &peer_id,
-                          size_t count,
-                          size_t offset = 0,
-                          bool is_group = false);
-    void loadInitChatLogs(std::string &peer_id, bool is_group = false);
+    void loadInitChatLogs(std::string &peer_id, ssize_t count = 20, bool is_group = false);
+    void loadMoreChatLogs(std::string &peer_id, ssize_t count, ssize_t offset, bool is_group = false);
     std::mutex chatLogs_mutex_;
     std::mutex groupChatLogs_mutex_;
 
@@ -51,6 +47,11 @@ private:
                       std::string &peer_id,
                       json &js,
                       bool is_group = false);
+    ChatLogs loadChatLogs(std::string &user_id,
+                          std::string &peer_id,
+                          size_t count,
+                          size_t offset = 0,
+                          bool is_group = false);
     std::string fixInvalidUtf8(const std::string &input);
     Neter *neter_;
     Client *client_;

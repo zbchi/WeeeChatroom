@@ -430,7 +430,9 @@ void Controller::showFriends()
 
 void Controller::chatWithFriend()
 {
-    client_->chatService_.loadInitChatLogs(client_->currentFriend_.id_);
+    ssize_t offset = 0;
+    int count = 20;
+    client_->chatService_.loadInitChatLogs(client_->currentFriend_.id_, count);
     clearScreen();
     std::cout << "💬 与好友聊天（输入 /exit 退出）\n";
     flushLogs();
@@ -445,9 +447,35 @@ void Controller::chatWithFriend()
             state_ = State::MAIN_MENU;
             break;
         }
+        else if (content == "/c")
+        {
+            if (client_->chatLogs_[client_->currentFriend_.id_].empty())
+            {
+                std::cout << "没有更多聊天记录了" << std::endl;
+                continue;
+            }
+            offset += count;
+            client_->chatService_.loadMoreChatLogs(client_->currentFriend_.id_, count, offset);
+            flushLogs();
+            continue;
+        }
+        else if (content == "/ ")
+        {
+            if (offset >= count)
+            {
+                offset -= count;
+                client_->chatService_.loadMoreChatLogs(client_->currentFriend_.id_, count, offset);
+                flushLogs();
+            }
+            continue;
+        }
+
         int chat_errno = client_->chatService_.sendMessage(content);
         if (chat_errno == 0)
+        {
+            client_->chatService_.loadInitChatLogs(client_->currentFriend_.id_, count);
             flushLogs();
+        }
         else if (chat_errno == 1)
             std::cout << "❌发送失败(你们已不是好友)" << std::endl;
     }
@@ -455,7 +483,9 @@ void Controller::chatWithFriend()
 
 void Controller::chatWithGroup()
 {
-    client_->chatService_.loadInitChatLogs(client_->currentGroup_.group_id_, true);
+    ssize_t offset = 0;
+    int count = 20;
+    client_->chatService_.loadInitChatLogs(client_->currentGroup_.group_id_, count, true);
     clearScreen();
     std::cout << "💬 群聊中（输入 /exit 退出）\n";
     flushGroupLogs();
@@ -470,9 +500,35 @@ void Controller::chatWithGroup()
             state_ = State::MAIN_MENU;
             break;
         }
+        else if (content == "/c")
+        {
+            if (client_->groupChatLogs_[client_->currentGroup_.group_id_].empty())
+            {
+                std::cout << "没有更多聊天记录了" << std::endl;
+                continue;
+            }
+            offset += count;
+            client_->chatService_.loadMoreChatLogs(client_->currentGroup_.group_id_, count, offset, true);
+            flushGroupLogs();
+            continue;
+        }
+        else if (content == "/ ")
+        {
+            if (offset >= count)
+            {
+                offset -= count;
+                client_->chatService_.loadMoreChatLogs(client_->currentGroup_.group_id_, count, offset, true);
+                flushGroupLogs();
+            }
+            continue;
+        }
+
         int chat_errno = client_->chatService_.sendGroupMessage(content);
         if (chat_errno == 0)
+        {
+            client_->chatService_.loadInitChatLogs(client_->currentGroup_.group_id_, count, true);
             flushGroupLogs();
+        }
         else if (chat_errno == 1)
             std::cout << "❌发送失败(你已不在此群聊)" << std::endl;
     }
@@ -772,35 +828,33 @@ void Controller::showDestroyGroup()
 void Controller::flushLogs()
 {
     clearScreen();
-    std::string displayName = client_->currentFriend_.nickname_;
-    displayName.resize(20, ' ');
-    std::cout << GREEN << BOLD << R"(
-╔═════════════════════════════════════╗
-║     💬 )" << displayName
-              << R"( 💬      ║
-╚═════════════════════════════════════╝
+    std::cout << MAGENTA << BOLD << R"(
+┌─────────────────────────────────────────────┐
+│ 与 )" << client_->currentFriend_.nickname_
+              << " 的聊天" << std::string(30 - client_->currentFriend_.nickname_.length(), ' ') << R"(│
+└─────────────────────────────────────────────┘
 )" << RESET;
-    std::cout << CYAN << "当前好友: " << client_->currentFriend_.nickname_ << "\n"
-              << RESET;
-    std::cout << YELLOW << "输入 /exit 退出聊天\n"
-              << RESET;
 
-    std::lock_guard<std::mutex> lock(client_->chatService_.chatLogs_mutex_);
     for (const auto &log : client_->chatLogs_[client_->currentFriend_.id_])
     {
+        std::string time = log.timestamp;
+        std::string sender = log.sender_id == client_->user_id_ ? "我" : client_->currentFriend_.nickname_;
+        std::string content = log.content;
+
         if (log.sender_id == client_->user_id_)
         {
-            std::cout << GREEN << "┌─ 我 ───/──┐\n"
-                      << "│ " << log.content << "\n"
-                      << "└────────────┘ " << CYAN << log.timestamp << "\n"
+            std::cout << GREEN << "┌────────────────────────────────────────────────────────┐\n"
+                      << "│ " << std::left << std::setw(10) << sender << " " << std::right << std::setw(30) << time << " \n"
+                      << "│ " << std::left << std::setw(40) << content << " \n"
+                      << "└────────────────────────────────────────────────────────┘\n"
                       << RESET;
         }
         else
         {
-            std::cout << "┌─ " << client_->currentFriend_.nickname_ << " ─┐\n"
-                      << "│ " << log.content << "\n"
-                      << "└────────────┘ " << CYAN << log.timestamp << "\n"
-                      << RESET;
+            std::cout << "┌────────────────────────────────────────────────────────┐\n"
+                      << "│ " << std::left << std::setw(10) << sender << " " << std::right << std::setw(30) << time << " \n"
+                      << "│ " << std::left << std::setw(40) << content << " \n"
+                      << "└────────────────────────────────────────────────────────┘\n";
         }
     }
 }
@@ -808,35 +862,33 @@ void Controller::flushLogs()
 void Controller::flushGroupLogs()
 {
     clearScreen();
-    std::string displayName = client_->currentGroup_.group_name;
-    displayName.resize(20, ' ');
-    std::cout << GREEN << BOLD << R"(
-╔═════════════════════════════════════╗
-║     💬 )" << displayName
-              << R"( 💬        ║
-╚═════════════════════════════════════╝
+    std::cout << MAGENTA << BOLD << R"(
+┌─────────────────────────────────────────────┐
+│ 群聊: )" << client_->currentGroup_.group_name
+              << std::string(30 - client_->currentGroup_.group_name.length(), ' ') << R"(│
+└─────────────────────────────────────────────┘
 )" << RESET;
 
-    std::cout << CYAN << "当前群聊: " << client_->currentGroup_.group_name << "\n"
-              << RESET;
-    std::cout << YELLOW << "输入 /exit 退出聊天\n"
-              << RESET;
-    std::lock_guard<std::mutex> lock(client_->chatService_.groupChatLogs_mutex_);
     for (const auto &log : client_->groupChatLogs_[client_->currentGroup_.group_id_])
     {
+        std::string time = log.timestamp;
+        std::string sender = log.sender_id == client_->user_id_ ? "我" : client_->currentGroup_.group_members[log.sender_id].nickname_;
+        std::string content = log.content;
+
         if (log.sender_id == client_->user_id_)
         {
-            std::cout << GREEN << "┌─ 我 ─────┐\n"
-                      << "│ " << log.content << "\n"
-                      << "└────────────┘ " << CYAN << log.timestamp << "\n"
+            std::cout << GREEN << "┌────────────────────────────────────────────────────────┐\n"
+                      << "│ " << std::left << std::setw(10) << sender << " " << std::right << std::setw(30) << time << " \n"
+                      << "│ " << std::left << std::setw(40) << content << " \n"
+                      << "└────────────────────────────────────────────────────────┘\n"
                       << RESET;
         }
         else
         {
-            std::cout << "┌─ " << client_->currentGroup_.group_members[log.sender_id].nickname_ << " ─┐\n"
-                      << "│ " << log.content << "\n"
-                      << "└────────────┘ " << CYAN << log.timestamp << "\n"
-                      << RESET;
+            std::cout << "┌─────────────────────────────────────────────┐\n"
+                      << "│ " << std::left << std::setw(10) << sender << " " << std::right << std::setw(30) << time << " \n"
+                      << "│ " << std::left << std::setw(40) << content << " \n"
+                      << "└─────────────────────────────────────────────┘\n";
         }
     }
 }

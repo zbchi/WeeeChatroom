@@ -40,7 +40,9 @@ Service::Service() : threadPool_(16),
     server_.setConnectionCallback([this](const TcpConnectionPtr &conn)
                                   { this->onConnection(conn); });
     server_.setMessageCallback([this](const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
-                               { this->onMessage(conn, buf, time); });
+                            
+     
+    { this->onMessage(conn, buf, time); });
 }
 
 void Service::start()

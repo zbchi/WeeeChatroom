@@ -23,6 +23,8 @@ enum class State
     REGISTERING,
     LOGINING,
     MAIN_MENU,
+    FRIEND_MENU,
+    GROUP_MENU,
     CHAT_PANEL,
     SHOW_FREINDS,
     SHOW_GROUPS,

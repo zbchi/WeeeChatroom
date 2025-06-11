@@ -184,9 +184,24 @@ ChatLogs ChatService::loadChatLogs(std::string &user_id,
     return logs;
 }
 
-void ChatService::loadInitChatLogs(std::string &peer_id, bool is_group)
+void ChatService::loadInitChatLogs(std::string &peer_id, ssize_t count, bool is_group)
 {
     ChatLogs logs = loadChatLogs(client_->user_id_, peer_id, 20, 0, is_group);
+    if (is_group)
+    {
+        std::lock_guard<std::mutex> lock(groupChatLogs_mutex_);
+        client_->groupChatLogs_[peer_id] = logs;
+    }
+    else
+    {
+        std::lock_guard<std::mutex> lock(chatLogs_mutex_);
+        client_->chatLogs_[peer_id] = logs;
+    }
+}
+
+void ChatService::loadMoreChatLogs(std::string &peer_id, ssize_t count, ssize_t offset, bool is_group)
+{
+    ChatLogs logs = loadChatLogs(client_->user_id_, peer_id, count, offset, is_group);
     if (is_group)
     {
         std::lock_guard<std::mutex> lock(groupChatLogs_mutex_);
