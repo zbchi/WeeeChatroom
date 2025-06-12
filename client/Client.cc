@@ -18,6 +18,8 @@ Client::Client() : neter_(this), controller_(&neter_, this),
     { this->userService_.handleLoginAck(conn, js); };
     msgHandlerMap_[REG_MSG_ACK] = [this](const TcpConnectionPtr &conn, json &js)
     { this->userService_.handleRegAck(conn, js); };
+    msgHandlerMap_[FIND_PASSWORD_ACK] = [this](const TcpConnectionPtr &conn, json &js)
+    { this->userService_.handleFindAck(conn, js); };
     msgHandlerMap_[GET_FRIENDS] = [this](const TcpConnectionPtr &conn, json &js)
     { this->friendService_.handleFriendsList(conn, js); };
     msgHandlerMap_[CHAT_MSG] = [this](const TcpConnectionPtr &conn, json &js)

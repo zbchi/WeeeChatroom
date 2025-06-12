@@ -36,13 +36,14 @@ Service::Service() : threadPool_(16),
     handlers_[KICK_MEMBER] = std::make_shared<MemberKicker>(this);
     handlers_[ADD_ADMIN] = std::make_shared<AdminAdder>(this);
     handlers_[REMOVE_ADMIN] = std::make_shared<AdminRemover>(this);
+    handlers_[FIND_PASSWORD] = std::make_shared<PasswordFinder>(this);
+    handlers_[FIND_PASSWORD_ACK] = std::make_shared<PasswordFindAcker>(this);
 
     server_.setConnectionCallback([this](const TcpConnectionPtr &conn)
                                   { this->onConnection(conn); });
     server_.setMessageCallback([this](const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
-                            
-     
-    { this->onMessage(conn, buf, time); });
+
+                               { this->onMessage(conn, buf, time); });
 }
 
 void Service::start()

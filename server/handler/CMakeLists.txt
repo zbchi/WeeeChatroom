@@ -9,7 +9,7 @@ Grouper.cc
 
 target_include_directories(handler_lib PUBLIC 
 ${CMAKE_CURRENT_SOURCE_DIR}/include
-${CMAKE_CURRENT_SOURCE_DIR}/../include
+${CMAKE_CURRENT_SOURCE_DIR}/..
 )
 
 

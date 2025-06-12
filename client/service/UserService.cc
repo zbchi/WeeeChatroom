@@ -48,10 +48,38 @@ void UserService::handleRegAck(const TcpConnectionPtr &conn, json &js)
 {
     regWaiter_.notify(js["errno"]);
 }
+
 void UserService::handleLoginAck(const TcpConnectionPtr &conn, json &js)
 {
     client_->user_email_ = js["email"];
     if (js["errno"] == 0)
         client_->user_id_ = js["user_id"];
     loginWaiter_.notify(js["errno"]);
+}
+
+void UserService::findPassword(std::string &email)
+{
+    json findInfo;
+    findInfo["msgid"] = FIND_PASSWORD;
+    findInfo["email"] = email;
+    neter_->sendJson(findInfo);
+}
+
+int UserService::findPasswordCode(std::string &email, std::string &password, int code)
+{
+    json findInfo;
+    findInfo["msgid"] = FIND_PASSWORD_ACK;
+    findInfo["email"] = email;
+    findInfo["password"] = password;
+    findInfo["code"] = code;
+    neter_->sendJson(findInfo);
+
+    // 阻塞等待回应
+    findWaiter_.wait();
+    return findWaiter_.getResult();
+}
+
+void UserService::handleFindAck(const TcpConnectionPtr &conn, json &js)
+{
+    findWaiter_.notify(js["errno"]);
 }

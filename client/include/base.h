@@ -10,6 +10,8 @@ enum MsgType
     REG_MSG_ACK,
     LOGIN_MSG,
     LOGIN_MSG_ACK,
+    FIND_PASSWORD,
+    FIND_PASSWORD_ACK,
     GET_FRIENDS,
     CHAT_MSG,
     CHAT_MSG_ACK,

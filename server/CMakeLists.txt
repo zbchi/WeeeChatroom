@@ -12,8 +12,3 @@ target_link_libraries(chat_server PRIVATE
     handler_lib
     base_lib
 )
-
-target_include_directories(chat_server PRIVATE 
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${HIREDIS_INCLUDE_DIR}
-)
