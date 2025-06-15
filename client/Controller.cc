@@ -8,7 +8,7 @@
 
 #include <unistd.h>
 
-State state_ = State::LOGINING;
+State state_ = State::FIND_PASSWORD;
 void clearScreen()
 {
     system("clear");
