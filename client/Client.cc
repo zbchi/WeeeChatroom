@@ -12,12 +12,14 @@ Client::Client() : neter_(this), controller_(&neter_, this),
                    userService_(&neter_, this),
                    friendService_(&neter_, this),
                    groupService_(&neter_, this)
+                  // fileService_(&neter_, this)
 {
-
     msgHandlerMap_[LOGIN_MSG_ACK] = [this](const TcpConnectionPtr &conn, json &js)
     { this->userService_.handleLoginAck(conn, js); };
     msgHandlerMap_[REG_MSG_ACK] = [this](const TcpConnectionPtr &conn, json &js)
     { this->userService_.handleRegAck(conn, js); };
+    msgHandlerMap_[FIND_PASSWORD_ACK] = [this](const TcpConnectionPtr &conn, json &js)
+    { this->userService_.handleFindAck(conn, js); };
     msgHandlerMap_[GET_FRIENDS] = [this](const TcpConnectionPtr &conn, json &js)
     { this->friendService_.handleFriendsList(conn, js); };
     msgHandlerMap_[CHAT_MSG] = [this](const TcpConnectionPtr &conn, json &js)
@@ -44,22 +46,7 @@ void Client::start()
 {
     // 网络接收线程将消息放入消息队列
     neter_.start();
-    // 逻辑处理线程负责处理消息更新内存
-    logicThread_ = std::thread([this]()
-                               { this->logicLoop(); });
-
-    // 主线程负责主控制输出UI
     controller_.mainLoop();
-}
-
-void Client::logicLoop()
-{
-    while (1)
-    {
-        json js = messageQueue_.pop();
-        std::string jsonStr = js.dump();
-        handleJson(neter_.conn_, jsonStr);
-    }
 }
 
 void Client::handleJson(const TcpConnectionPtr &conn, const std::string &jsonStr)

@@ -94,6 +94,10 @@ void Controller::mainLoop()
             showDestroyGroup();
             break;
 
+        case State::FIND_PASSWORD:
+            showFindPassword();
+            break;
+
         default:
             break;
         }
@@ -366,6 +370,45 @@ void Controller::showRegister()
             std::cout << "❌ 注册失败，错误码: " << reg_errno << "\n";
             if (reg_errno != 1)
             {
+                state_ = State::REGISTERING;
+                break;
+            }
+        }
+    }
+}
+
+void Controller::showFindPassword()
+{
+    clearScreen();
+    std::cout << R"(
+╔════════════════════════╗
+║       📝 找回密码       ║
+╚════════════════════════╝
+)";
+    std::string email, password, nickname;
+    std::cout << "📧 邮箱: ";
+    std::cin >> email;
+    std::cout << "🔐 新的密码: ";
+    std::cin >> password;
+
+    client_->userService_.findPassword(email);
+
+    while (true)
+    {
+        int code = getValidInt("📩 输入验证码: ");
+        int reg_errno = client_->userService_.findPasswordCode(email, password, code);
+        if (reg_errno == 0)
+        {
+            std::cout << "✅ 重置密码成功!\n";
+            state_ = State::LOGINING;
+            break;
+        }
+        else
+        {
+            std::cout << "❌ 重置密码失败，错误码: " << reg_errno << "\n";
+            if (reg_errno != 1)
+            {
+                sleep(1);
                 state_ = State::REGISTERING;
                 break;
             }

@@ -125,6 +125,18 @@ CREATE TABLE IF NOT EXISTS unread_counts
     FOREIGN KEY (friend_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS files
+(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sender_id INT,
+    receiver_id INT,
+    size BIGINT,
+    name TEXT,
+    send_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES users(id),
+    FOREIGN KEY (receiver_id) REFERENCES users(id)
+);
+
 CREATE USER 'zb'@'localhost' IDENTIFIED BY '1662308219@Zb';
 GRANT ALL PRIVILEGES ON chatdb.* To 'zb'@'localhost';
 FLUSH PRIVILEGES;

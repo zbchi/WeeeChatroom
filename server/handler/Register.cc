@@ -25,6 +25,16 @@ void RegisterAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp tim
     std::string nickname = js["nickname"].get<std::string>();
 
     int errno_verify = verifyCode(email, inputCode);
+
+    auto mysql = MySQLConnPool::instance().getConnection();
+
+    std::string user_id = mysql->getIdByEmail(email);
+    if (user_id != "")
+    {
+        LOG_DEBUG("%s已经注册", email.c_str());
+        errno_verify = 2;
+    }
+
     if (errno_verify == 0)
     {
         if (inputAccount(email, password, nickname))
@@ -56,14 +66,6 @@ bool RegisterKiter::storeCode(std::string &email, int code, int expireTime)
 
 int RegisterKiter::verifyCode(std::string &email, int inputCode)
 {
-    auto mysql = MySQLConnPool::instance().getConnection();
-    std::string user_id = mysql->getIdByEmail(email);
-    if (user_id != "")
-    {
-        LOG_DEBUG("%s已经注册", email.c_str());
-        return 2;
-    }
-
     std::string key = "verify_email:" + email;
     Redis redis;
     std::string real_code = redis.hget(key, "code");
@@ -99,8 +101,14 @@ static size_t payload_source(char *ptr, size_t size, size_t nmemb, void *userp)
     return will_send;
 }
 
-bool RegisterKiter::sendCode(std::string &email, int code)
+bool RegisterKiter::sendCode(std::string &email, int code, bool is_find)
 {
+    std::string action;
+    if (is_find)
+        action = "找回密码";
+    else
+        action = "欢迎注册";
+
     CURLcode res = CURLE_OK;
     CURL *curl = curl_easy_init();
     curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L); // 打印通信日志
@@ -119,8 +127,9 @@ bool RegisterKiter::sendCode(std::string &email, int code)
         const std::string subject = "Subject: WeeeChatRoom验证码\r\n";
         const std::string body = R"(
 <div style="font-family: Arial, sans-serif; padding: 20px;">
-  <h2 style="color: #333;">欢迎注册！</h2>
-  <p style="font-size: 16px; color: #555;">请使用以下验证码完成注册：</p>
+  <h2 style="color: #333;">)" + action +
+                                 R"(！</h2>
+  <p style="font-size: 16px; color: #555;">请使用以下验证码：</p>
   <div style="margin-top: 20px; padding: 15px; border: 2px dashed #00a2ff; width: fit-content; text-align: center; font-size: 36px; font-weight: bold; color: #00a2ff;">
     )" + std::to_string(code) + R"(</div>
   <p style="margin-top: 20px; font-size: 14px; color: #999;">如果不是您本人操作，请忽略此邮件。</p>
@@ -175,4 +184,38 @@ bool RegisterKiter::inputAccount(std::string &email, std::string &password, std:
         return false;
     }
     return true;
+}
+
+void PasswordFinder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    int code = gVerificationCode();
+    std::string email = js["email"].get<std::string>();
+    bool isStore = storeCode(email, code);
+    bool isSend = sendCode(email, code, true);
+}
+
+void PasswordFindAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    int inputCode = js["code"].get<int>();
+    std::string email = js["email"].get<std::string>();
+    std::string password = js["password"].get<std::string>();
+
+    int errno_verify = verifyCode(email, inputCode);
+
+    auto mysql = MySQLConnPool::instance().getConnection();
+
+    std::string user_id = mysql->getIdByEmail(email);
+    if (user_id == "")
+    {
+        LOG_DEBUG("%s未经注册", email.c_str());
+        errno_verify = 2;
+    }
+
+    if (errno_verify == 0)
+    {
+        auto mysql = MySQLConnPool::instance().getConnection();
+        mysql->update("users", {{"password", password}}, {{"email", email}});
+    }
+    // 1验证码错误  2该邮箱未注册
+    sendJson(conn, makeResponse(FIND_PASSWORD_ACK, errno_verify));
 }

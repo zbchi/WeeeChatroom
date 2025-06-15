@@ -84,7 +84,7 @@ void Loginer::sendFriendRequestOffLine(std::string &to_user_id, const TcpConnect
         json js = json::parse(row.at("json"));
         sendJson(conn, js);
 
-        mysql->del("friend_requests", {{"id", row.at("id")}});
+        // mysql->del("friend_requests", {{"id", row.at("id")}});  不删除，处理请求后再删除
     }
 }
 
@@ -110,6 +110,6 @@ void Loginer::sendGroupRequestOffLine(std::string &to_user_id, const TcpConnecti
         json js = json::parse(row.at("json"));
         sendJson(conn, js);
 
-        mysql->del("group_requests", {{"id", row.at("id")}});
+        // mysql->del("group_requests", {{"id", row.at("id")}});  不删除，处理请求后再删除
     }
 }

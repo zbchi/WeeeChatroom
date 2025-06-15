@@ -1,7 +1,4 @@
 #pragma once
-#include <string>
-#include <mutex>
-#include "Handler.h"
 #include "FriendService.h"
 class Neter;
 class Client;

@@ -3,12 +3,9 @@
 #include <vector>
 #include <mutex>
 #include <fstream>
-
-#include "Neter.h"
 #include "base.h"
 class Neter;
 class Client;
-using namespace mylib;
 namespace fs = std::filesystem;
 
 struct ChatMessage

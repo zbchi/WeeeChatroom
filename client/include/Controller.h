@@ -1,6 +1,5 @@
 #pragma once
 #include <map>
-#include <Handler.h>
 #include <mutex>
 #include <condition_variable>
 #include "base.h"
@@ -40,8 +39,10 @@ enum class State
     EXIT_GROUP,
     DESTORY_GROUP,
     ADD_ADMIN,
+    FIND_PASSWORD,
 };
 extern State state_;
+
 class Client;
 class Neter;
 
@@ -63,6 +64,7 @@ private:
     void showChatPanel();
     void showLogin();
     void showRegister();
+    void showFindPassword();
     void showFriends();
     void chatWithFriend();
     void chatWithGroup();

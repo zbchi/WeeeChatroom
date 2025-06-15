@@ -36,13 +36,16 @@ Service::Service() : threadPool_(16),
     handlers_[KICK_MEMBER] = std::make_shared<MemberKicker>(this);
     handlers_[ADD_ADMIN] = std::make_shared<AdminAdder>(this);
     handlers_[REMOVE_ADMIN] = std::make_shared<AdminRemover>(this);
+    handlers_[FIND_PASSWORD] = std::make_shared<PasswordFinder>(this);
+    handlers_[FIND_PASSWORD_ACK] = std::make_shared<PasswordFindAcker>(this);
 
+    // 设置连接回调
     server_.setConnectionCallback([this](const TcpConnectionPtr &conn)
                                   { this->onConnection(conn); });
+    // 设置消息回调
     server_.setMessageCallback([this](const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
-                            
-     
-    { this->onMessage(conn, buf, time); });
+
+                               { this->onMessage(conn, buf, time); });
 }
 
 void Service::start()
@@ -70,7 +73,7 @@ void Service::onConnection(const TcpConnectionPtr &conn)
     {
     }
     else
-    {
+    { // 断开连接讲用户移出在线用户表
         std::lock_guard<std::mutex> lock(onlienUsersMutex_);
         for (auto it = onlienUsers_.begin(); it != onlienUsers_.end(); it++)
         {
@@ -84,7 +87,7 @@ void Service::onConnection(const TcpConnectionPtr &conn)
 }
 
 TcpConnectionPtr Service::getConnectionPtr(std::string user_id)
-{
+{ // 根据user ID 获取 connection指针
     std::lock_guard<std::mutex> lock(onlienUsersMutex_);
     auto it = onlienUsers_.find(user_id);
     if (it != onlienUsers_.end())
@@ -94,7 +97,7 @@ TcpConnectionPtr Service::getConnectionPtr(std::string user_id)
 }
 
 std::string Service::getUserid(const TcpConnectionPtr &conn)
-{
+{ // 根据connection指针 获取 user ID
     std::lock_guard<std::mutex> lock(onlienUsersMutex_);
     for (const auto &pair : onlienUsers_)
     {
@@ -107,7 +110,7 @@ std::string Service::getUserid(const TcpConnectionPtr &conn)
 void Service::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
 {
     while (buf->readableBytes() >= 4)
-    {
+    { // 消息回调时处理TCP粘包
         const void *data = buf->peek();
         int lenNetOrder;
         memcpy(&lenNetOrder, data, sizeof(lenNetOrder));
@@ -119,8 +122,13 @@ void Service::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp tim
         std::string jsonStr(buf->peek(), len);
         buf->retrieve(len);
         std::cout << jsonStr << std::endl;
-
+        // 将json字符串分配给线程池
         threadPool_.add_task([conn, jsonStr, time, this]()
                              { handleMessage(conn, jsonStr, time); });
     }
+}
+
+void Service::setNumThreads(int numThreads)
+{
+    server_.setThreadNum(numThreads);
 }

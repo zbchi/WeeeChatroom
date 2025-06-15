@@ -77,12 +77,11 @@ void FriendAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     { // 在线直接转发
         sendJson(targetConn, js);
     }
-    else
-    { // 离线存储申请记录
-        mysql->insert("friend_requests", {{"to_user_id", to_user_id},
-                                          {"from_user_id", from_user_id},
-                                          {"json", js.dump()}});
-    }
+
+    // 无论是否在线存储申请记录
+    mysql->insert("friend_requests", {{"to_user_id", to_user_id},
+                                      {"from_user_id", from_user_id},
+                                      {"json", js.dump()}});
 }
 
 void FriendAddAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
@@ -104,6 +103,9 @@ void FriendAddAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp ti
     {
         std::cout << "rejectrejectrejectrejectreject" << std::endl;
     }
+    // 处理完后删除申请记录
+    mysql->del("friend_requests", {{"to_user_id", to_user_id},
+                                   {"from_user_id", from_user_id}});
 
     // 更新用户好友列表
     FriendLister list(service_);

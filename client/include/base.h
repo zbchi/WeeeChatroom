@@ -1,15 +1,19 @@
 #pragma once
 #include <nlohmann/json.hpp>
 #include "TcpConnection.h"
+#include "Logger.h"
 #include <mutex>
 #include <condition_variable>
 using json = nlohmann::json;
+using namespace mylib;
 enum MsgType
 {
     REG_MSG = 1,
     REG_MSG_ACK,
     LOGIN_MSG,
     LOGIN_MSG_ACK,
+    FIND_PASSWORD,
+    FIND_PASSWORD_ACK,
     GET_FRIENDS,
     CHAT_MSG,
     CHAT_MSG_ACK,

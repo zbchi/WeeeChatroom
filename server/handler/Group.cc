@@ -44,14 +44,12 @@ void GroupAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
         {
             sendJson(targetConn, js);
         }
-        else // 离线存储加群请求记录，待管理员上线后发
-        {
-            js["to_user_id"] = admin_id;
-            mysql->insert("group_requests", {{"from_user_id", from_user_id},
-                                             {"to_user_id", admin_id},
-                                             {"group_id", group_id},
-                                             {"json", js.dump()}});
-        }
+        // 无论知否在线存储加群请求记录，待管理员上线后发
+        js["to_user_id"] = admin_id;
+        mysql->insert("group_requests", {{"from_user_id", from_user_id},
+                                         {"to_user_id", admin_id},
+                                         {"group_id", group_id},
+                                         {"json", js.dump()}});
     }
 }
 
@@ -76,6 +74,10 @@ void GroupAddAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp tim
     GroupLister list(service_);
     list.sendGroupList(from_user_id);
 
+    // 处理完后删除group_requests表里的记录，防止用户上线再发
+    mysql->del("group_requests", {{"from_user_id", from_user_id},
+                                  {"group_id", group_id}});
+
     // 广播给所有管理员
     json notice;
     notice["msgid"] = ADD_GROUP_REMOVE;
@@ -93,12 +95,7 @@ void GroupAddAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp tim
         {
             sendJson(targetConn, notice);
         }
-        else // 离线存储加remove的json通知，待管理员上线后发
-        {
-            notice["to_user_id"] = admin_id;
-            mysql->insert("remove_jsons", {{"to_user_id", admin_id},
-                                           {"json", notice.dump()}});
-        }
+        // 离线不发移除request的json
     }
 }
 

@@ -3,7 +3,7 @@
 
 void Neter::start()
 {
-    loop_ = loopThread_.startLoop();
+    loop_ = loopThread_.startLoop();//开新的线程接收消息
     Tcpclient_ = std::make_unique<mylib::TcpClient>(loop_, serverAddr_);
 
     Tcpclient_->setConnectionCallback([this](const TcpConnectionPtr &conn)
@@ -17,7 +17,7 @@ void Neter::start()
                                    { this->onMessage(conn, buf, time); });
     Tcpclient_->connect();
 
-    // 等待recv线程连接
+    // 阻塞等待recv线程连接
     {
         std::unique_lock<std::mutex> lock(connMutex_);
         connCond_.wait(lock, [this]
@@ -43,9 +43,8 @@ void Neter::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
         buf->retrieve(len);
         std::cout << jsonStr << std::endl;
 
-        client_->messageQueue_.push(json::parse(jsonStr));
-        // loop_->runInLoop([this, conn, jsonStr]()
-        //                  { client_->handleJson(conn, jsonStr); });
+        loop_->runInLoop([this, conn, jsonStr]()
+                         { client_->handleJson(conn, jsonStr); });
     }
 }
 

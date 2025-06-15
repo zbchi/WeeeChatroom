@@ -1,6 +1,5 @@
 #pragma once
 #include <string>
-#include "Handler.h"
 #include "base.h"
 class Neter;
 class Client;
@@ -16,9 +15,14 @@ public:
     int login(std::string &email, std::string &password);
     void handleLoginAck(const TcpConnectionPtr &conn, json &js);
     void handleRegAck(const TcpConnectionPtr &conn, json &js);
+    void handleFindAck(const TcpConnectionPtr &conn, json &js);
 
+    void findPassword(std::string &email);
+    int findPasswordCode(std::string &email, std::string &password, int code);
     Waiter regWaiter_;
     Waiter loginWaiter_;
+    Waiter findWaiter_;
+
 private:
     Neter *neter_;
     Client *client_;

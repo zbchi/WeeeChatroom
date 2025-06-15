@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
 #include <mutex>
-#include "Handler.h"
 #include "base.h"
 class Neter;
 class Client;

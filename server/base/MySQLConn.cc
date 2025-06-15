@@ -152,6 +152,8 @@ std::string MySQLConn::getNicknameById(std::string &user_id)
 std::string MySQLConn::getIdByEmail(std::string &email)
 {
     auto result = select("users", {{"email", email}});
+    if (result.empty())
+        return "";
     return result[0]["id"];
 }
 
