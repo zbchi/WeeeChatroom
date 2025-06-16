@@ -1,38 +1,14 @@
 #include "Controller.h"
 #include "Client.h"
-#include <iostream>
-#include <limits>
-#include <string>
 #include <thread>
 #include <mutex>
-
 #include <unistd.h>
+#include "ui.h"
 
-State state_ = State::FIND_PASSWORD;
+State state_ = State::LOGINING;
 void clearScreen()
 {
     system("clear");
-}
-
-int getValidInt(const std::string &prompt)
-{
-    int value;
-    while (true)
-    {
-        std::cout << prompt;
-        std::cin >> value;
-        if (std::cin.fail())
-        {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            std::cout << "❌ 输入无效，请输入数字。\n";
-        }
-        else
-        {
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            return value;
-        }
-    }
 }
 
 void Controller::mainLoop()
@@ -107,16 +83,13 @@ void Controller::mainLoop()
 void Controller::showMainMenu()
 {
     clearScreen();
-    std::cout << R"(
-╔════════════════════════╗
-║        主菜单          ║
-╚════════════════════════╝
-[0] 📬 消息中心（聊天面板）
-[1] 👤 好友相关功能
-[2] 👥 群聊相关功能
-[3] ⚙️ 系统设置/退出
-)";
-    int choice = getValidInt("请输入选项 (1-3): ");
+    printHeader("🏠 聊天室主页", "欢迎回来！选择您要进行的操作");
+    printMenuItem(0, "💬", "消息中心", "查看聊天记录和消息");
+    printMenuItem(1, "👥", "好友管理", "添加、删除好友及相关操作");
+    printMenuItem(2, "🏢", "群聊管理", "创建群聊、管理群成员");
+    printMenuItem(3, "⚙️", "系统设置", "账户设置和退出登录");
+
+    int choice = getValidInt("请选择操作: ");
     switch (choice)
     {
     case 0:
@@ -132,7 +105,8 @@ void Controller::showMainMenu()
         showSystemMenu();
         break;
     default:
-        std::cout << "❌ 无效选项\n";
+        printStatus("无效选项，请重新选择", "error");
+        sleep(1);
         break;
     }
 }
@@ -143,63 +117,64 @@ void Controller::showChatPanel()
     client_->groupService_.getGroups();
 
     clearScreen();
-    std::cout << MAGENTA << BOLD << R"(
-┌═════════════════════════════════════┐
-│            📬 消息中心              │
-└═════════════════════════════════════┘
-)" << RESET;
+    printHeader("💬 消息中心", "选择聊天对象开始对话");
 
     std::vector<std::string> types;
     std::vector<std::string> ids;
     int index = 1;
 
-    std::cout << YELLOW << "好友列表:\n"
-              << RESET;
-    for (const auto &f : client_->friendList_)
+    // 显示好友列表
+    if (!client_->friendList_.empty())
     {
-        std::cout << BLUE << index << ". 👤 " << f.nickname_ << " "
-                  << (f.isOnline_ ? GREEN "● 在线" : RED "○ 离线") << RESET << "\n";
-        types.push_back("friend");
-        ids.push_back(f.id_);
-        ++index;
+        printDivider("好友列表", "─");
+        for (const auto &f : client_->friendList_)
+        {
+            std::string status = f.isOnline_ ? std::string(SUCCESS) + "● 在线" : std::string(DIM) + "○ 离线";
+            std::cout << PRIMARY << "[" << BOLD << index << RESET PRIMARY << "] "
+                      << "👤 " << BOLD << f.nickname_ << RESET << " "
+                      << status << RESET << "\n";
+            types.push_back("friend");
+            ids.push_back(f.id_);
+            ++index;
+        }
+        std::cout << "\n";
     }
-
-    std::cout << YELLOW << "\n群聊列表:\n"
-              << RESET;
-    for (const auto &g : client_->groupList_)
+    // 显示群聊列表
+    if (!client_->groupList_.empty())
     {
-        std::cout << BLUE << index << ". 👥 " << g.group_name << RESET << "\n";
-        types.push_back("group");
-        ids.push_back(g.group_id_);
-        ++index;
+        printDivider("群聊列表", "─");
+        for (const auto &g : client_->groupList_)
+        {
+            std::cout << SECONDARY << "[" << BOLD << index << RESET SECONDARY << "] "
+                      << "🏢 " << BOLD << g.group_name << RESET << "\n";
+            types.push_back("group");
+            ids.push_back(g.group_id_);
+            ++index;
+        }
+        std::cout << "\n";
     }
 
     if (index == 1)
     {
-        std::cout << YELLOW << "⚠️ 暂无好友或群聊，快去添加吧！\n"
-                  << RESET;
+        printStatus("暂无好友或群聊，快去添加吧！", "warning");
     }
 
-    std::cout << CYAN << "\n快捷操作:\n"
-              << "[91] 好友请求 (" << client_->friendRequests_.size() << ")\n"
-              << "[92] 群聊请求 (" << client_->groupAddRequests_.size() << ")\n"
-              << "[0] 返回主菜单\n"
-              << RESET;
-    std::cout << GRADIENT_END << "➤ 选择编号或快捷键: " << RESET;
+    // 快捷操作
+    printDivider("快捷操作", "=");
+    std::cout << WARNING << BOLD << "[91] " << RESET << "📥 好友请求 "
+              << BG_WARNING << " " << client_->friendRequests_.size() << " " << RESET << "\n";
+    std::cout << INFO << BOLD << "[92] " << RESET << "📨 群聊请求 "
+              << BG_PRIMARY << " " << client_->groupAddRequests_.size() << " " << RESET << "\n";
+    std::cout << DIM << "[0]  🔙 返回主菜单" << RESET << "\n\n";
 
-    int choice = getValidInt("");
+    int choice = getValidInt("请选择");
+
     if (choice == 0)
-    {
         state_ = State::MAIN_MENU;
-    }
     else if (choice == 91)
-    {
         state_ = State::HANDLE_FRIEND_REQUEST;
-    }
     else if (choice == 92)
-    {
         state_ = State::HANDLE_GROUP_REQUEST;
-    }
     else if (choice >= 1 && choice < index)
     {
         if (types[choice - 1] == "friend")
@@ -230,26 +205,23 @@ void Controller::showChatPanel()
     }
     else
     {
-        std::cout << RED << "⚠️ 无效选择\n"
-                  << RESET;
+        printStatus("无效选择", "error");
+        sleep(1);
     }
 }
 
 void Controller::showFriendMenu()
 {
     clearScreen();
-    std::cout << R"(
-╔════════════════════════╗
-║     👤 好友功能菜单     ║
-╚════════════════════════╝
+    printHeader("👥 好友管理", "管理您的好友关系");
 
-[1] 与好友聊天
-[2] 添加好友
-[3] 删除好友
-[4] 处理好友请求
-[0] 返回主菜单
-)";
-    int choice = getValidInt("请输入选项: ");
+    printMenuItem(1, "💬", "与好友聊天", "选择好友开始对话");
+    printMenuItem(2, "➕", "添加好友", "通过ID添加新好友");
+    printMenuItem(3, "🗑️", "删除好友", "移除好友关系");
+    printMenuItem(4, "📥", "处理好友请求", "查看并处理好友申请");
+    printMenuItem(0, "🔙", "返回主菜单", "");
+
+    int choice = getValidInt("请选择操作");
     switch (choice)
     {
     case 1:
@@ -268,7 +240,8 @@ void Controller::showFriendMenu()
         state_ = State::MAIN_MENU;
         break;
     default:
-        std::cout << "❌ 无效选项\n";
+        printStatus("无效选项", "error");
+        sleep(1);
         break;
     }
 }
@@ -276,18 +249,14 @@ void Controller::showFriendMenu()
 void Controller::showGroupMenu()
 {
     clearScreen();
-    std::cout << R"(
-╔════════════════════════╗
-║     👥 群聊功能菜单     ║
-╚════════════════════════╝
+    printHeader("🏢 群聊管理", "管理您的群聊");
 
-[1] 创建群聊
-[2] 加入群聊
-[3] 处理加群申请
-[4] 查看群聊列表
-[0] 返回主菜单
-)";
-    int choice = getValidInt("请输入选项: ");
+    printMenuItem(1, "🆕", "创建群聊", "创建一个新的群聊");
+    printMenuItem(2, "🔗", "加入群聊", "通过ID加入现有群聊");
+    printMenuItem(3, "📨", "处理加群申请", "查看并处理入群请求");
+    printMenuItem(4, "📋", "查看群聊列表", "浏览所有已加入的群聊");
+    printMenuItem(0, "🔙", "返回主菜单", "");
+    int choice = getValidInt("请选择操作:");
     switch (choice)
     {
     case 1:
@@ -306,7 +275,8 @@ void Controller::showGroupMenu()
         state_ = State::MAIN_MENU;
         break;
     default:
-        std::cout << "❌ 无效选项\n";
+        printStatus("无效选项", "error");
+        sleep(1);
         break;
     }
 }
@@ -314,15 +284,13 @@ void Controller::showGroupMenu()
 void Controller::showSystemMenu()
 {
     clearScreen();
-    std::cout << R"(
-╔════════════════════════╗
-║      ⚙️ 系统设置菜单     ║
-╚════════════════════════╝
+    printHeader("⚙️ 系统设置", "账户管理和系统设置");
 
-[1] 退出登录
-[0] 返回主菜单
-)";
-    int choice = getValidInt("请输入选项: ");
+    printMenuItem(1, "🚪", "退出登录", "注销当前账户");
+    printMenuItem(2, "🔒", "找回密码", "重置账户密码");
+    printMenuItem(0, "🔙", "返回主菜单", "");
+
+    int choice = getValidInt("请选择操作: ");
     switch (choice)
     {
     case 1:
@@ -332,7 +300,8 @@ void Controller::showSystemMenu()
         state_ = State::MAIN_MENU;
         break;
     default:
-        std::cout << "❌ 无效选项\n";
+        printStatus("无效选项", "error");
+        sleep(1);
         break;
     }
 }
@@ -340,34 +309,30 @@ void Controller::showSystemMenu()
 void Controller::showRegister()
 {
     clearScreen();
-    std::cout << R"(
-╔════════════════════════╗
-║       📝 用户注册       ║
-╚════════════════════════╝
-)";
+    printHeader("📝 用户注册", "创建您的账户");
     std::string email, password, nickname;
-    std::cout << "📧 邮箱: ";
-    std::cin >> email;
-    std::cout << "🔐 密码: ";
-    std::cin >> password;
-    std::cout << "👤 昵称: ";
-    std::cin >> nickname;
+
+    email = getValidString("📧 请输入邮箱地址: ");
+    password = getValidString("🔐 请输入密码: ");
+    nickname = getValidString("👤 请输入昵称: ");
 
     client_->userService_.regiSter(email, password, nickname);
 
     while (true)
     {
-        int code = getValidInt("📩 输入验证码: ");
+        int code = getValidInt("📩 请输入验证码: ");
         int reg_errno = client_->userService_.registerCode(email, password, nickname, code);
+
         if (reg_errno == 0)
         {
-            std::cout << "✅ 注册成功!\n";
+            printStatus("注册成功！", "success");
+            sleep(2);
             state_ = State::LOGINING;
             break;
         }
         else
         {
-            std::cout << "❌ 注册失败，错误码: " << reg_errno << "\n";
+            printStatus("注册失败，错误码: " + std::to_string(reg_errno), "error");
             if (reg_errno != 1)
             {
                 state_ = State::REGISTERING;
@@ -380,17 +345,11 @@ void Controller::showRegister()
 void Controller::showFindPassword()
 {
     clearScreen();
-    std::cout << R"(
-╔════════════════════════╗
-║       📝 找回密码       ║
-╚════════════════════════╝
-)";
-    std::string email, password, nickname;
-    std::cout << "📧 邮箱: ";
-    std::cin >> email;
-    std::cout << "🔐 新的密码: ";
-    std::cin >> password;
-
+    printHeader("🔒 找回密码", "重置您的账户密码");
+    std::string email, password;
+    email = getValidString("📧 请输入账户的邮箱:");
+    password = getValidString("🔐请输入新的密码:");
+    printStatus("正在发送验证码到您的邮箱...", "info");
     client_->userService_.findPassword(email);
 
     while (true)
@@ -399,13 +358,13 @@ void Controller::showFindPassword()
         int reg_errno = client_->userService_.findPasswordCode(email, password, code);
         if (reg_errno == 0)
         {
-            std::cout << "✅ 重置密码成功!\n";
+            printStatus("密码重置成功!", "success");
             state_ = State::LOGINING;
             break;
         }
         else
         {
-            std::cout << "❌ 重置密码失败，错误码: " << reg_errno << "\n";
+            printStatus("重置失败,错误码:" + std::to_string(reg_errno), "error");
             if (reg_errno != 1)
             {
                 sleep(1);
@@ -419,30 +378,25 @@ void Controller::showFindPassword()
 void Controller::showLogin()
 {
     clearScreen();
-    std::cout << R"(
-╔════════════════════════╗
-║       🔑 用户登录       ║
-╚════════════════════════╝
-)";
+    printHeader("🔑 用户登录", "欢迎回来");
     std::string email, password;
-    std::cout << "📧 邮箱: ";
-    std::cin >> email;
-
+    email = getValidString("📧 邮箱地址: ");
     while (true)
     {
-        std::cout << "🔐 密码: ";
-        std::cin >> password;
+        password = getValidString("🔐 密码: ");
+        printStatus("正在验证身份...", "info");
         int login_errno = client_->userService_.login(email, password);
 
         if (login_errno == 0)
         {
-            std::cout << "✅ 登录成功，欢迎 " << client_->user_email_ << "\n";
+            printStatus("登录成功！欢迎 " + client_->user_email_, "success");
+            sleep(2);
             state_ = State::CHAT_PANEL;
             break;
         }
         else
         {
-            std::cout << "❌ 登录失败，错误码: " << login_errno << "\n";
+            printStatus("登录失败，错误码: " + std::to_string(login_errno), "error");
             if (login_errno != 1)
             {
                 state_ = State::LOGINING;
@@ -580,10 +534,13 @@ void Controller::chatWithGroup()
 void Controller::showAddFriend()
 {
     clearScreen();
-    std::cout << "➕ 请输入要添加的好友ID: ";
-    std::string friend_id;
-    std::cin >> friend_id;
+    printHeader("➕ 添加好友", "通过用户ID添加新好友");
+
+    std::string friend_id = getValidString("🆔 请输入好友ID: ");
+    printStatus("正在发送好友请求...", "info");
     client_->friendService_.addFriend(friend_id);
+    printStatus("好友请求已发送！", "success");
+    sleep(1);
     state_ = State::MAIN_MENU;
 }
 
@@ -768,13 +725,6 @@ void Controller::showGroupMembers()
         ++i;
     }
 
-    if (member_ids.empty())
-    {
-        std::cout << "⚠️ 没有成员\n";
-        state_ = State::SHOW_GROUPS;
-        return;
-    }
-
     int choice = getValidInt("🔢 选择成员编号进行管理 (0 返回): ");
     if (choice == 0)
     {
@@ -801,13 +751,11 @@ void Controller::showGroupMembers()
         return;
     }
 
-    std::cout << R"(
-选择操作:
-1. ❌ 踢出成员
-2. ⬆️ 设为管理员
-3. ⬇️ 取消管理员
-0. 返回
-)";
+    printMenuItem(1, "❌", "踢出成员");
+    printMenuItem(2, "⬆️", "设为管理员");
+    printMenuItem(3, "⬇️", "取消管理员");
+    printMenuItem(0, "", "返回");
+
     int action = getValidInt("输入操作编号: ");
     switch (action)
     {
@@ -815,32 +763,29 @@ void Controller::showGroupMembers()
         break;
     case 1:
         client_->groupService_.kickMember(target_id);
-        std::cout << "✅ 已踢出成员。\n";
+        printStatus("已踢出成员", "info");
         break;
     case 2:
         if (target_role == "admin" || target_role == "owner")
-        {
-            std::cout << "⚠️ 对方已经是管理员或群主。\n";
-        }
+            printStatus("对方已经是管理员或群主。", "warning");
         else
         {
             client_->groupService_.addAdmin(target_id);
-            std::cout << "✅ 已设为管理员。\n";
+            printStatus("已设为管理员", "info");
         }
         break;
     case 3:
         if (target_role != "admin")
-        {
-            std::cout << "⚠️ 对方不是管理员，无法取消。\n";
-        }
+            printStatus("对方不是管理员，无法取消。", "warning");
         else
         {
             client_->groupService_.removeAdmin(target_id);
-            std::cout << "✅ 已取消管理员。\n";
+            printStatus("已取消管理员。", "info");
         }
         break;
     default:
-        std::cout << "❌ 无效操作。\n";
+        printStatus("无效选择", "error");
+        sleep(1);
         break;
     }
 
@@ -852,18 +797,15 @@ void Controller::showDestroyGroup()
     clearScreen();
     bool isOwner = client_->currentGroup_.group_members[client_->user_id_].role_ == "owner";
     if (isOwner)
-    {
-        std::cout << "⚠️ 你是群主，此操作将解散群聊！\n";
-    }
+        printStatus("你是群主，此操作将解散群聊！", "warning");
     else
-    {
-        std::cout << "⚠️ 你将退出该群聊。\n";
-    }
+         printStatus("你将退出该群聊。", "warning");
+
     int confirm = getValidInt("确认操作？(1=是): ");
     if (confirm == 1)
     {
         client_->groupService_.exitGroup();
-        std::cout << "✅ 操作已完成。\n";
+        printStatus("操作已完成。", "info");
     }
     state_ = State::MAIN_MENU;
 }
@@ -871,100 +813,30 @@ void Controller::showDestroyGroup()
 void Controller::flushLogs()
 {
     clearScreen();
-    std::cout << MAGENTA << BOLD << R"(
-┌─────────────────────────────────────────────┐
-│ 与 )" << client_->currentFriend_.nickname_
-              << " 的聊天" << std::string(30 - client_->currentFriend_.nickname_.length(), ' ') << R"(│
-└─────────────────────────────────────────────┘
-)" << RESET;
-
-    for (const auto &log : client_->chatLogs_[client_->currentFriend_.id_])
-    {
-        std::string time = log.timestamp;
-        std::string sender = log.sender_id == client_->user_id_ ? "我" : client_->currentFriend_.nickname_;
-        std::string content = log.content;
-
-        if (log.sender_id == client_->user_id_)
-        {
-            std::cout << GREEN << "┌────────────────────────────────────────────────────────┐\n"
-                      << "│ " << std::left << std::setw(10) << sender << " " << std::right << std::setw(30) << time << " \n"
-                      << "│ " << std::left << std::setw(40) << content << " \n"
-                      << "└────────────────────────────────────────────────────────┘\n"
-                      << RESET;
-        }
-        else
-        {
-            std::cout << "┌────────────────────────────────────────────────────────┐\n"
-                      << "│ " << std::left << std::setw(10) << sender << " " << std::right << std::setw(30) << time << " \n"
-                      << "│ " << std::left << std::setw(40) << content << " \n"
-                      << "└────────────────────────────────────────────────────────┘\n";
-        }
-    }
+    printHeader("💬" + client_->currentFriend_.nickname_);
+    printLogs(client_->chatLogs_[client_->currentFriend_.id_]);
 }
 
 void Controller::flushGroupLogs()
 {
     clearScreen();
-    std::cout << MAGENTA << BOLD << R"(
-┌─────────────────────────────────────────────┐
-│ 群聊: )" << client_->currentGroup_.group_name
-              << std::string(30 - client_->currentGroup_.group_name.length(), ' ') << R"(│
-└─────────────────────────────────────────────┘
-)" << RESET;
-
-    for (const auto &log : client_->groupChatLogs_[client_->currentGroup_.group_id_])
-    {
-        std::string time = log.timestamp;
-        std::string sender = log.sender_id == client_->user_id_ ? "我" : client_->currentGroup_.group_members[log.sender_id].nickname_;
-        std::string content = log.content;
-
-        if (log.sender_id == client_->user_id_)
-        {
-            std::cout << GREEN << "┌────────────────────────────────────────────────────────┐\n"
-                      << "│ " << std::left << std::setw(10) << sender << " " << std::right << std::setw(30) << time << " \n"
-                      << "│ " << std::left << std::setw(40) << content << " \n"
-                      << "└────────────────────────────────────────────────────────┘\n"
-                      << RESET;
-        }
-        else
-        {
-            std::cout << "┌─────────────────────────────────────────────┐\n"
-                      << "│ " << std::left << std::setw(10) << sender << " " << std::right << std::setw(30) << time << " \n"
-                      << "│ " << std::left << std::setw(40) << content << " \n"
-                      << "└─────────────────────────────────────────────┘\n";
-        }
-    }
+    printHeader("💬" + client_->currentGroup_.group_name);
+    printLogs(client_->groupChatLogs_[client_->currentGroup_.group_id_]);
 }
 void Controller::flushFriends()
 {
     clearScreen();
-    std::cout << R"(
-╔════════════════════════╗
-║        好友列表        ║
-╚════════════════════════╝
-)";
-    if (client_->friendList_.empty())
-    {
-        std::cout << "⚠️ 没有好友。\n";
-        return;
-    }
-
+    printHeader("好友列表", "选择好友进行操作");
     for (size_t i = 0; i < client_->friendList_.size(); ++i)
-    {
         std::cout << (i + 1) << ". " << client_->friendList_[i].nickname_
                   << " [" << (client_->friendList_[i].isOnline_ ? "🟢 在线" : "🔴 离线") << "]\n";
-    }
     std::cout << "🔢 请输入要选择的好友编号 (或 0 返回): ";
 }
 
 void Controller::flushRequests()
 {
     clearScreen();
-    std::cout << R"(
-╔════════════════════════╗
-║      好友请求列表      ║
-╚════════════════════════╝
-)";
+    printHeader("📥好友请求列表");
     int i = 1;
     for (const auto &req : client_->friendRequests_)
     {
@@ -978,11 +850,7 @@ void Controller::flushRequests()
 void Controller::flushGroupRequests()
 {
     clearScreen();
-    std::cout << R"(
-╔══════════════════════════════╗
-║        群聊加群请求列表      ║
-╚══════════════════════════════╝
-)";
+    printHeader("📨 群聊请求列表");
     int i = 1;
     for (const auto &req : client_->groupAddRequests_)
     {
@@ -996,21 +864,44 @@ void Controller::flushGroupRequests()
 void Controller::flushGroups()
 {
     clearScreen();
-    std::cout << R"(
-╔════════════════════════╗
-║        群聊列表        ║
-╚════════════════════════╝
-)";
-    if (client_->groupList_.empty())
-    {
-        std::cout << "⚠️ 当前没有加入任何群聊。\n";
-        return;
-    }
+    printHeader("🏢群聊列表", "选择群聊进行操作");
 
     for (size_t i = 0; i < client_->groupList_.size(); ++i)
-    {
         std::cout << (i + 1) << ". 📛 " << client_->groupList_[i].group_name << "\n";
-    }
-
     std::cout << "🔢 请输入要选择的群聊编号 (或 0 返回): ";
+}
+
+void Controller::printLogs(ChatLogs &chatLogs)
+{
+    const int boxWidth = 60;
+
+    for (const auto &log : chatLogs)
+    {
+        std::string time = log.timestamp;
+        std::string sender = log.sender_id == client_->user_id_ ? "我" : client_->currentGroup_.group_members[log.sender_id].nickname_;
+        std::string content = log.content;
+        std::vector<std::string> lines = wrapContent(content, boxWidth - 2);
+
+        if (log.sender_id == client_->user_id_)
+            std::cout << GREEN;
+        // 顶部边框
+        std::cout << "┌" << repeat(boxWidth, "─") << "┐\n";
+        // 昵称 + 时间那一行
+        int nameWidth = getDisplayWidth(sender);
+        int timeWidth = getDisplayWidth(time);
+        int spaceBetween = boxWidth - nameWidth - timeWidth - 2; // 两侧空格
+        std::cout << "│ " << sender << std::string(spaceBetween, ' ') << time << " │\n";
+        // 消息正文
+        for (const auto &line : lines)
+        {
+            int padding = boxWidth - getDisplayWidth(line) - 2;
+            std::cout << "│ " << line << std::string(padding, ' ') << " │\n";
+        }
+        // 底部边框
+        std::cout << "└" << repeat(boxWidth, "─") << "┘\n";
+
+        if (log.sender_id == client_->user_id_)
+            std::cout << RESET;
+    }
+    std::cout << DIM << "💡 提示: /c 查看更多历史记录, /exit 退出聊天" << RESET << "\n";
 }

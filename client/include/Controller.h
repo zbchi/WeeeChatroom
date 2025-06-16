@@ -3,6 +3,7 @@
 #include <mutex>
 #include <condition_variable>
 #include "base.h"
+#include "ChatService.h"
 
 #define RESET "\033[0m"
 #define RED "\033[31m"
@@ -52,6 +53,7 @@ public:
     Controller(Neter *neter, Client *client) : client_(client), neter_(neter) {}
     void mainLoop();
 
+    void printLogs(ChatLogs &chatLogs);
     void flushLogs();
     void flushGroupLogs();
     void flushFriends();

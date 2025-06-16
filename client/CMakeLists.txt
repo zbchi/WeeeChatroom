@@ -7,6 +7,7 @@ add_executable(chat_client
     Neter.cc
     Controller.cc
     Client.cc
+    ui.cc
 )
 
 target_link_libraries(chat_client PRIVATE 
