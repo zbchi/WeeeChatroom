@@ -111,7 +111,6 @@ void GroupLister::sendGroupList(std::string &user_id)
     if (conn == nullptr)
         return;
     auto groupsId = getGroupsId(user_id);
-
     auto groups = getGroupsInfo(groupsId);
 
     json groupList;
