@@ -34,7 +34,6 @@
 
 int getDisplayWidth(const std::string &str);
 void printHeader(const std::string &title, const std::string &subtitle = "");
-void printBox(const std::string &content, const std::string &color = PRIMARY);
 void printDivider(const std::string &text = "", std::string ch = "-");
 void printMenuItem(int index, const std::string &icon, const std::string &text,
                    const std::string &description = "", bool highlight = false);
@@ -44,3 +43,4 @@ int getValidInt(const std::string &prompt);
 std::string getValidString(const std::string &prompt);
 std::vector<std::string> wrapContent(const std::string &text, int maxWidth);
 std::string repeat(int count, const std::string &ch);
+void clearScreen();

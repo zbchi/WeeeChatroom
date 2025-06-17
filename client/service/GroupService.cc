@@ -106,6 +106,7 @@ void GroupService::getGroupInfo()
 
 void GroupService::handleGroupInfo(const TcpConnectionPtr &conn, json &js)
 {
+    client_->currentGroup_.group_members.clear();
     GroupMember m;
     for (const auto &amember : js["members"])
     {

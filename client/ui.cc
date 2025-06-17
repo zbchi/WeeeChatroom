@@ -70,15 +70,6 @@ void printHeader(const std::string &title, const std::string &subtitle)
     std::cout << "╰─────────────────────────────────────────────────────────────────────╯" << RESET << "\n\n";
 }
 
-void printBox(const std::string &content, const std::string &color)
-{
-    std::cout << color << "┌─────────────────────────────────────────────────────────────────────┐\n";
-    int width = 68;
-    int contentWidth = getDisplayWidth(content);
-    std::cout << "│ " << content << std::string(width - contentWidth, ' ') << "│\n";
-    std::cout << "└─────────────────────────────────────────────────────────────────────┘" << RESET << "\n";
-}
-
 void printDivider(const std::string &text, std::string ch)
 {
     int width = 70;
@@ -233,4 +224,9 @@ std::vector<std::string> wrapContent(const std::string &text, int maxWidth)
     }
 
     return lines;
+}
+
+void clearScreen()
+{
+    system("clear");
 }

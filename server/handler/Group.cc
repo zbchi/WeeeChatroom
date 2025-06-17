@@ -162,7 +162,6 @@ void GroupInfoSender::handle(const TcpConnectionPtr &conn, json &js, Timestamp t
         m["role"] = memberId.at("role");
         auto member_info = mysql->select("users", {{"id", user_id}});
         m["nickname"] = member_info[0].at("nickname");
-
         membersInfo["members"].push_back(m);
     }
     sendJson(conn, membersInfo);
