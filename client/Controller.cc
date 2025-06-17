@@ -65,15 +65,12 @@ void Controller::mainLoop()
         case State::EXIT_GROUP:
             showExitGroup();
             break;
-
         case State::DESTORY_GROUP:
             showDestroyGroup();
             break;
-
         case State::FIND_PASSWORD:
             showFindPassword();
             break;
-
         default:
             break;
         }
@@ -484,7 +481,6 @@ void Controller::chatWithGroup()
     int count = 20;
     client_->chatService_.loadInitChatLogs(client_->currentGroup_.group_id_, count, true);
     clearScreen();
-    std::cout << "💬 群聊中（输入 /exit 退出）\n";
     flushGroupLogs();
     std::string content;
     while (true)
@@ -569,10 +565,8 @@ void Controller::showCreateGroup()
 {
     clearScreen();
     std::string name, desc;
-    std::cout << "📛 群名: ";
-    std::cin >> name;
-    std::cout << "📝 群描述: ";
-    std::cin >> desc;
+    name = getValidString("📛 群名:");
+    desc = getValidString("📝 群描述: ");
     client_->groupService_.createGroup(name, desc);
     state_ = State::MAIN_MENU;
 }
@@ -604,7 +598,8 @@ void Controller::showHandleFriendRequest()
 
         if (i < 1 || i > static_cast<int>(client_->friendRequests_.size()))
         {
-            std::cout << "❌ 无效编号\n";
+            printStatus("无效编号", "error");
+            sleep(1);
             continue;
         }
 
@@ -707,11 +702,7 @@ void Controller::showExitGroup()
 void Controller::showGroupMembers()
 {
     clearScreen();
-    std::cout << R"(
-╔════════════════════════════════╗
-║        👥 群成员列表           ║
-╚════════════════════════════════╝
-)";
+    printHeader("👥 群成员列表");
     std::vector<std::string> member_ids;
     std::vector<std::string> roles;
     int i = 0;
@@ -734,7 +725,8 @@ void Controller::showGroupMembers()
 
     if (choice < 1 || choice > static_cast<int>(member_ids.size()))
     {
-        std::cout << "❌ 无效编号\n";
+        printStatus("无效编号", "error");
+        sleep(1);
         state_ = State::SHOW_GROUPS;
         return;
     }
@@ -746,7 +738,8 @@ void Controller::showGroupMembers()
     // 群主 or 管理员才有权限管理他人
     if (my_role == "member")
     {
-        std::cout << "🚫 你没有管理权限。\n";
+        printStatus("你没有管理权限。", "error");
+        sleep(1);
         state_ = State::SHOW_GROUPS;
         return;
     }
@@ -799,7 +792,7 @@ void Controller::showDestroyGroup()
     if (isOwner)
         printStatus("你是群主，此操作将解散群聊！", "warning");
     else
-         printStatus("你将退出该群聊。", "warning");
+        printStatus("你将退出该群聊。", "warning");
 
     int confirm = getValidInt("确认操作？(1=是): ");
     if (confirm == 1)
@@ -821,7 +814,7 @@ void Controller::flushGroupLogs()
 {
     clearScreen();
     printHeader("💬" + client_->currentGroup_.group_name);
-    printLogs(client_->groupChatLogs_[client_->currentGroup_.group_id_]);
+    printLogs(client_->groupChatLogs_[client_->currentGroup_.group_id_], true);
 }
 void Controller::flushFriends()
 {
@@ -871,14 +864,17 @@ void Controller::flushGroups()
     std::cout << "🔢 请输入要选择的群聊编号 (或 0 返回): ";
 }
 
-void Controller::printLogs(ChatLogs &chatLogs)
+void Controller::printLogs(ChatLogs &chatLogs, bool is_group)
 {
     const int boxWidth = 60;
-
     for (const auto &log : chatLogs)
     {
         std::string time = log.timestamp;
-        std::string sender = log.sender_id == client_->user_id_ ? "我" : client_->currentGroup_.group_members[log.sender_id].nickname_;
+        std::string sender;
+        if (is_group)
+            sender = log.sender_id == client_->user_id_ ? "我" : client_->currentGroup_.group_members[log.sender_id].nickname_;
+        else
+            sender = log.sender_id == client_->user_id_ ? "我" : client_->currentFriend_.nickname_;
         std::string content = log.content;
         std::vector<std::string> lines = wrapContent(content, boxWidth - 2);
 
@@ -903,5 +899,5 @@ void Controller::printLogs(ChatLogs &chatLogs)
         if (log.sender_id == client_->user_id_)
             std::cout << RESET;
     }
-    std::cout << DIM << "💡 提示: /c 查看更多历史记录, /exit 退出聊天" << RESET << "\n";
+    std::cout << DIM << "💡 提示: /c向上翻页,/ 向下翻页, /exit 退出聊天" << RESET << "\n";
 }

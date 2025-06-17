@@ -53,7 +53,7 @@ public:
     Controller(Neter *neter, Client *client) : client_(client), neter_(neter) {}
     void mainLoop();
 
-    void printLogs(ChatLogs &chatLogs);
+    void printLogs(ChatLogs &chatLogs,bool is_group=false);
     void flushLogs();
     void flushGroupLogs();
     void flushFriends();
