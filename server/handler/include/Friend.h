@@ -1,6 +1,6 @@
 #pragma once
 #include "Handler.h"
-#include "MySQLConn.h"
+
 using namespace mylib;
 class Service;
 class FriendAddAcker;

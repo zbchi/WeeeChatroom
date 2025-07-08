@@ -11,8 +11,8 @@ Client::Client() : neter_(this), controller_(&neter_, this),
                    chatService_(&neter_, this),
                    userService_(&neter_, this),
                    friendService_(&neter_, this),
-                   groupService_(&neter_, this)
-                  // fileService_(&neter_, this)
+                   groupService_(&neter_, this),
+                   fileService_(&neter_, this)
 {
     msgHandlerMap_[LOGIN_MSG_ACK] = [this](const TcpConnectionPtr &conn, json &js)
     { this->userService_.handleLoginAck(conn, js); };

@@ -390,6 +390,10 @@ void Controller::chatWithFriend()
             }
             continue;
         }
+        else if(content=="/f")
+        {
+            state_=State::FILE;
+        }
 
         int chat_errno = client_->chatService_.sendMessage(content);
         if (chat_errno == 0)

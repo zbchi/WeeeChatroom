@@ -1,4 +1,4 @@
-#include "Grouper.h"
+#include "Group.h"
 
 #include "Service.h"
 #include "Timestamp.h"
@@ -111,7 +111,6 @@ void GroupLister::sendGroupList(std::string &user_id)
     if (conn == nullptr)
         return;
     auto groupsId = getGroupsId(user_id);
-
     auto groups = getGroupsInfo(groupsId);
 
     json groupList;

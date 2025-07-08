@@ -130,11 +130,14 @@ CREATE TABLE IF NOT EXISTS files
     id INT AUTO_INCREMENT PRIMARY KEY,
     sender_id INT,
     receiver_id INT,
-    size BIGINT,
-    name TEXT,
+    group_id INT,
+    file_size BIGINT,
+    file_name TEXT,
+    is_group BOOL DEFAULT FALSE,
     send_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sender_id) REFERENCES users(id),
-    FOREIGN KEY (receiver_id) REFERENCES users(id)
+    FOREIGN KEY (receiver_id) REFERENCES users(id),
+    FOREIGN KEY (group_id) REFERENCES `groups`(id)
 );
 
 CREATE USER 'zb'@'localhost' IDENTIFIED BY '1662308219@Zb';

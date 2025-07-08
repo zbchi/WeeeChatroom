@@ -1,4 +1,4 @@
-#include "Friender.h"
+#include "Friend.h"
 
 #include "Service.h"
 #include "Timestamp.h"
@@ -20,8 +20,6 @@ void FriendLister::sendFriendList(std::string &user_id)
     if (conn == nullptr)
         return;
     auto friendsId = getFriendsId(user_id);
-    if (friendsId.empty())
-        return;
     auto friends = getFriendsInfo(friendsId);
 
     json friendList;
@@ -50,8 +48,9 @@ Result FriendLister::getFriendsId(std::string &user_id)
 
 Result FriendLister::getFriendsInfo(Result &friendsId)
 {
+    if (friendsId.empty())
+        return {};
     auto mysql = MySQLConnPool::instance().getConnection();
-
     std::vector<std::string> id_list;
     for (const auto &friend_map : friendsId)
     {

@@ -30,4 +30,5 @@ enum MsgType
     KICK_MEMBER,
     ADD_ADMIN,
     REMOVE_ADMIN,
+    UPLOAD_FILE,
 };

@@ -4,11 +4,11 @@
 
 #include "Service.h"
 #include "Register.h"
-#include "Loginer.h"
-#include "Friender.h"
-#include "Chatter.h"
-#include "Grouper.h"
-// #include "Adder.h"
+#include "Login.h"
+#include "Friend.h"
+#include "Chat.h"
+#include "Group.h"
+#include "File.h"
 
 #include "MySQLConn.h"
 #include "base.h"
@@ -38,6 +38,7 @@ Service::Service() : threadPool_(16),
     handlers_[REMOVE_ADMIN] = std::make_shared<AdminRemover>(this);
     handlers_[FIND_PASSWORD] = std::make_shared<PasswordFinder>(this);
     handlers_[FIND_PASSWORD_ACK] = std::make_shared<PasswordFindAcker>(this);
+    handlers_[UPLOAD_FILE] = std::make_shared<FileUploader>(this);
 
     // 设置连接回调
     server_.setConnectionCallback([this](const TcpConnectionPtr &conn)

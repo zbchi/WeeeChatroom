@@ -1,6 +1,6 @@
 #pragma once
 #include <nlohmann/json.hpp>
-
+#include "MySQLConn.h"
 #include "TcpConnection.h"
 using json = nlohmann::json;
 using namespace mylib;

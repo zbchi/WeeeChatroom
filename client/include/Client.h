@@ -10,7 +10,7 @@
 #include "ChatService.h"
 #include "FriendService.h"
 #include "GroupService.h"
-//#include "FileService.h"
+#include "FileService.h"
 
 #include "Controller.h"
 
@@ -54,7 +54,7 @@ private:
     ChatService chatService_;
     FriendService friendService_;
     GroupService groupService_;
-    //FileService fileService_;
+    FileService fileService_;
 
     Controller controller_;
 };

@@ -41,6 +41,8 @@ enum class State
     DESTORY_GROUP,
     ADD_ADMIN,
     FIND_PASSWORD,
+    FILE_FRIEND,
+    FILE_GROUP,
 };
 extern State state_;
 
@@ -84,6 +86,9 @@ private:
     void showGroupMenu();
     void showFriendMenu();
     void showSystemMenu();
+
+    void fileWithFriend();
+    void fileWithGroup();
     Client *client_;
     Neter *neter_;
 };
