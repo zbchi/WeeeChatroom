@@ -3,6 +3,7 @@ ChatService.cc
 FriendService.cc
 GroupService.cc
 UserService.cc
+FileService.cc
 )
 
 

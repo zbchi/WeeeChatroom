@@ -4,6 +4,7 @@ Register.cc
 Friend.cc
 Chat.cc
 Group.cc
+File.cc
 )
 
 

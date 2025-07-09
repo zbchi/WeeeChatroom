@@ -39,6 +39,7 @@ Service::Service() : threadPool_(16),
     handlers_[FIND_PASSWORD] = std::make_shared<PasswordFinder>(this);
     handlers_[FIND_PASSWORD_ACK] = std::make_shared<PasswordFindAcker>(this);
     handlers_[UPLOAD_FILE] = std::make_shared<FileUploader>(this);
+    handlers_[GET_FILES] = std::make_shared<FileLister>(this);
 
     // 设置连接回调
     server_.setConnectionCallback([this](const TcpConnectionPtr &conn)

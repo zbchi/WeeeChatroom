@@ -58,10 +58,11 @@ public:
     void printLogs(ChatLogs &chatLogs,bool is_group=false);
     void flushLogs();
     void flushGroupLogs();
-    void flushFriends();
     void flushRequests();
     void flushGroupRequests();
+    void flushFriends();
     void flushGroups();
+    void flushFiles();
 
 private:
     void showMainMenu();
@@ -87,8 +88,7 @@ private:
     void showFriendMenu();
     void showSystemMenu();
 
-    void fileWithFriend();
-    void fileWithGroup();
+    void filePanel(bool is_group=false);
     Client *client_;
     Neter *neter_;
 };

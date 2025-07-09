@@ -33,6 +33,7 @@ enum MsgType
     ADD_ADMIN,
     REMOVE_ADMIN,
     UPLOAD_FILE,
+    GET_FILES,
 };
 
 class Waiter
