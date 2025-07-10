@@ -4,6 +4,8 @@
 #include "Socket.h"
 #include <memory>
 #include <functional>
+
+#include <any>
 namespace mylib
 {
     class TcpConnection;
@@ -59,6 +61,10 @@ namespace mylib
 
         std::string user_id;
 
+        void setContext(const std::any &context) { context_ = context; }
+        const std::any &getContext() const { return context_; }
+        std::any *getMutableContext() { return &context_; }
+
     private:
         enum StateE
         {
@@ -93,5 +99,7 @@ namespace mylib
 
         Buffer inputBuffer_;
         Buffer outputBuffer_;
+
+        std::any context_;
     };
 };

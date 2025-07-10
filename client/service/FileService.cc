@@ -12,21 +12,30 @@ FtpClient::FtpClient(const std::string &file_path, const std::string &file_id, b
                                                                                                  tcpClient_(&loop_, serverAddr_)
 {
     tcpClient_.setConnectionCallback([this](const TcpConnectionPtr &conn)
-                                     { if(conn->connected())
-                                {
-                                   
-                                }
-                                else
-                                 {
-                                   loop_.quit();
-                                   LOG_DEBUG("Loop Quit!");
-                                 } });
+                                     { this->onConnection(conn); });
     tcpClient_.setMessageCallback([this](const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
                                   { this->onMessage(conn, buf, time); });
     tcpClient_.connect();
     loop_.loop();
 }
 
+void FtpClient::onConnection(const TcpConnectionPtr &conn)
+{
+    if (conn->connected())
+    { // 连接成功后自动传输文件
+        if (is_upload)
+        {
+        }
+        else
+        {
+        }
+    }
+    else
+    {
+        loop_.quit();
+        LOG_DEBUG("Loop Quit!");
+    }
+}
 void FtpClient::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
 {
 }
