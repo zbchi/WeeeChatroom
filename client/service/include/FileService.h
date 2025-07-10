@@ -11,62 +11,39 @@ class FileService;
 class FtpClient
 {
 public:
-    FtpClient(EventLoop *loop);
-
-    TcpClient tcpClient_;
-    InetAddress serverAddr_;
+    FtpClient(const std::string &file_path, const std::string &file_id, bool is_upload);
 
     void uploadFile(const std::string &file_path, const std::string &file_id);
     void downloadFile(const std::string &file_id);
 
-    std::mutex connMutex_;
-    std::condition_variable connCond_;
-    mylib::TcpConnectionPtr conn_;
-
-    using DisConnectedCallback = std::function<void()>;
-    DisConnectedCallback onDisconnectedCallback_;
-    void setDisconnectedCallback(const DisConnectedCallback &cb)
-    {
-        onDisconnectedCallback_ = cb;
-    }
-
 private:
+    std::string file_path;
+    std::string file_id;
+    bool is_upload;
+
+    InetAddress serverAddr_;
+    EventLoop loop_;
+    TcpClient tcpClient_; // 构造顺严格执行，为声明的顺序
     void onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time);
-    void onDisConnected()
-    {
-        if (onDisconnectedCallback_)
-            onDisconnectedCallback_(); // 通知外部销毁自己
-    }
 };
 
-class FtpClientThread : public std::enable_shared_from_this<FtpClientThread>
+class FtpClientManager
 {
 public:
-    void start();
-
     void uploadFile(const std::string &file_path, const std::string &file_id)
     {
-        loop_->runInLoop([this, file_path, file_id]
-                         { ftpClient_->uploadFile(file_path, file_id); });
+        std::thread([file_path, file_id]
+                    { auto ftpClient = std::make_unique<FtpClient>(file_path, file_id, true); 
+                    LOG_DEBUG("Thread Die!"); })
+            .detach();
     }
-    void downloadFile(const std::string &file_id)
+    void donwloadFile(const std::string &file_id)
     {
-        loop_->runInLoop([this, file_id]
-                         { ftpClient_->downloadFile(file_id); });
+        std::thread([file_id]
+                    { auto ftpClient = std::make_unique<FtpClient>("", file_id, false);
+                     LOG_DEBUG("Thread Die!"); })
+            .detach();
     }
-    void stop()
-    {
-        loop_->runInLoop([this]()
-                         {
-                ftpClient_->tcpClient_.disconnect();
-                loop_->quit(); });
-    }
-
-private:
-    EventLoopThread loopThread_;
-    std::thread thread_;
-    EventLoop *loop_;
-    std::unique_ptr<FtpClient> ftpClient_;
 };
 
 class File
@@ -91,6 +68,8 @@ public:
     void handleUploadAck(const TcpConnectionPtr &conn, json &js);
     Waiter fileListWaiter_;
     Waiter uploadWaiter_;
+
+    FtpClientManager ftpClientManager_;
 
 private:
     Neter *neter_;

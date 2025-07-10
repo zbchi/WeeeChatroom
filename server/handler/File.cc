@@ -10,20 +10,24 @@ FtpServer::FtpServer() : listenAddr_(8001),
 
 void FtpServer::start()
 {
-    tcpServer_.setThreadNum(4);
-    tcpServer_.start();
     tcpServer_.setConnectionCallback([this](const TcpConnectionPtr &conn)
                                      { this->onConnection(conn); });
     tcpServer_.setMessageCallback([this](const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
                                   { this->onMessage(conn, buf, time); });
+
+    tcpServer_.setThreadNum(4);
+    tcpServer_.start();
+    loop_.loop();
 }
 
 void FtpServer::onConnection(const TcpConnectionPtr &conn)
 {
+    std::cout << "jsdofidjsfdffdsfasfsdffdsffdsa" << std::endl;
 }
 
 void FtpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
 {
+    std::cout << "jsdofidjsfdffdsfasfsdffdsffdsa" << std::endl;
 }
 
 void FileUploader::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
