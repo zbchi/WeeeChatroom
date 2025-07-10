@@ -61,6 +61,8 @@ namespace mylib
 
         std::string user_id;
 
+        Socket *socket() { return socket_.get(); }
+
         void setContext(const std::any &context) { context_ = context; }
         const std::any &getContext() const { return context_; }
         std::any *getMutableContext() { return &context_; }

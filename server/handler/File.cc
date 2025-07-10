@@ -5,6 +5,8 @@
 #include "Logger.h"
 #include "base.h"
 
+#include "Sendfile.h"
+
 FtpServer::FtpServer() : listenAddr_(8001),
                          tcpServer_(&loop_, listenAddr_) {}
 
@@ -21,12 +23,10 @@ void FtpServer::start()
 
 void FtpServer::onConnection(const TcpConnectionPtr &conn)
 {
-    
 }
 
 void FtpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
 {
-    
 }
 
 void FileUploader::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
