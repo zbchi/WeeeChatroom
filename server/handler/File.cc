@@ -5,6 +5,27 @@
 #include "Logger.h"
 #include "base.h"
 
+FtpServer::FtpServer() : listenAddr_(8001),
+                         tcpServer_(&loop_, listenAddr_) {}
+
+void FtpServer::start()
+{
+    tcpServer_.setThreadNum(4);
+    tcpServer_.start();
+    tcpServer_.setConnectionCallback([this](const TcpConnectionPtr &conn)
+                                     { this->onConnection(conn); });
+    tcpServer_.setMessageCallback([this](const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
+                                  { this->onMessage(conn, buf, time); });
+}
+
+void FtpServer::onConnection(const TcpConnectionPtr &conn)
+{
+}
+
+void FtpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
+{
+}
+
 void FileUploader::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
 {
     bool is_group = js["is_group"];
@@ -19,6 +40,11 @@ void FileUploader::handle(const TcpConnectionPtr &conn, json &js, Timestamp time
                             {"file_size", std::to_string(file_size)},
                             {"file_name", file_name},
                             {"is_group", is_group ? "1" : "0"}});
+
+    json response;
+    response["msgid"] = UPLOAD_FILE_ACK;
+    response["file_id"] = mysql->getLastInsertId();
+    sendJson(conn, response);
 }
 
 void FileLister::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)

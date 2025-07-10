@@ -920,7 +920,7 @@ void Controller::filePanel(bool is_group)
 
 void Controller::flushFiles()
 {
-    clearScreen();
+    //clearScreen();
     printHeader("文件传输");
     for (size_t i = 0; i < client_->fileList_.size(); ++i)
         std::cout << (i + 1) << ". " << client_->fileList_[i].file_name

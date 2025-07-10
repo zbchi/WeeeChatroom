@@ -42,6 +42,8 @@ Client::Client() : neter_(this), controller_(&neter_, this),
     { this->chatService_.handleGroupMessageAck(conn, js); };
     msgHandlerMap_[GET_FILES] = [this](const TcpConnectionPtr &conn, json &js)
     { this->fileService_.handleFileList(conn, js); };
+    msgHandlerMap_[UPLOAD_FILE_ACK] = [this](const TcpConnectionPtr &conn, json &js)
+    { this->fileService_.handleUploadAck(conn, js); };
 }
 
 void Client::start()

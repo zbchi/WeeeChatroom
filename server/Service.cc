@@ -52,6 +52,10 @@ Service::Service() : threadPool_(16),
 
 void Service::start()
 {
+    std::thread t([this]()
+                  {
+    FtpServer ftpServer_;
+    ftpServer_.start(); });
     server_.start();
     loop_.loop();
 }

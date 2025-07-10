@@ -8,6 +8,8 @@
 #include <string>
 #include <functional>
 #include <nlohmann/json.hpp>
+
+#include "File.h"
 using json = nlohmann::json;
 class Service
 {
@@ -15,12 +17,12 @@ public:
     Service();
     void start();
 
-
     std::unordered_map<std::string, TcpConnectionPtr> onlienUsers_;
     std::mutex onlienUsersMutex_;
     TcpConnectionPtr getConnectionPtr(std::string user_id);
     std::string getUserid(const TcpConnectionPtr &conn);
     void setNumThreads(int numThreads);
+
 private:
     std::unordered_map<int, std::shared_ptr<Handler>> handlers_;
     void handleMessage(const mylib::TcpConnectionPtr &conn, const std::string &jsonStr, mylib::Timestamp time);
@@ -31,4 +33,6 @@ private:
     InetAddress listenAddr_;
     EventLoop loop_;
     TcpServer server_;
+
+
 };

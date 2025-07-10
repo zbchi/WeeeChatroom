@@ -40,6 +40,8 @@ public:
     std::string getEmailById(std::string &user_id);
     std::string getNicknameById(std::string &user_id);
     std::string getIdByEmail(std::string &email);
+
+    int getLastInsertId() { return mysql_insert_id(conn_); }
 };
 
 class MySQLConnPool

@@ -2,6 +2,7 @@
 #include <nlohmann/json.hpp>
 #include "TcpConnection.h"
 using json = nlohmann::json;
+using namespace mylib;
 void sendJson(const mylib::TcpConnectionPtr &conn, const json &js);
 json makeResponse(int msgid, int errno_, std::string errmsg = "");
 enum MsgType
@@ -32,4 +33,5 @@ enum MsgType
     REMOVE_ADMIN,
     UPLOAD_FILE,
     GET_FILES,
+    UPLOAD_FILE_ACK,
 };
