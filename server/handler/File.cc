@@ -23,6 +23,11 @@ void FtpServer::start()
 
 void FtpServer::onConnection(const TcpConnectionPtr &conn)
 {
+    if (conn->connected())
+    {
+    }
+    else
+        std::cout << "ondisconnectedondisconnected" << std::endl;
 }
 
 void FtpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
@@ -64,10 +69,10 @@ void FtpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp t
         else if (msgid == DOWNLOAD_FILE)
         {
             std::string file_id = js["file_id"];
-            off_t file_size=js["file_size"];
-            std::string file_path=makeFilePath(file_id);
-            int file_fd=::open(file_path.c_str(),O_RDONLY);
-            sendFile(conn,file_fd,0,file_size);
+            off_t file_size = js["file_size"];
+            std::string file_path = makeFilePath(file_id);
+            int file_fd = ::open(file_path.c_str(), O_RDONLY);
+            sendFile(conn, file_fd, 0, file_size);
         }
     }
     else

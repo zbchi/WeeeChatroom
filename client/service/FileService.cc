@@ -30,6 +30,7 @@ void FtpClient::onConnection(const TcpConnectionPtr &conn)
     }
     else
     {
+        std::cout << "quitquitquitquitquitquitquitquitquitquitquitquitquitquitquit" << std::endl;
         loop_.quit();
         LOG_DEBUG("Loop Quit!");
     }

@@ -65,7 +65,6 @@ void TcpConnection::handleRead(Timestamp receiveTime)
 
 void TcpConnection::handleWrite()
 {
-    std::cout << "handleWrite" << std::endl;
     loop_->assertInLoopThread();
     if (channel_->isWriting())
     {
@@ -199,6 +198,25 @@ void TcpConnection::shutdownInLoop()
     if (!channel_->isWriting())
     {
         socket_->shutdownWrite();
+    }
+}
+
+void TcpConnection::forceClose()
+{
+    if (state_ == kConnected || state_ == kDisconnecting)
+    {
+        setState(kDisconnecting);
+        loop_->queueInLoop([this]()
+                           { forceCloseInLoop(); });
+    }
+}
+
+void TcpConnection::forceCloseInLoop()
+{
+    loop_->assertInLoopThread();
+    if (state_ == kConnected || state_ == kDisconnecting)
+    {
+        handleClose();
     }
 }
 

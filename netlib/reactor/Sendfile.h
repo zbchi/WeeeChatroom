@@ -35,10 +35,8 @@ void sendFileChunk(const TcpConnectionPtr &conn)
         ssize_t sent = ::sendfile(conn->socket()->fd(), ctx->fileFd, &ctx->offset, remain);
         if (sent <= 0)
         {
-            std::cout << "sent<0sent<0sent<0sent<0sent<0" << std::endl;
             if (errno == EAGAIN || errno == EWOULDBLOCK)
             {
-                std::cout << "EAGAINEAGINEAGAINEAGINEAGIN" << std::endl;
                 conn->setWriteCallback([ctx](const TcpConnectionPtr &conn)
                                        { sendFileChunk(conn); });
                 conn->channel_->enableWriting();
@@ -63,6 +61,17 @@ void sendFileChunk(const TcpConnectionPtr &conn)
     conn->setWriteCallback(nullptr);
     conn->setContext(std::any());
     conn->channel_->disableWriting();
+    conn->shutdown();
+}
+
+bool isConnected(const TcpConnectionPtr &conn)
+{
+    char buf[1];
+    ssize_t n = ::recv(conn->socket()->fd(), buf, 1, MSG_PEEK | MSG_DONTWAIT);
+    if (n == 0)
+        return false;
+    else
+        return true;
 }
 
 void recvFileData(const TcpConnectionPtr &conn)
@@ -80,19 +89,20 @@ void recvFileData(const TcpConnectionPtr &conn)
                 ::close(ctx->fileFd);
                 ::close(ctx->pipefd[0]);
                 ::close(ctx->pipefd[1]);
-                conn->setContext(std::any());
-                conn->channel_->disableAll();
-                conn->shutdown();
+                // conn->setContext(std::any());
+                //  conn->channel_->disableAll();
+                // conn->shutdown();
             }
-        }
-        else if (n == 0)
-        {
-            // conn->setContext(std::any());
-            // conn->shutdown();
-            break;
         }
         else if (errno == EAGAIN)
         {
+            break;
+        }
+        // 尝试读取少量数据检查连接状态
+        if (!isConnected(conn))
+        {
+            conn->setContext(std::any());
+            conn->forceClose();
             break;
         }
     }

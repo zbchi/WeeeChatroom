@@ -74,6 +74,8 @@ namespace mylib
 
         void connectDestroyed();
         void shutdown();
+        void forceClose();
+        void forceCloseInLoop();
         void send(const std::string &message);
         void setTcpNodelay(bool on);
 
