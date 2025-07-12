@@ -8,18 +8,33 @@
 class Neter;
 class Client;
 class FileService;
+
+struct FileInfo
+{
+    std::string file_path;
+    std::string file_id;
+    bool is_upload;
+
+    bool is_group;
+    std::string sender_id;
+    std::string peer_id;
+    std::string file_name;
+    off_t file_size;
+    int fileFd;
+};
+
 class FtpClient
 {
 public:
-    FtpClient(const std::string &file_path, const std::string &file_id, bool is_upload);
+    FtpClient(const FileInfo &fileinfo);
 
     void uploadFile(const std::string &file_path, const std::string &file_id);
     void downloadFile(const std::string &file_id);
 
 private:
-    std::string file_path;
-    std::string file_id;
-    bool is_upload;
+    void sendUploadInfo(const TcpConnectionPtr &conn);
+
+    FileInfo fileInfo_;
 
     InetAddress serverAddr_;
     EventLoop loop_;
@@ -31,17 +46,17 @@ private:
 class FtpClientManager
 {
 public:
-    void uploadFile(const std::string &file_path, const std::string &file_id)
+    void uploadFile(FileInfo &fileInfo)
     {
-        std::thread([file_path, file_id]
-                    { auto ftpClient = std::make_unique<FtpClient>(file_path, file_id, true); 
+        std::thread([fileInfo]
+                    { auto ftpClient = std::make_unique<FtpClient>(fileInfo); 
                     LOG_DEBUG("Thread Die!"); })
             .detach();
     }
-    void donwloadFile(const std::string &file_id)
+    void donwloadFile(FileInfo &fileInfo)
     {
-        std::thread([file_id]
-                    { auto ftpClient = std::make_unique<FtpClient>("", file_id, false);
+        std::thread([fileInfo]
+                    { auto ftpClient = std::make_unique<FtpClient>(fileInfo);
                      LOG_DEBUG("Thread Die!"); })
             .detach();
     }

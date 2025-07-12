@@ -34,4 +34,6 @@ enum MsgType
     UPLOAD_FILE,
     GET_FILES,
     UPLOAD_FILE_ACK,
+    DOWNLOAD_FILE,
+    DOWNLOAD_FILE_ACK,
 };

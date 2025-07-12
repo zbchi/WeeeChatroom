@@ -6,6 +6,7 @@
 
 #include <unistd.h>
 using namespace mylib;
+#include <iostream>
 
 TcpConnection::TcpConnection(EventLoop *loop,
                              const std::string &name,
@@ -43,6 +44,11 @@ void TcpConnection::connectEstablished()
 void TcpConnection::handleRead(Timestamp receiveTime)
 
 {
+    if (is_setReadableCallback)
+    {
+        readableCallback_(shared_from_this());
+        return;
+    }
     int savedErrno = 0;
     ssize_t n = inputBuffer_.readFd(channel_->fd(), &savedErrno);
     if (n > 0)
@@ -59,37 +65,46 @@ void TcpConnection::handleRead(Timestamp receiveTime)
 
 void TcpConnection::handleWrite()
 {
+    std::cout << "handleWrite" << std::endl;
     loop_->assertInLoopThread();
     if (channel_->isWriting())
     {
-        ssize_t n = ::write(channel_->fd(),
-                            outputBuffer_.peek(),
-                            outputBuffer_.readableBytes());
-        if (n > 0)
+        if (writeCallback_)
         {
-            outputBuffer_.retrieve(n);
-            if (outputBuffer_.readableBytes() == 0)
+            writeCallback_(shared_from_this());
+        }
+        else
+        {
+            ssize_t n = ::write(channel_->fd(),
+                                outputBuffer_.peek(),
+                                outputBuffer_.readableBytes());
+            if (n > 0)
             {
-                channel_->disableWriting();
-                if (writeCompleteCallback_)
+                outputBuffer_.retrieve(n);
+                if (outputBuffer_.readableBytes() == 0)
                 {
-                    auto self = shared_from_this();
-                    loop_->queueInLoop([self]()
-                                       { self->writeCompleteCallback_(self); });
+                    channel_->disableWriting();
+                    if (writeCompleteCallback_)
+                    {
+                        std::cout << "handleWriteCallbackCompleteComplete" << std::endl;
+                        auto self = shared_from_this();
+                        loop_->queueInLoop([self]()
+                                           { self->writeCompleteCallback_(self); });
+                    }
+                    if (state_ = kDisconnecting)
+                    {
+                        shutdownInLoop();
+                    }
                 }
-                if (state_ = kDisconnecting)
+                else
                 {
-                    shutdownInLoop();
+                    LOG_TRACE("I am going to write more data");
                 }
             }
             else
             {
-                LOG_TRACE("I am going to write more data");
+                LOG_SYSERR("TcpConnection::handleWrite");
             }
-        }
-        else
-        {
-            LOG_SYSERR("TcpConnection::handleWrite");
         }
     }
     else

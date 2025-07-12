@@ -17,6 +17,10 @@ namespace mylib
                                                Buffer *buf,
                                                Timestamp)>;
     using WriteCompleteCallback = std::function<void(const TcpConnectionPtr &)>;
+    using ReadableCallback = std::function<void(const TcpConnectionPtr &)>;
+    using WriteCallback=std::function<void(const TcpConnectionPtr&)>;
+
+
     class EventLoop;
     class Socket;
     class Channel;
@@ -38,6 +42,15 @@ namespace mylib
 
         void connectEstablished();
 
+        void setReadableCallback(const ReadableCallback &cb)
+        {
+            if (cb)
+                is_setReadableCallback = true;
+            else
+                is_setReadableCallback = false;
+            readableCallback_ = cb;
+        }
+
         void setConnectionCallback(const ConnectionCallback &cb)
         {
             connectionCallback_ = cb;
@@ -54,6 +67,11 @@ namespace mylib
         {
             writeCompleteCallback_ = cb;
         }
+        void setWriteCallback(const WriteCallback&cb)
+        {
+            writeCallback_=cb;
+        }
+
         void connectDestroyed();
         void shutdown();
         void send(const std::string &message);
@@ -66,6 +84,8 @@ namespace mylib
         void setContext(const std::any &context) { context_ = context; }
         const std::any &getContext() const { return context_; }
         std::any *getMutableContext() { return &context_; }
+
+        std::unique_ptr<Channel> channel_;
 
     private:
         enum StateE
@@ -92,16 +112,19 @@ namespace mylib
         InetAddress peerAddr_;
 
         std::unique_ptr<Socket> socket_;
-        std::unique_ptr<Channel> channel_;
 
         MessageCallback messageCallback_;
         ConnectionCallback connectionCallback_;
         CloseCallback closeCallback_;
         WriteCompleteCallback writeCompleteCallback_;
+        ReadableCallback readableCallback_;
+        WriteCallback writeCallback_;
 
         Buffer inputBuffer_;
         Buffer outputBuffer_;
 
         std::any context_;
+
+        bool is_setReadableCallback = false;
     };
 };

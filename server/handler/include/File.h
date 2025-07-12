@@ -14,9 +14,13 @@ public:
     void onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time);
     void onConnection(const TcpConnectionPtr &conn);
 
+    void onReadable(const TcpConnectionPtr&conn);
     EventLoop loop_;
     InetAddress listenAddr_;
     TcpServer tcpServer_;
+
+private:
+    std::string makeFilePath(const std::string &file_id);
 };
 
 class FileUploader : public Handler

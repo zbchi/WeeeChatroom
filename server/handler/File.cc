@@ -27,27 +27,98 @@ void FtpServer::onConnection(const TcpConnectionPtr &conn)
 
 void FtpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
 {
+    // auto context = std::any_cast_or_null<std::shared_ptr<FileContext>>(conn->getMutableContext());
+    if (!conn->getContext().has_value())
+    {
+        std::string jsonStr(buf->peek(), buf->readableBytes());
+        json js = json::parse(jsonStr);
+        int msgid = js["msgid"].get<int>();
+        if (msgid == UPLOAD_FILE)
+        {
+            bool is_group = js["is_group"];
+            std::string sender_id = js["sender_id"];
+            std::string peer_id = js["peer_id"];
+            std::string file_name = js["file_name"];
+            off_t file_size = js["file_size"];
+            auto mysql = MySQLConnPool::instance().getConnection();
+
+            mysql->insert("files", {{"sender_id", sender_id},
+                                    {is_group ? "group_id" : "receiver_id", peer_id},
+                                    {"file_size", std::to_string(file_size)},
+                                    {"file_name", file_name},
+                                    {"is_group", is_group ? "1" : "0"}});
+
+            int file_id = mysql->getLastInsertId();
+            std::string file_path = makeFilePath(std::to_string(file_id));
+
+            int file_fd = ::open(file_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            auto ctx = std::make_shared<FileContext>(file_fd, file_id, 0, file_size);
+            conn->setContext(ctx);
+            conn->setReadableCallback([this](const TcpConnectionPtr &conn)
+                                      { onReadable(conn); });
+            conn->send(makeResponse(UPLOAD_FILE_ACK, 0).dump());
+        }
+        else if (msgid == DOWNLOAD_FILE)
+        {
+        }
+    }
+    else
+    {
+        auto ctx = std::any_cast<std::shared_ptr<FileContext>>(conn->getContext());
+        int written = ::write(ctx->fileFd, buf->peek(), buf->readableBytes());
+        buf->retrieve(written);
+        ctx->written += written;
+        if (ctx->written >= ctx->totalSize)
+        {
+            ::close(ctx->fileFd);
+            conn->setContext(std::any());
+            conn->shutdown();
+        }
+    }
+}
+
+void FtpServer::onReadable(const TcpConnectionPtr &conn)
+{
+    std::cout << "----------------------------" << std::endl;
+    auto ctx = std::any_cast<std::shared_ptr<FileContext>>(conn->getContext());
+    int pipefd[2];
+    ::pipe(pipefd);
+    while (1)
+    {
+        ssize_t n = splice(conn->socket()->fd(), nullptr, pipefd[1], nullptr, 65535000, SPLICE_F_MOVE);
+        if (n > 0)
+        {
+            std::cout << "n>0>0>0---------------------" << std::endl;
+            ssize_t written = splice(pipefd[0], nullptr, ctx->fileFd, nullptr, n, SPLICE_F_MOVE);
+            ctx->written += written;
+            if (ctx->written >= ctx->totalSize)
+            {
+                std::cout << "donedonedonedonedonedonedonedonedonedonedonedone" << std::endl;
+                ::close(ctx->fileFd);
+                conn->setContext(std::any());
+                conn->channel_->disableAll();
+                conn->shutdown();
+            }
+        }
+        else if (n == 0)
+        {
+            std::cout << "n=0=0===============0---------------------" << std::endl;
+            // conn->setContext(std::any());
+            // conn->shutdown();
+            break;
+        }
+        else if (errno == EAGAIN)
+        {
+            std::cout << "EAGAINEAGAIGNAGEIGWEGAEGIIEGAEEIAG---------------------" << std::endl;
+            break;
+        }
+    }
+    ::close(pipefd[0]);
+    ::close(pipefd[1]);
 }
 
 void FileUploader::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
 {
-    bool is_group = js["is_group"];
-    std::string sender_id = js["sender_id"];
-    std::string peer_id = js["peer_id"];
-    std::string file_name = js["file_name"];
-    std::uint64_t file_size = js["file_size"];
-    auto mysql = MySQLConnPool::instance().getConnection();
-
-    mysql->insert("files", {{"sender_id", sender_id},
-                            {is_group ? "group_id" : "receiver_id", peer_id},
-                            {"file_size", std::to_string(file_size)},
-                            {"file_name", file_name},
-                            {"is_group", is_group ? "1" : "0"}});
-
-    json response;
-    response["msgid"] = UPLOAD_FILE_ACK;
-    response["file_id"] = mysql->getLastInsertId();
-    sendJson(conn, response);
 }
 
 void FileLister::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
@@ -77,4 +148,14 @@ void FileLister::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     }
 
     sendJson(conn, fileList);
+}
+
+std::string FtpServer::makeFilePath(const std::string &file_id)
+{
+    fs::path exe_path = fs::canonical("/proc/self/exe");
+    fs::path exe_dir = exe_path.parent_path();
+    fs::path file_dir = exe_dir / "chat_files";
+    std::string path = (file_dir / file_id).string();
+    fs::create_directories(fs::path(path).parent_path());
+    return path;
 }
