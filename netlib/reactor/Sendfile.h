@@ -11,16 +11,6 @@
 using namespace mylib;
 namespace fs = std::filesystem;
 
-#pragma pack(1)
-struct FileHeader
-{
-    uint8_t type;
-    uint64_t file_size;
-    char file_id[32];
-    char file_name[64];
-};
-#pragma pack()
-
 struct FileContext
 {
     int fileFd;
@@ -29,6 +19,7 @@ struct FileContext
     off_t totalSize;
     std::string file_name;
     ssize_t written = 0;
+    int pipefd[2];
     FileContext(int fd, int id, off_t off, off_t size) : fileFd(fd),
                                                          fileId(id),
                                                          offset(off),
@@ -42,7 +33,6 @@ void sendFileChunk(const TcpConnectionPtr &conn)
     {
         off_t remain = ctx->totalSize - ctx->offset;
         ssize_t sent = ::sendfile(conn->socket()->fd(), ctx->fileFd, &ctx->offset, remain);
-        std::cout << "---------------------------------" << std::endl;
         if (sent <= 0)
         {
             std::cout << "sent<0sent<0sent<0sent<0sent<0" << std::endl;
@@ -73,6 +63,39 @@ void sendFileChunk(const TcpConnectionPtr &conn)
     conn->setWriteCallback(nullptr);
     conn->setContext(std::any());
     conn->channel_->disableWriting();
+}
+
+void recvFileData(const TcpConnectionPtr &conn)
+{
+    auto ctx = std::any_cast<std::shared_ptr<FileContext>>(conn->getContext());
+    while (1)
+    {
+        ssize_t n = splice(conn->socket()->fd(), nullptr, ctx->pipefd[1], nullptr, 65536, SPLICE_F_MOVE);
+        if (n > 0)
+        {
+            ssize_t written = splice(ctx->pipefd[0], nullptr, ctx->fileFd, nullptr, n, SPLICE_F_MOVE);
+            ctx->written += written;
+            if (ctx->written >= ctx->totalSize)
+            {
+                ::close(ctx->fileFd);
+                ::close(ctx->pipefd[0]);
+                ::close(ctx->pipefd[1]);
+                conn->setContext(std::any());
+                conn->channel_->disableAll();
+                conn->shutdown();
+            }
+        }
+        else if (n == 0)
+        {
+            // conn->setContext(std::any());
+            // conn->shutdown();
+            break;
+        }
+        else if (errno == EAGAIN)
+        {
+            break;
+        }
+    }
 }
 
 void sendFile(const TcpConnectionPtr &conn, int fileFd, off_t offset, off_t fileSize)

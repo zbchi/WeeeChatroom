@@ -12,28 +12,30 @@ class FileService;
 struct FileInfo
 {
     std::string file_path;
-    std::string file_id;
+    std::string id;
     bool is_upload;
-
     bool is_group;
+    off_t file_size;
+    int fileFd;
+
     std::string sender_id;
     std::string peer_id;
     std::string file_name;
-    off_t file_size;
-    int fileFd;
+    std::string file_size_str;
+    std::string timestamp;
 };
 
 class FtpClient
 {
 public:
     FtpClient(const FileInfo &fileinfo);
-
-    void uploadFile(const std::string &file_path, const std::string &file_id);
     void downloadFile(const std::string &file_id);
 
 private:
     void sendUploadInfo(const TcpConnectionPtr &conn);
+    void sendDownloadInfo(const TcpConnectionPtr &conn);
 
+    std::string makeFilePath(const std::string&file_name);
     FileInfo fileInfo_;
 
     InetAddress serverAddr_;
@@ -62,16 +64,6 @@ public:
     }
 };
 
-class File
-{
-public:
-    std::string id;
-    std::string file_name;
-    std::string file_size;
-
-    std::string timestamp;
-};
-
 class FileService
 {
 public:
@@ -80,10 +72,10 @@ public:
 
     void getFiles(bool is_group = false);
     void handleFileList(const TcpConnectionPtr &conn, json &js);
+    
     void uploadFile(std::string &filePath, bool is_group = false);
-    void handleUploadAck(const TcpConnectionPtr &conn, json &js);
+    void downloadFile(FileInfo &fileinfo);
     Waiter fileListWaiter_;
-    Waiter uploadWaiter_;
 
     FtpClientManager ftpClientManager_;
 

@@ -906,23 +906,28 @@ void Controller::filePanel(bool is_group)
     client_->fileService_.getFiles(is_group);
     flushFiles();
     // printHeader("文件传输");
-    std::string choice;
-    choice = getValidString("输入序号下载文件,输入绝对路径上传文件:");
-    if (choice[0] == '/')
+    std::string input;
+    input = getValidString("输入序号下载文件,输入绝对路径上传文件:");
+    if (input[0] == '/')
     {
-        client_->fileService_.uploadFile(choice, is_group);
+        client_->fileService_.uploadFile(input, is_group);
 
         // int chat_errno = client_->chatService_.sendMessage(content);
         // if (chat_errno == 1)
         //    printStatus("发送失败(你们已不是好友)", "error");
     }
+    else
+    {
+        int choice = std::stoi(input);
+        client_->fileService_.downloadFile(client_->fileList_[choice - 1]);
+    }
 }
 
 void Controller::flushFiles()
 {
-    //clearScreen();
+    // clearScreen();
     printHeader("文件传输");
     for (size_t i = 0; i < client_->fileList_.size(); ++i)
         std::cout << (i + 1) << ". " << client_->fileList_[i].file_name
-                  << client_->fileList_[i].file_size << client_->fileList_[i].timestamp << "\n";
+                  << client_->fileList_[i].file_size_str << client_->fileList_[i].timestamp << "    " << client_->fileList_[i].sender_id << "   " << client_->fileList_[i].id << "\n";
 }

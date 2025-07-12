@@ -35,6 +35,7 @@ void FtpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp t
         int msgid = js["msgid"].get<int>();
         if (msgid == UPLOAD_FILE)
         {
+            // 做好接收文件的前提准备(文件信息写入数据库，创建文件fd，写入conn上下文，设置可读回调收文件)
             bool is_group = js["is_group"];
             std::string sender_id = js["sender_id"];
             std::string peer_id = js["peer_id"];
@@ -53,13 +54,20 @@ void FtpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp t
 
             int file_fd = ::open(file_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
             auto ctx = std::make_shared<FileContext>(file_fd, file_id, 0, file_size);
+            ::pipe(ctx->pipefd);
             conn->setContext(ctx);
             conn->setReadableCallback([this](const TcpConnectionPtr &conn)
-                                      { onReadable(conn); });
+                                      { recvFileData(conn); });
+            // 向客户端发送ack接收文件准备完成
             conn->send(makeResponse(UPLOAD_FILE_ACK, 0).dump());
         }
         else if (msgid == DOWNLOAD_FILE)
         {
+            std::string file_id = js["file_id"];
+            off_t file_size=js["file_size"];
+            std::string file_path=makeFilePath(file_id);
+            int file_fd=::open(file_path.c_str(),O_RDONLY);
+            sendFile(conn,file_fd,0,file_size);
         }
     }
     else
@@ -75,46 +83,6 @@ void FtpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp t
             conn->shutdown();
         }
     }
-}
-
-void FtpServer::onReadable(const TcpConnectionPtr &conn)
-{
-    std::cout << "----------------------------" << std::endl;
-    auto ctx = std::any_cast<std::shared_ptr<FileContext>>(conn->getContext());
-    int pipefd[2];
-    ::pipe(pipefd);
-    while (1)
-    {
-        ssize_t n = splice(conn->socket()->fd(), nullptr, pipefd[1], nullptr, 65535000, SPLICE_F_MOVE);
-        if (n > 0)
-        {
-            std::cout << "n>0>0>0---------------------" << std::endl;
-            ssize_t written = splice(pipefd[0], nullptr, ctx->fileFd, nullptr, n, SPLICE_F_MOVE);
-            ctx->written += written;
-            if (ctx->written >= ctx->totalSize)
-            {
-                std::cout << "donedonedonedonedonedonedonedonedonedonedonedone" << std::endl;
-                ::close(ctx->fileFd);
-                conn->setContext(std::any());
-                conn->channel_->disableAll();
-                conn->shutdown();
-            }
-        }
-        else if (n == 0)
-        {
-            std::cout << "n=0=0===============0---------------------" << std::endl;
-            // conn->setContext(std::any());
-            // conn->shutdown();
-            break;
-        }
-        else if (errno == EAGAIN)
-        {
-            std::cout << "EAGAINEAGAIGNAGEIGWEGAEGIIEGAEEIAG---------------------" << std::endl;
-            break;
-        }
-    }
-    ::close(pipefd[0]);
-    ::close(pipefd[1]);
 }
 
 void FileUploader::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
@@ -142,8 +110,9 @@ void FileLister::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
         json f;
         f["id"] = file.at("id");
         f["file_name"] = file.at("file_name");
-        f["file_size"] = file.at("file_size");
+        f["file_size_str"] = file.at("file_size");
         f["timestamp"] = file.at("send_at");
+        f["sender_id"] = file.at("sender_id");
         fileList["files"].push_back(f);
     }
 

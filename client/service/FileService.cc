@@ -22,14 +22,11 @@ FtpClient::FtpClient(const FileInfo &fileinfo) : serverAddr_("127.0.0.1", 8001),
 void FtpClient::onConnection(const TcpConnectionPtr &conn)
 {
     if (conn->connected())
-    { // 连接成功后自动传输文件
+    { // 连接成功后自动传输信息
         if (fileInfo_.is_upload)
-        {
             sendUploadInfo(conn);
-        }
         else
-        {
-        }
+            sendDownloadInfo(conn);
     }
     else
     {
@@ -53,6 +50,33 @@ void FtpClient::sendUploadInfo(const TcpConnectionPtr &conn)
     conn->send(js.dump());
 }
 
+void FtpClient::sendDownloadInfo(const TcpConnectionPtr &conn)
+{
+    json js;
+    js["msgid"] = DOWNLOAD_FILE;
+    js["file_id"] = fileInfo_.id;
+    std::string file_path = makeFilePath(fileInfo_.file_name);
+    off_t file_size = static_cast<off_t>(std::stoll(fileInfo_.file_size_str));
+    js["file_size"] = file_size;
+    int file_fd = ::open(file_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    auto ctx = std::make_shared<FileContext>(file_fd, std::stoi(fileInfo_.id), 0, file_size);
+    ::pipe(ctx->pipefd);
+    conn->setContext(ctx);
+    conn->setReadableCallback([this](const TcpConnectionPtr &conn)
+                              { recvFileData(conn); });
+    conn->send(js.dump());
+}
+
+std::string FtpClient::makeFilePath(const std::string &file_name)
+{
+    fs::path exe_path = fs::canonical("/proc/self/exe");
+    fs::path exe_dir = exe_path.parent_path();
+    fs::path file_dir = exe_dir / "chat_files";
+    std::string path = (file_dir / file_name).string();
+    fs::create_directories(fs::path(path).parent_path());
+    return path;
+}
+
 void FtpClient::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
 {
     if (!conn->getContext().has_value())
@@ -61,13 +85,7 @@ void FtpClient::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp t
         json js = json::parse(jsonStr);
         int msgid = js["msgid"].get<int>();
         if (msgid == UPLOAD_FILE_ACK)
-        {
             sendFile(conn, fileInfo_.fileFd, 0, fileInfo_.file_size);
-        }
-        else if(msgid==DOWNLOAD_FILE_ACK)
-        {
-            
-        }
     }
 }
 
@@ -83,11 +101,14 @@ void FileService::uploadFile(std::string &filePath, bool is_group)
     fileInfo.sender_id = client_->user_id_;
     fileInfo.peer_id = is_group ? client_->currentGroup_.group_id_ : client_->currentFriend_.id_;
     fileInfo.file_name = extractFilename(filePath);
-
-    // uploadWaiter_.wait();
-    // int file_id = uploadWaiter_.getResult();
-
+    fileInfo.is_upload = true;
     ftpClientManager_.uploadFile(fileInfo);
+}
+
+void FileService::downloadFile(FileInfo &fileinfo)
+{
+    fileinfo.is_upload = false;
+    ftpClientManager_.donwloadFile(fileinfo);
 }
 
 void FileService::getFiles(bool is_group)
@@ -101,27 +122,18 @@ void FileService::getFiles(bool is_group)
     fileListWaiter_.wait();
 }
 
-void FileService::handleUploadAck(const TcpConnectionPtr &conn, json &js)
-{
-    int file_id = js["file_id"];
-    uploadWaiter_.notify(file_id);
-}
-
 void FileService::handleFileList(const TcpConnectionPtr &conn, json &js)
 {
     client_->fileList_.clear();
-    File f;
+    FileInfo f;
     for (const auto &afile : js["files"])
     {
         f.file_name = afile["file_name"];
-        f.file_size = afile["file_size"];
+        f.file_size_str = afile["file_size_str"];
         f.timestamp = afile["timestamp"];
+        f.sender_id = afile["sender_id"];
         f.id = afile["id"];
         client_->fileList_.push_back(f);
     }
     fileListWaiter_.notify(0);
-}
-
-void FtpClient::uploadFile(const std::string &filePath, const std::string &file_id)
-{
 }
