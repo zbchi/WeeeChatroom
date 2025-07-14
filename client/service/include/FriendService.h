@@ -16,6 +16,7 @@ public:
 
     void addFriend(std::string &friend_id);
     void delFriend(std::string &friend_id);
+    void blockFriend(std::string &friend_id);
     void handleFriendRequest(const TcpConnectionPtr &conn, json &js);
     void responseFriendRequest(FriendRequest friendRequest, char *response);
 

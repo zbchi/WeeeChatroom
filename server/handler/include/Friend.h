@@ -50,3 +50,13 @@ public:
 private:
     Service *service_;
 };
+
+class FriendBlocker : public Handler
+{
+public:
+    FriendBlocker(Service *service) : service_(service) {}
+    void handle(const TcpConnectionPtr &conn, json &js, Timestamp time);
+
+private:
+    Service *service_;
+};

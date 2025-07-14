@@ -103,6 +103,7 @@ void GroupService::getGroupInfo()
     getInfo["group_id"] = client_->currentGroup_.group_id_;
     neter_->sendJson(getInfo);
     groupInfoWaiter_.wait();
+    groupInfoWaiter_.getResult();
 }
 
 void GroupService::handleGroupInfo(const TcpConnectionPtr &conn, json &js)

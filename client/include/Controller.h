@@ -82,7 +82,6 @@ private:
     void showAddGroup();
     void showHandleGroupRequest();
     void showGroupMembers();
-    void showExitGroup();
     void showDestroyGroup();
 
     void showGroupMenu();

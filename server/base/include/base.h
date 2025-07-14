@@ -36,4 +36,5 @@ enum MsgType
     UPLOAD_FILE_ACK,
     DOWNLOAD_FILE,
     DOWNLOAD_FILE_ACK,
+    BLOCK_FRIEND,
 };

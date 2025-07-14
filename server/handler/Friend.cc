@@ -128,3 +128,14 @@ void FriendDeleter::handle(const TcpConnectionPtr &conn, json &js, Timestamp tim
     list.sendFriendList(from_user_id);
     list.sendFriendList(to_user_id);
 }
+
+void FriendBlocker::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    std::string from_user_id = js["from_user_id"];
+    std::string to_user_id = js["to_user_id"];
+
+    auto mysql = MySQLConnPool::instance().getConnection();
+    // 删掉单向好友关系，保留对端的好友关系
+    mysql->del("friends", {{"user_id", from_user_id},
+                           {"friend_id", to_user_id}});
+}
