@@ -25,8 +25,6 @@ void Controller::mainLoop()
         case State::CHAT_PANEL:
             showChatPanel();
             break;
-        case State::SHOW_FREINDS:
-            showFriends();
             break;
         case State::CHAT_FRIEND:
             chatWithFriend();
@@ -48,9 +46,6 @@ void Controller::mainLoop()
             break;
         case State::HANDLE_GROUP_REQUEST:
             showHandleGroupRequest();
-            break;
-        case State::SHOW_GROUPS:
-            showGroups();
             break;
         case State::SHOW_MEMBERS:
             showGroupMembers();
@@ -127,6 +122,7 @@ void Controller::showChatPanel()
     client_->friendService_.getFriends();
     client_->groupService_.getGroups();
 
+    
     clearScreen();
     printHeader("💬 消息中心", "选择聊天对象开始对话");
 

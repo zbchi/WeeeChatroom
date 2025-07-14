@@ -73,7 +73,6 @@ private:
     void showLogin();
     void showRegister();
     void showFindPassword();
-    void showFriends();
     void chatWithFriend();
     void chatWithGroup();
     void showAddFriend();
@@ -82,7 +81,6 @@ private:
     void showCreateGroup();
     void showAddGroup();
     void showHandleGroupRequest();
-    void showGroups();
     void showGroupMembers();
     void showExitGroup();
     void showDestroyGroup();

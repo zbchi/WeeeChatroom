@@ -47,6 +47,7 @@ void FriendService::getFriends()
     getInfo["user_id"] = client_->user_id_;
     neter_->sendJson(getInfo);
     friendListWaiter_.wait();
+    friendListWaiter_.getResult();
 }
 
 void FriendService::handleFriendsList(const TcpConnectionPtr &conn, json &js)
