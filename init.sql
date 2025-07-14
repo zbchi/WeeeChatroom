@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users
     email VARCHAR(32) NOT NULL,
     nickname VARCHAR(32) NOT NULL,
     password VARCHAR(16) NOT NULL,
+    state ENUM('alive','die')DEFAULT 'alive',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

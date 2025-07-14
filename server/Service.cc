@@ -41,7 +41,7 @@ Service::Service() : threadPool_(16),
     handlers_[UPLOAD_FILE] = std::make_shared<FileUploader>(this);
     handlers_[GET_FILES] = std::make_shared<FileLister>(this);
     handlers_[BLOCK_FRIEND] = std::make_shared<FriendBlocker>(this);
-
+    handlers_[DESTROY_ACCOUNT]=std::make_shared<AccountKiller>(this);
     // 设置连接回调
     server_.setConnectionCallback([this](const TcpConnectionPtr &conn)
                                   { this->onConnection(conn); });

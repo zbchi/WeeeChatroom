@@ -46,6 +46,8 @@ enum class State
 
     FRIEND_PANEL,
     GROUP_PANEL,
+
+    DESTROY_ACCOUNT,
 };
 extern State state_;
 
@@ -92,6 +94,8 @@ private:
     void groupPanel();
 
     void filePanel(bool is_group = false);
+
+    void showDestroyAccount();
     Client *client_;
     Neter *neter_;
 };

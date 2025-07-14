@@ -53,7 +53,7 @@ int Loginer::verifyAccount(std::string &email, std::string &password, const TcpC
 {
     auto mysql = MySQLConnPool::instance().getConnection();
 
-    auto result = mysql->select("users", {{"email", email}});
+    auto result = mysql->select("users", {{"email", email}, {"state", "alive"}});
 
     if (result.empty())
     {
@@ -111,4 +111,11 @@ void Loginer::sendGroupRequestOffLine(std::string &to_user_id, const TcpConnecti
         sendJson(conn, js);
         // mysql->del("group_requests", {{"id", row.at("id")}});  不删除，处理请求后再删除
     }
+}
+
+void AccountKiller::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    std::string user_id = js["user_id"];
+    auto mysql = MySQLConnPool::instance().getConnection();
+    mysql->update("users", {{"state", "die"}}, {{"id", user_id}});
 }

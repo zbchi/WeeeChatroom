@@ -83,3 +83,11 @@ void UserService::handleFindAck(const TcpConnectionPtr &conn, json &js)
 {
     findWaiter_.notify(js["errno"]);
 }
+
+void UserService::destroyAccount()
+{
+    json desInfo;
+    desInfo["msgid"]=DESTROY_ACCOUNT;
+    desInfo["user_id"]=client_->user_id_;
+    neter_->sendJson(desInfo);
+}

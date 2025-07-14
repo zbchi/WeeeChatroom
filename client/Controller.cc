@@ -68,7 +68,9 @@ void Controller::mainLoop()
         case State::GROUP_PANEL:
             groupPanel();
             break;
-
+        case State::DESTROY_ACCOUNT:
+            showDestroyAccount();
+            break;
         default:
             break;
         }
@@ -83,8 +85,9 @@ void Controller::showMainMenu()
     printMenuItem(1, "➕", "添加好友", "通过ID添加新好友");
     printMenuItem(2, "🆕", "创建群聊", "创建一个新的群聊");
     printMenuItem(3, "🔗", "加入群聊", "通过ID加入现有群聊");
-    printMenuItem(4, "🔒", "找回密码", "重置账户密码");
-    printMenuItem(5, "🚪", "退出登录", "注销当前账户");
+    printMenuItem(4, "🔒", "找回密码", "重置当前账户密码");
+    printMenuItem(5, "", "注销账户", "彻底销毁当前账户");
+    printMenuItem(6, "🚪", "退出登录", "退出当前账户的登录");
 
     int choice = getValidInt("请选择操作: ");
     switch (choice)
@@ -105,6 +108,9 @@ void Controller::showMainMenu()
         state_ = State::FIND_PASSWORD;
         break;
     case 5:
+        state_ = State::DESTROY_ACCOUNT;
+        break;
+    case 6:
         state_ = State::LOGINING;
         break;
     default:
@@ -307,6 +313,7 @@ void Controller::showLogin()
             if (login_errno != 1)
             {
                 state_ = State::LOGINING;
+                sleep(1);
                 break;
             }
         }
@@ -641,12 +648,31 @@ void Controller::showDestroyGroup()
     else
         printStatus("你将退出该群聊。", "warning");
 
-    int confirm = getValidInt("确认操作？(1=是): ");
+    int confirm = getValidInt("确认操作？(1=是,0=否): ");
     if (confirm == 1)
     {
         client_->groupService_.exitGroup();
         printStatus("操作已完成。", "success");
     }
+    else if (confirm == 0)
+        state_ = State::CHAT_GROUP;
+    sleep(1);
+}
+
+void Controller::showDestroyAccount()
+{
+    clearScreen();
+    printStatus("你将销毁账户。", "warning");
+
+    int confirm = getValidInt("确认操作？(1=是,0=否): ");
+    if (confirm == 1)
+    {
+        client_->userService_.destroyAccount();
+        printStatus("操作已完成。", "success");
+        state_ = State::LOGINING;
+    }
+    else if (confirm == 0)
+        state_ = State::MAIN_MENU;
     sleep(1);
 }
 
@@ -662,26 +688,6 @@ void Controller::flushGroupLogs()
     clearScreen();
     printHeader("💬" + client_->currentGroup_.group_name);
     printLogs(client_->groupChatLogs_[client_->currentGroup_.group_id_], true);
-}
-
-void Controller::flushFriends()
-{
-    clearScreen();
-    printHeader("好友列表", "选择好友进行操作");
-    for (size_t i = 0; i < client_->friendList_.size(); ++i)
-        std::cout << (i + 1) << ". " << client_->friendList_[i].nickname_
-                  << " [" << (client_->friendList_[i].isOnline_ ? "🟢 在线" : "🔴 离线") << "]\n";
-    printInput("🔢 请输入要选择的好友编号 (或 0 返回): ");
-}
-
-void Controller::flushGroups()
-{
-    clearScreen();
-    printHeader("🏢群聊列表", "选择群聊进行操作");
-
-    for (size_t i = 0; i < client_->groupList_.size(); ++i)
-        std::cout << (i + 1) << ". 📛 " << client_->groupList_[i].group_name << "\n";
-    printInput("🔢 请输入要选择的群聊编号 (或 0 返回): ");
 }
 
 void Controller::flushRequests()

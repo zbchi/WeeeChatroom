@@ -19,6 +19,8 @@ public:
 
     void findPassword(std::string &email);
     int findPasswordCode(std::string &email, std::string &password, int code);
+    void destroyAccount();
+
     Waiter regWaiter_;
     Waiter loginWaiter_;
     Waiter findWaiter_;
