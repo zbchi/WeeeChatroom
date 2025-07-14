@@ -81,11 +81,11 @@ void Service::onConnection(const TcpConnectionPtr &conn)
     else
     { // 断开连接讲用户移出在线用户表
         std::lock_guard<std::mutex> lock(onlienUsersMutex_);
-        for (auto it = onlienUsers_.begin(); it != onlienUsers_.end(); it++)
+        for (auto it = onlineUsers_.begin(); it != onlineUsers_.end(); it++)
         {
             if (it->second == conn)
             {
-                onlienUsers_.erase(it);
+                onlineUsers_.erase(it);
                 break;
             }
         }
@@ -95,8 +95,8 @@ void Service::onConnection(const TcpConnectionPtr &conn)
 TcpConnectionPtr Service::getConnectionPtr(std::string user_id)
 { // 根据user ID 获取 connection指针
     std::lock_guard<std::mutex> lock(onlienUsersMutex_);
-    auto it = onlienUsers_.find(user_id);
-    if (it != onlienUsers_.end())
+    auto it = onlineUsers_.find(user_id);
+    if (it != onlineUsers_.end())
         return it->second;
     else
         return nullptr;
@@ -105,7 +105,7 @@ TcpConnectionPtr Service::getConnectionPtr(std::string user_id)
 std::string Service::getUserid(const TcpConnectionPtr &conn)
 { // 根据connection指针 获取 user ID
     std::lock_guard<std::mutex> lock(onlienUsersMutex_);
-    for (const auto &pair : onlienUsers_)
+    for (const auto &pair : onlineUsers_)
     {
         if (pair.second == conn)
             return pair.first;

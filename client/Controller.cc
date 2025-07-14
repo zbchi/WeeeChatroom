@@ -430,7 +430,7 @@ void Controller::chatWithFriend()
     int count = 20;
     client_->chatService_.loadInitChatLogs(client_->currentFriend_.id_, count);
     clearScreen();
-    std::cout << "💬 与好友聊天（输入 /exit 退出）\n";
+    std::cout << "💬 与好友聊天（输入 /e 退出）\n";
     flushLogs();
     std::string content;
     while (true)
@@ -438,7 +438,7 @@ void Controller::chatWithFriend()
         std::getline(std::cin, content);
         if (content.empty())
             continue;
-        if (content == "/exit")
+        if (content == "/e")
         {
             state_ = State::MAIN_MENU;
             break;
@@ -494,7 +494,7 @@ void Controller::chatWithGroup()
         std::getline(std::cin, content);
         if (content.empty())
             continue;
-        if (content == "/exit")
+        if (content == "/e")
         {
             state_ = State::MAIN_MENU;
             break;
@@ -520,6 +520,11 @@ void Controller::chatWithGroup()
                 flushGroupLogs();
             }
             continue;
+        }
+        else if (content == "/f")
+        {
+            state_ = State::FILE_GROUP;
+            break;
         }
 
         int chat_errno = client_->chatService_.sendGroupMessage(content);
@@ -898,13 +903,13 @@ void Controller::printLogs(ChatLogs &chatLogs, bool is_group)
         if (log.sender_id == client_->user_id_)
             std::cout << RESET;
     }
-    std::cout << DIM << "💡 提示: /c向上翻页,/ 向下翻页,/f传输文件,/exit退出聊天" << RESET << "\n";
+    std::cout << DIM << "💡 提示: /c向上翻页,/ 向下翻页,/f传输文件,/e退出聊天" << RESET << "\n";
 }
 
 void Controller::filePanel(bool is_group)
 {
     client_->fileService_.getFiles(is_group);
-    flushFiles();
+    flushFiles(is_group);
     // printHeader("文件传输");
     std::string input;
     input = getValidString("输入序号下载文件,输入绝对路径上传文件:");
@@ -923,11 +928,28 @@ void Controller::filePanel(bool is_group)
     }
 }
 
-void Controller::flushFiles()
+void Controller::flushFiles(bool is_group)
 {
     // clearScreen();
     printHeader("文件传输");
+    std::cout << std::left
+              << std::setw(4) << "No."
+              << std::setw(32) << "File Name"
+              << std::setw(12) << "Size"
+              << std::setw(20) << "Timestamp"
+              << std::setw(10) << "Sender"
+              << "ID" << "\n";
+
     for (size_t i = 0; i < client_->fileList_.size(); ++i)
-        std::cout << (i + 1) << ". " << client_->fileList_[i].file_name
-                  << client_->fileList_[i].file_size_str << client_->fileList_[i].timestamp << "    " << client_->fileList_[i].sender_id << "   " << client_->fileList_[i].id << "\n";
+    {
+        const auto &file = client_->fileList_[i];
+        std::string sender = is_group ? client_->currentGroup_.group_members[file.sender_id].nickname_ : file.sender_id;
+        std::cout << std::left
+                  << std::setw(4) << (i + 1)
+                  << std::setw(32) << (file.file_name.size() > 31 ? file.file_name.substr(0, 29) + "..." : file.file_name)
+                  << std::setw(12) << file.file_size_str
+                  << std::setw(20) << file.timestamp
+                  << std::setw(10) << sender
+                  << file.id << "\n";
+    }
 }

@@ -11,13 +11,15 @@
 
 #include "File.h"
 using json = nlohmann::json;
+
+using OnlineUsers = std::unordered_map<std::string, TcpConnectionPtr>;
 class Service
 {
 public:
     Service();
     void start();
 
-    std::unordered_map<std::string, TcpConnectionPtr> onlienUsers_;
+    OnlineUsers onlineUsers_;
     std::mutex onlienUsersMutex_;
     TcpConnectionPtr getConnectionPtr(std::string user_id);
     std::string getUserid(const TcpConnectionPtr &conn);
@@ -33,6 +35,4 @@ private:
     InetAddress listenAddr_;
     EventLoop loop_;
     TcpServer server_;
-
-
 };

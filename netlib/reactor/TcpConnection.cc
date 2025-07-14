@@ -44,6 +44,8 @@ void TcpConnection::connectEstablished()
 void TcpConnection::handleRead(Timestamp receiveTime)
 
 {
+
+    LOG_DEBUG("HANDLEREADHANDLEREAD");
     if (is_setReadableCallback)
     {
         readableCallback_(shared_from_this());
@@ -54,7 +56,10 @@ void TcpConnection::handleRead(Timestamp receiveTime)
     if (n > 0)
         messageCallback_(shared_from_this(), &inputBuffer_, receiveTime);
     else if (n == 0)
+    {
         handleClose();
+        LOG_DEBUG("HANDLECLOSECLOSECLOSECLOSE");
+    }
     else
     {
         errno = savedErrno;
@@ -216,6 +221,7 @@ void TcpConnection::forceCloseInLoop()
     loop_->assertInLoopThread();
     if (state_ == kConnected || state_ == kDisconnecting)
     {
+        socket_->shutdownWrite();
         handleClose();
     }
 }

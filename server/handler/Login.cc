@@ -64,7 +64,7 @@ int Loginer::verifyAccount(std::string &email, std::string &password, const TcpC
     if (result[0]["password"] == password)
     {
         std::lock_guard<std::mutex> lock(service_->onlienUsersMutex_);
-        service_->onlienUsers_[result[0]["id"]] = conn;
+        service_->onlineUsers_[result[0]["id"]] = conn;
         LOG_DEBUG("密码正确");
         return 0;
     }

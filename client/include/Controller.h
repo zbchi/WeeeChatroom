@@ -55,14 +55,14 @@ public:
     Controller(Neter *neter, Client *client) : client_(client), neter_(neter) {}
     void mainLoop();
 
-    void printLogs(ChatLogs &chatLogs,bool is_group=false);
+    void printLogs(ChatLogs &chatLogs, bool is_group = false);
     void flushLogs();
     void flushGroupLogs();
     void flushRequests();
     void flushGroupRequests();
     void flushFriends();
     void flushGroups();
-    void flushFiles();
+    void flushFiles(bool is_group = false);
 
 private:
     void showMainMenu();
@@ -88,7 +88,7 @@ private:
     void showFriendMenu();
     void showSystemMenu();
 
-    void filePanel(bool is_group=false);
+    void filePanel(bool is_group = false);
     Client *client_;
     Neter *neter_;
 };

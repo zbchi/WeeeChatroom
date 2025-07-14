@@ -14,6 +14,17 @@
 
 #include "Controller.h"
 
+using FriendChatLogs = std::unordered_map<std::string, ChatLogs>;
+using GroupChatLogs = std::unordered_map<std::string, ChatLogs>;
+using FriendRequests = std::vector<FriendRequest>;
+using GroupAddRequests = std::vector<GroupAddRequest>;
+using FriendList = std::vector<Friend>;
+using GroupList = std::vector<Group>;
+using FileList = std::vector<FileInfo>;
+
+using MsgHandler = std::function<void(const TcpConnectionPtr &, json &)>;
+using MsgHanlerMap = std::unordered_map<int, MsgHandler>;
+
 class Client
 {
     friend class Controller;
@@ -27,22 +38,19 @@ public:
     Client();
     void start();
 
-    using MsgHandler = std::function<void(const TcpConnectionPtr &, json &)>;
-    std::unordered_map<int, MsgHandler> msgHandlerMap_;
+    MsgHanlerMap msgHandlerMap_;
 
     void handleJson(const TcpConnectionPtr &conn, const std::string &jsonStr);
-    void logicLoop();
 
     std::string user_id_;
     std::string user_email_;
-    std::vector<Friend> friendList_;
-    std::vector<Group> groupList_;
-    std::vector<FileInfo> fileList_;
-    std::unordered_map<std::string, ChatLogs> chatLogs_;        // map< freind_id,vector<log> >
-    std::unordered_map<std::string, ChatLogs> groupChatLogs_;   //   map<  group_id,vector<log>  >
-    std::unordered_map<std::string, std::string> unreadCounts_; // map< friend_id,unreadCount >
-    std::vector<FriendRequest> friendRequests_;
-    std::vector<GroupAddRequest> groupAddRequests_;
+    FriendList friendList_;
+    GroupList groupList_;
+    FileList fileList_;
+    FriendChatLogs chatLogs_;           // map< freind_id,vector<log> >
+    GroupChatLogs groupChatLogs_; //   map<  group_id,vector<log>  >
+    FriendRequests friendRequests_;
+    GroupAddRequests groupAddRequests_;
 
     Friend currentFriend_;
     Group currentGroup_;

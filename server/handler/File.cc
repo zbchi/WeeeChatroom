@@ -36,6 +36,7 @@ void FtpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp t
     if (!conn->getContext().has_value())
     {
         std::string jsonStr(buf->peek(), buf->readableBytes());
+        std::cout << jsonStr << std::endl;
         json js = json::parse(jsonStr);
         int msgid = js["msgid"].get<int>();
         if (msgid == UPLOAD_FILE)
