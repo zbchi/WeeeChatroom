@@ -37,9 +37,6 @@ void Controller::mainLoop()
         case State::ADD_FRIEND:
             showAddFriend();
             break;
-        case State::DEL_FRIEND:
-            showDelFriend();
-            break;
         case State::HANDLE_FRIEND_REQUEST:
             showHandleFriendRequest();
             break;
@@ -73,6 +70,13 @@ void Controller::mainLoop()
         case State::FILE_GROUP:
             filePanel(true);
             break;
+        case State::FRIEND_PANEL:
+            friendPanel();
+            break;
+        case State::GROUP_PANEL:
+            groupPanel();
+            break;
+
         default:
             break;
         }
@@ -84,9 +88,11 @@ void Controller::showMainMenu()
     clearScreen();
     printHeader("🏠 聊天室主页", "欢迎回来！选择您要进行的操作");
     printMenuItem(0, "💬", "消息中心", "查看聊天记录和消息");
-    printMenuItem(1, "👥", "好友管理", "添加、删除好友及相关操作");
-    printMenuItem(2, "🏢", "群聊管理", "创建群聊、管理群成员");
-    printMenuItem(3, "⚙️", "系统设置", "账户设置和退出登录");
+    printMenuItem(1, "➕", "添加好友", "通过ID添加新好友");
+    printMenuItem(2, "🆕", "创建群聊", "创建一个新的群聊");
+    printMenuItem(3, "🔗", "加入群聊", "通过ID加入现有群聊");
+    printMenuItem(4, "🔒", "找回密码", "重置账户密码");
+    printMenuItem(5, "🚪", "退出登录", "注销当前账户");
 
     int choice = getValidInt("请选择操作: ");
     switch (choice)
@@ -95,13 +101,19 @@ void Controller::showMainMenu()
         state_ = State::CHAT_PANEL;
         break;
     case 1:
-        showFriendMenu();
+        state_ = State::ADD_FRIEND;
         break;
     case 2:
-        showGroupMenu();
+        state_ = State::CREATE_GROUP;
         break;
     case 3:
-        showSystemMenu();
+        state_ = State::ADD_GROUP;
+        break;
+    case 4:
+        state_ = State::FIND_PASSWORD;
+        break;
+    case 5:
+        state_ = State::LOGINING;
         break;
     default:
         printStatus("无效选项，请重新选择", "error");
@@ -209,102 +221,6 @@ void Controller::showChatPanel()
     }
 }
 
-void Controller::showFriendMenu()
-{
-    clearScreen();
-    printHeader("👥 好友管理", "管理您的好友关系");
-
-    printMenuItem(1, "💬", "与好友聊天", "选择好友开始对话");
-    printMenuItem(2, "➕", "添加好友", "通过ID添加新好友");
-    printMenuItem(3, "🗑️", "删除好友", "移除好友关系");
-    printMenuItem(4, "📥", "处理好友请求", "查看并处理好友申请");
-    printMenuItem(0, "🔙", "返回主菜单", "");
-
-    int choice = getValidInt("请选择操作");
-    switch (choice)
-    {
-    case 1:
-        state_ = State::SHOW_FREINDS;
-        break;
-    case 2:
-        state_ = State::ADD_FRIEND;
-        break;
-    case 3:
-        state_ = State::DEL_FRIEND;
-        break;
-    case 4:
-        state_ = State::HANDLE_FRIEND_REQUEST;
-        break;
-    case 0:
-        state_ = State::MAIN_MENU;
-        break;
-    default:
-        printStatus("无效选项", "error");
-        sleep(1);
-        break;
-    }
-}
-
-void Controller::showGroupMenu()
-{
-    clearScreen();
-    printHeader("🏢 群聊管理", "管理您的群聊");
-
-    printMenuItem(1, "🆕", "创建群聊", "创建一个新的群聊");
-    printMenuItem(2, "🔗", "加入群聊", "通过ID加入现有群聊");
-    printMenuItem(3, "📨", "处理加群申请", "查看并处理入群请求");
-    printMenuItem(4, "📋", "查看群聊列表", "浏览所有已加入的群聊");
-    printMenuItem(0, "🔙", "返回主菜单", "");
-    int choice = getValidInt("请选择操作:");
-    switch (choice)
-    {
-    case 1:
-        state_ = State::CREATE_GROUP;
-        break;
-    case 2:
-        state_ = State::ADD_GROUP;
-        break;
-    case 3:
-        state_ = State::HANDLE_GROUP_REQUEST;
-        break;
-    case 4:
-        state_ = State::SHOW_GROUPS;
-        break;
-    case 0:
-        state_ = State::MAIN_MENU;
-        break;
-    default:
-        printStatus("无效选项", "error");
-        sleep(1);
-        break;
-    }
-}
-
-void Controller::showSystemMenu()
-{
-    clearScreen();
-    printHeader("⚙️ 系统设置", "账户管理和系统设置");
-
-    printMenuItem(1, "🚪", "退出登录", "注销当前账户");
-    printMenuItem(2, "🔒", "找回密码", "重置账户密码");
-    printMenuItem(0, "🔙", "返回主菜单", "");
-
-    int choice = getValidInt("请选择操作: ");
-    switch (choice)
-    {
-    case 1:
-        state_ = State::LOGINING;
-        break;
-    case 0:
-        state_ = State::MAIN_MENU;
-        break;
-    default:
-        printStatus("无效选项", "error");
-        sleep(1);
-        break;
-    }
-}
-
 void Controller::showRegister()
 {
     clearScreen();
@@ -405,24 +321,6 @@ void Controller::showLogin()
     }
 }
 
-void Controller::showFriends()
-{
-    client_->friendService_.getFriends();
-    flushFriends();
-    int choice = getValidInt("");
-    if (choice == 0)
-    {
-        state_ = State::MAIN_MENU;
-        return;
-    }
-    if (choice < 1 || choice > static_cast<int>(client_->friendList_.size()))
-    {
-        printStatus("无效编号", "error");
-        return;
-    }
-    client_->currentFriend_.setCurrentFriend(client_->friendList_[choice - 1]);
-    state_ = State::CHAT_FRIEND;
-}
 
 void Controller::chatWithFriend()
 {
@@ -468,6 +366,11 @@ void Controller::chatWithFriend()
         else if (content == "/f")
         {
             state_ = State::FILE_FRIEND;
+            break;
+        }
+        else if (content == "/m")
+        {
+            state_ = State::FRIEND_PANEL;
             break;
         }
         int chat_errno = client_->chatService_.sendMessage(content);
@@ -526,7 +429,11 @@ void Controller::chatWithGroup()
             state_ = State::FILE_GROUP;
             break;
         }
-
+        else if (content == "/m")
+        {
+            state_ = State::GROUP_PANEL;
+            break;
+        }
         int chat_errno = client_->chatService_.sendGroupMessage(content);
         if (chat_errno == 0)
         {
@@ -547,28 +454,6 @@ void Controller::showAddFriend()
     client_->friendService_.addFriend(friend_id);
     printStatus("好友请求已发送！", "success");
     sleep(1);
-    state_ = State::MAIN_MENU;
-}
-
-void Controller::showDelFriend()
-{
-    clearScreen();
-    if (client_->friendList_.empty())
-    {
-        std::cout << "⚠️ 当前没有好友。\n";
-        return;
-    }
-    std::cout << "👥 好友列表:\n";
-    for (size_t i = 0; i < client_->friendList_.size(); ++i)
-        std::cout << i + 1 << ". " << client_->friendList_[i].nickname_ << "\n";
-    int choice = getValidInt("🔢 选择要删除的好友编号: ");
-    if (choice < 1 || choice > static_cast<int>(client_->friendList_.size()))
-    {
-        printStatus("无效编号。", "error");
-        sleep(1);
-        return;
-    }
-    client_->friendService_.delFriend(client_->friendList_[choice - 1].id_);
     state_ = State::MAIN_MENU;
 }
 
@@ -638,7 +523,7 @@ void Controller::showHandleGroupRequest()
 {
     while (true)
     {
-            flushGroupRequests();
+        flushGroupRequests();
 
         int i = getValidInt("🔢 选择请求编号 (0 返回): ");
         if (i == 0)
@@ -672,26 +557,7 @@ void Controller::showHandleGroupRequest()
         }
     }
 }
-void Controller::showGroups()
-{
-    client_->groupService_.getGroups();
-    flushGroups();
-    int choice = getValidInt("");
-    if (choice == 0)
-    {
-        state_ = State::MAIN_MENU;
-        return;
-    }
-    if (choice < 1 || choice > static_cast<int>(client_->groupList_.size()))
-    {
-        printStatus("无效编号。", "error");
-        return;
-    }
 
-    client_->currentGroup_.setCurrentGroup(client_->groupList_[choice - 1]);
-    client_->groupService_.getGroupInfo();
-    state_ = State::SHOW_MEMBERS;
-}
 void Controller::showExitGroup()
 {
     clearScreen();
@@ -722,7 +588,7 @@ void Controller::showGroupMembers()
     int choice = getValidInt("🔢 选择成员编号进行管理 (0 返回): ");
     if (choice == 0)
     {
-        state_ = State::SHOW_GROUPS;
+        state_ = State::GROUP_PANEL;
         return;
     }
 
@@ -730,7 +596,7 @@ void Controller::showGroupMembers()
     {
         printStatus("无效编号", "error");
         sleep(1);
-        state_ = State::SHOW_GROUPS;
+        state_ = State::GROUP_PANEL;
         return;
     }
 
@@ -782,7 +648,7 @@ void Controller::showGroupMembers()
         sleep(1);
         break;
     }
-    state_ = State::SHOW_GROUPS;
+    state_ = State::GROUP_PANEL;
 }
 
 void Controller::showDestroyGroup()
@@ -800,7 +666,7 @@ void Controller::showDestroyGroup()
         client_->groupService_.exitGroup();
         printStatus("操作已完成。", "success");
     }
-    state_ = State::MAIN_MENU;
+    sleep(1);
 }
 
 void Controller::flushLogs()
@@ -901,7 +767,7 @@ void Controller::printLogs(ChatLogs &chatLogs, bool is_group)
         if (log.sender_id == client_->user_id_)
             std::cout << RESET;
     }
-    std::cout << DIM << "💡 提示: /c向上翻页,/ 向下翻页,/f传输文件,/e退出聊天" << RESET << "\n";
+    std::cout << DIM << "💡 提示: /c向上翻页,/ 向下翻页,/f传输文件,/e退出聊天,/m管理聊天" << RESET << "\n";
 }
 
 void Controller::filePanel(bool is_group)
@@ -949,5 +815,54 @@ void Controller::flushFiles(bool is_group)
                   << std::setw(20) << file.timestamp
                   << std::setw(10) << sender
                   << file.id << "\n";
+    }
+}
+
+void Controller::friendPanel()
+{
+    clearScreen();
+    std::string head = "好友ID:" + client_->currentFriend_.id_ + "  昵称:" + client_->currentFriend_.nickname_;
+    printHeader(head.c_str());
+    printMenuItem(1, "删掉Ta", "你们将结束好友关系");
+    printMenuItem(2, "屏蔽Ta", "你将再也收不到此好友的消息");
+    printMenuItem(0, "返回上级", "");
+
+    int choice = getValidInt("请选择操作:");
+    switch ((choice))
+    {
+    case 1:
+        client_->friendService_.delFriend(client_->currentFriend_.id_);
+        state_ = State::CHAT_PANEL;
+        printStatus("删除好友成功", "success");
+        sleep(1);
+        break;
+    case 2:
+        break;
+    default:
+        break;
+    }
+}
+
+void Controller::groupPanel()
+{
+    client_->groupService_.getGroupInfo();
+    clearScreen();
+    std::string head = "群聊ID:" + client_->currentGroup_.user_id_ + "  昵称:" + client_->currentGroup_.group_name;
+    printHeader(head.c_str());
+    printMenuItem(1, "查看群成员列表", "");
+    printMenuItem(2, "退出群/解散群", "");
+
+    int choice = getValidInt("请选择操作：");
+    switch (choice)
+    {
+    case 1:
+        state_ = State::SHOW_MEMBERS;
+        break;
+    case 2:
+        showDestroyGroup();
+        state_ = State::CHAT_PANEL;
+        break;
+    default:
+        break;
     }
 }

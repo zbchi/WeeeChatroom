@@ -31,7 +31,7 @@ enum class State
     CHAT_FRIEND,
     CHAT_GROUP,
     ADD_FRIEND,
-    DEL_FRIEND,
+
     HANDLE_FRIEND_REQUEST,
     CREATE_GROUP,
     ADD_GROUP,
@@ -43,6 +43,9 @@ enum class State
     FIND_PASSWORD,
     FILE_FRIEND,
     FILE_GROUP,
+
+    FRIEND_PANEL,
+    GROUP_PANEL,
 };
 extern State state_;
 
@@ -74,7 +77,7 @@ private:
     void chatWithFriend();
     void chatWithGroup();
     void showAddFriend();
-    void showDelFriend();
+
     void showHandleFriendRequest();
     void showCreateGroup();
     void showAddGroup();
@@ -87,6 +90,9 @@ private:
     void showGroupMenu();
     void showFriendMenu();
     void showSystemMenu();
+
+    void friendPanel();
+    void groupPanel();
 
     void filePanel(bool is_group = false);
     Client *client_;
