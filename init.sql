@@ -47,6 +47,16 @@ CREATE TABLE IF NOT EXISTS friends
     UNIQUE KEY unique_friendship(user_id,friend_id)
 );
 
+CREATE TABLE IF NOT EXISTS `groups`
+(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(32) NOT NULL,
+    description TEXT,
+    creator_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN kEY (creator_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS friend_requests
 (
     id INT AUTO_INCREMENT PRIMARY KEY, 
@@ -83,16 +93,6 @@ CREATE TABLE IF NOT EXISTS remove_jsons
     FOREIGN KEY (to_user_id) REFERENCES users(id)
 );
 
-CREATE TABLE IF NOT EXISTS `groups`
-(
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(32) NOT NULL,
-    description TEXT,
-    creator_id INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN kEY (creator_id) REFERENCES users(id)
-);
-
 CREATE TABLE IF NOT EXISTS group_members
 (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -115,16 +115,6 @@ CREATE TABLE IF NOT EXISTS group_messages
     FOREIGN KEY (sender_id) REFERENCES users(id)
 );
 
-CREATE TABLE IF NOT EXISTS unread_counts
-(
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    friend_id INT,
-    unread_count INT DEFAULT 0,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (friend_id) REFERENCES users(id)
-);
-
 CREATE TABLE IF NOT EXISTS files
 (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -140,6 +130,6 @@ CREATE TABLE IF NOT EXISTS files
     FOREIGN KEY (group_id) REFERENCES `groups`(id)
 );
 
-CREATE USER 'zb'@'localhost' IDENTIFIED BY '1662308219@Zb';
+#CREATE USER 'zb'@'localhost' IDENTIFIED BY '1662308219@Zb';
 GRANT ALL PRIVILEGES ON chatdb.* To 'zb'@'localhost';
 FLUSH PRIVILEGES;

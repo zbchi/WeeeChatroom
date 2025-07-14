@@ -66,6 +66,7 @@ void FtpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp t
                                       { recvFileData(conn); });
             // 向客户端发送ack接收文件准备完成
             conn->send(makeResponse(UPLOAD_FILE_ACK, 0).dump());
+            LOG_INFO("开始接收文件[%d]", file_id);
         }
         else if (msgid == DOWNLOAD_FILE)
         {
@@ -73,7 +74,8 @@ void FtpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp t
             off_t file_size = js["file_size"];
             std::string file_path = makeFilePath(file_id);
             int file_fd = ::open(file_path.c_str(), O_RDONLY);
-            sendFile(conn, file_fd, 0, file_size);
+            LOG_INFO("开始发送文件[%s]", file_id.c_str());
+            sendFile(conn, file_fd, 0, file_size, std::stoi(file_id));
         }
     }
     else

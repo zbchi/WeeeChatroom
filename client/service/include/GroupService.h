@@ -48,7 +48,7 @@ public:
     Waiter groupInfoWaiter_;
 
 private:
-    void removeGroupAddRequest(std::string &group_id, std::string &from_user_id);
+    void removeGroupAddRequest(std::string group_id, std::string from_user_id);
     Neter *neter_;
     Client *client_;
 };

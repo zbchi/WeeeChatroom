@@ -56,7 +56,7 @@ void sendFileChunk(const TcpConnectionPtr &conn)
             }
         }
     }
-
+    LOG_INFO("文件[%d]发送完毕",ctx->fileId);
     ::close(ctx->fileFd);
     conn->setWriteCallback(nullptr);
     conn->setContext(std::any());
@@ -108,9 +108,9 @@ void recvFileData(const TcpConnectionPtr &conn)
     }
 }
 
-void sendFile(const TcpConnectionPtr &conn, int fileFd, off_t offset, off_t fileSize)
+void sendFile(const TcpConnectionPtr &conn, int fileFd, off_t offset, off_t fileSize,int fileId=0)
 {
-    auto ctx = std::make_shared<FileContext>(fileFd, 0, offset, fileSize);
+    auto ctx = std::make_shared<FileContext>(fileFd, fileId, offset, fileSize);
     conn->setContext(ctx);
     sendFileChunk(conn);
 }

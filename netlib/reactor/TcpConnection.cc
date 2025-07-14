@@ -44,8 +44,6 @@ void TcpConnection::connectEstablished()
 void TcpConnection::handleRead(Timestamp receiveTime)
 
 {
-
-    LOG_DEBUG("HANDLEREADHANDLEREAD");
     if (is_setReadableCallback)
     {
         readableCallback_(shared_from_this());
@@ -58,7 +56,6 @@ void TcpConnection::handleRead(Timestamp receiveTime)
     else if (n == 0)
     {
         handleClose();
-        LOG_DEBUG("HANDLECLOSECLOSECLOSECLOSE");
     }
     else
     {
@@ -90,7 +87,6 @@ void TcpConnection::handleWrite()
                     channel_->disableWriting();
                     if (writeCompleteCallback_)
                     {
-                        std::cout << "handleWriteCallbackCompleteComplete" << std::endl;
                         auto self = shared_from_this();
                         loop_->queueInLoop([self]()
                                            { self->writeCompleteCallback_(self); });

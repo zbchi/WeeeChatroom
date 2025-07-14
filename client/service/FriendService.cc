@@ -64,7 +64,7 @@ void FriendService::handleFriendsList(const TcpConnectionPtr &conn, json &js)
     friendListWaiter_.notify(0);
 }
 
-void FriendService::responseFriendRequest(FriendRequest &friendRequest, char *response)
+void FriendService::responseFriendRequest(FriendRequest friendRequest, char *response)
 {
     json acceptInfo;
     acceptInfo["msgid"] = ADD_FRIEND_ACK;

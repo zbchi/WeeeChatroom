@@ -17,7 +17,7 @@ public:
     void addFriend(std::string &friend_id);
     void delFriend(std::string &friend_id);
     void handleFriendRequest(const TcpConnectionPtr &conn, json &js);
-    void responseFriendRequest(FriendRequest &friendRequest, char *response);
+    void responseFriendRequest(FriendRequest friendRequest, char *response);
 
     std::mutex friendRequests_mutex_;
     std::mutex friendList_mutex_;
@@ -42,7 +42,7 @@ public:
         isOnline_ = friendObj.isOnline_;
     }
     std::string user_id_;
-};
+}; 
 
 class FriendRequest
 {

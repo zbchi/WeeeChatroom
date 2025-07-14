@@ -638,10 +638,7 @@ void Controller::showHandleGroupRequest()
 {
     while (true)
     {
-        {
-            std::lock_guard<std::mutex> lock(client_->groupService_.groupAddRequests_mutex_);
             flushGroupRequests();
-        }
 
         int i = getValidInt("🔢 选择请求编号 (0 返回): ");
         if (i == 0)
@@ -859,6 +856,7 @@ void Controller::flushGroupRequests()
     clearScreen();
     printHeader("📨 群聊请求列表");
     int i = 1;
+    std::lock_guard<std::mutex> lock(client_->groupService_.groupAddRequests_mutex_);
     for (const auto &req : client_->groupAddRequests_)
     {
         std::cout << i << ". 📛 群: " << req.group_name

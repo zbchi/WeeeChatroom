@@ -57,7 +57,7 @@ void GroupService::responseGroupRequest(GroupAddRequest &groupAddRequest, char *
     acceptInfo["from_user_id"] = groupAddRequest.from_user_id;
     acceptInfo["response"] = std::string(response);
     neter_->sendJson(acceptInfo);
-    removeGroupAddRequest(groupAddRequest.group_id, groupAddRequest.from_user_id);
+    removeGroupAddRequest(groupAddRequest.group_id, groupAddRequest.from_user_id);//传递引用将覆盖内存导致全等
 }
 
 void GroupService::handleGroupList(const TcpConnectionPtr &conn, json &js)
@@ -73,8 +73,9 @@ void GroupService::handleGroupList(const TcpConnectionPtr &conn, json &js)
     groupListWaiter_.notify(1);
 }
 
-void GroupService::removeGroupAddRequest(std::string &group_id, std::string &from_user_id)
+void GroupService::removeGroupAddRequest(std::string group_id, std::string from_user_id)
 {
+    std::lock_guard<std::mutex> lock(groupAddRequests_mutex_);
     for (auto it = client_->groupAddRequests_.begin(); it != client_->groupAddRequests_.end();)
     {
         if (it->group_id == group_id &&
@@ -91,8 +92,7 @@ void GroupService::handleGroupRequestRemove(const TcpConnectionPtr &conn, json &
 {
     std::string from_user_id = js["from_user_id"];
     std::string group_id = js["group_id"];
-    std::lock_guard<std::mutex> lock(groupAddRequests_mutex_);
-    removeGroupAddRequest(group_id, from_user_id);
+     removeGroupAddRequest(group_id, from_user_id);
 }
 
 void GroupService::getGroupInfo()
