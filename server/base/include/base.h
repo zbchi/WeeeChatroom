@@ -38,4 +38,5 @@ enum MsgType
     DOWNLOAD_FILE_ACK,
     BLOCK_FRIEND,
     DESTROY_ACCOUNT,
+    HEART_BEAT,
 };

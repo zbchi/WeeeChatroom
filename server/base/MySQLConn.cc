@@ -129,9 +129,7 @@ Result MySQLConn::queryResult(const std::string &sql)
     {
         std::map<std::string, std::string> rowMap;
         for (int i = 0; i < numFields; i++)
-        {
             rowMap[fields[i].name] = row[i] ? row[i] : "";
-        }
         resultVec.emplace_back(std::move(rowMap));
     }
     mysql_free_result(result);
@@ -140,18 +138,18 @@ Result MySQLConn::queryResult(const std::string &sql)
 
 std::string MySQLConn::getEmailById(std::string &user_id)
 {
-    auto result = select("users", {{"id", user_id}});
+    auto result = select("users", {{"id", user_id},{"state","alive"}});
     return result[0]["email"];
 }
 
 std::string MySQLConn::getNicknameById(std::string &user_id)
 {
-    auto result = select("users", {{"id", user_id}});
+    auto result = select("users", {{"id", user_id},{"state","alive"}});
     return result[0]["nickname"];
 }
 std::string MySQLConn::getIdByEmail(std::string &email)
 {
-    auto result = select("users", {{"email", email}});
+    auto result = select("users", {{"email", email},{"state","alive"}});
     if (result.empty())
         return "";
     return result[0]["id"];

@@ -119,3 +119,9 @@ void AccountKiller::handle(const TcpConnectionPtr &conn, json &js, Timestamp tim
     auto mysql = MySQLConnPool::instance().getConnection();
     mysql->update("users", {{"state", "die"}}, {{"id", user_id}});
 }
+
+void HeartBeatUpdater::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    auto ctx = std::any_cast<std::shared_ptr<HeartBeatContext>>(conn->getContext());
+    ctx->lastCheckTime = time;
+}

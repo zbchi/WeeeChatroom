@@ -41,7 +41,9 @@ Service::Service() : threadPool_(16),
     handlers_[UPLOAD_FILE] = std::make_shared<FileUploader>(this);
     handlers_[GET_FILES] = std::make_shared<FileLister>(this);
     handlers_[BLOCK_FRIEND] = std::make_shared<FriendBlocker>(this);
-    handlers_[DESTROY_ACCOUNT]=std::make_shared<AccountKiller>(this);
+    handlers_[DESTROY_ACCOUNT] = std::make_shared<AccountKiller>(this);
+    handlers_[HEART_BEAT] = std::make_shared<HeartBeatUpdater>(this);
+
     // 设置连接回调
     server_.setConnectionCallback([this](const TcpConnectionPtr &conn)
                                   { this->onConnection(conn); });
@@ -54,9 +56,10 @@ Service::Service() : threadPool_(16),
 void Service::start()
 {
     std::thread t([this]()
-                  {
-        FtpServer ftpServer_;
-        ftpServer_.start(); });
+                  { FtpServer ftpServer_;
+                    ftpServer_.start(); }); // 启动文件传输服务器
+    loop_.runEvery(20.0, [this]()
+                   { this->heartBeatCheck(); }); // 定时检测心跳
     server_.start();
     loop_.loop();
 }
@@ -78,9 +81,14 @@ void Service::onConnection(const TcpConnectionPtr &conn)
 {
     if (conn->connected())
     {
+        // 创建心跳检测上下文
+        Timestamp now = Timestamp::now();
+        auto ctx = std::make_shared<HeartBeatContext>(now);
+        conn->setContext(ctx);
     }
     else
-    { // 断开连接讲用户移出在线用户表
+    {
+        // 断开连接讲用户移出在线用户表
         std::lock_guard<std::mutex> lock(onlienUsersMutex_);
         for (auto it = onlineUsers_.begin(); it != onlineUsers_.end(); it++)
         {
@@ -138,4 +146,21 @@ void Service::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp tim
 void Service::setNumThreads(int numThreads)
 {
     server_.setThreadNum(numThreads);
+}
+
+void Service::heartBeatCheck()
+{
+    Timestamp now = Timestamp::now();
+    for (const auto pair : server_.connections_)
+    {
+        auto conn = pair.second;
+        auto ctx = std::any_cast<std::shared_ptr<HeartBeatContext>>(conn->getContext());
+        if (now.microSecondsSinceEpoch() - ctx->lastCheckTime.microSecondsSinceEpoch() > 30 * 1000 * 1000)
+        {
+            LOG_INFO("%s连接超时强制关闭", conn->name().c_str());
+            conn->forceClose();
+        }
+        else
+            LOG_INFO("%s:heatbeat.", conn->name().c_str());
+    }
 }

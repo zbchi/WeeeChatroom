@@ -197,6 +197,9 @@ void MemberKicker::handle(const TcpConnectionPtr &conn, json &js, Timestamp time
 {
     std::string kick_user_id = js["kick_user_id"];
     std::string user_id = js["user_id"];
+    if (kick_user_id == user_id)
+        return;
+
     std::string group_id = js["group_id"];
     auto mysql = MySQLConnPool::instance().getConnection();
     auto result = mysql->select("group_members", {{"user_id", user_id},

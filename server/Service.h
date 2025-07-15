@@ -1,3 +1,4 @@
+#pragma once
 #include "EventLoop.h"
 #include "TcpServer.h"
 #include "InetAddress.h"
@@ -31,8 +32,17 @@ private:
     void onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time);
     void onConnection(const TcpConnectionPtr &conn);
 
+    void heartBeatCheck();
+
     ThreadPool threadPool_;
     InetAddress listenAddr_;
     EventLoop loop_;
     TcpServer server_;
+
+};
+
+struct HeartBeatContext
+{
+    Timestamp lastCheckTime;
+    HeartBeatContext(Timestamp time) : lastCheckTime(time) {}
 };

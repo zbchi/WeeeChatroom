@@ -784,11 +784,11 @@ void Controller::flushFiles(bool is_group)
     // clearScreen();
     printHeader("文件传输");
     std::cout << std::left
-              << std::setw(4) << "No."
-              << std::setw(32) << "File Name"
-              << std::setw(12) << "Size"
-              << std::setw(20) << "Timestamp"
-              << std::setw(10) << "Sender"
+              << std::setw(4) << "序号"
+              << std::setw(32) << "文件名"
+              << std::setw(12) << "文件大小"
+              << std::setw(20) << "发送时间"
+              << std::setw(10) << "发送者"
               << "ID" << "\n";
 
     for (size_t i = 0; i < client_->fileList_.size(); ++i)

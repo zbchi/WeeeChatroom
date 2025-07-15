@@ -9,8 +9,10 @@ namespace mylib
     class InetAddress;
     class Acceptor;
     class EventLoopThreadPool;
+
     class TcpServer
     {
+
     public:
         TcpServer(EventLoop *loop, const InetAddress &listenAddr);
         ~TcpServer();
@@ -24,9 +26,10 @@ namespace mylib
         void removeConnectionInLoop(const TcpConnectionPtr &conn);
 
         void setThreadNum(int numThreads);
+        using ConnectionMap = std::map<std::string, TcpConnectionPtr>;
+        ConnectionMap connections_;
 
     private:
-        using ConnectionMap = std::map<std::string, TcpConnectionPtr>;
         void newConnection(int sockfd, const InetAddress &peerAddr);
 
         EventLoop *loop_;
@@ -36,7 +39,6 @@ namespace mylib
 
         std::unique_ptr<Acceptor> acceptor_;
         std::unique_ptr<EventLoopThreadPool> threadPool_;
-        ConnectionMap connections_;
 
         MessageCallback messageCallback_;
         ConnectionCallback connectionCallback_;

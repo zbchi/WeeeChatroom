@@ -18,6 +18,10 @@ void Neter::start()
     Tcpclient_->setMessageCallback([this](const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
                                    { this->onMessage(conn, buf, time); });
     Tcpclient_->connect();
+    loop_->runEvery(10.0, [this]()
+                    {   json js; 
+                        js["msgid"]=HEART_BEAT;
+                        sendJson(js); }); // 发送心跳包
 
     // 阻塞等待recv线程连接
     {
