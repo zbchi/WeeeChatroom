@@ -7,10 +7,10 @@
 
 #include <unistd.h>
 
-FtpClient::FtpClient(const FileInfo &fileinfo, Client *client) : serverAddr_("127.0.0.1", 8001),
+FtpClient::FtpClient(const FileInfo &fileinfo, Client *client) : client_(client),
+                                                                 serverAddr_(client_->serverAddr_.c_str(), 8001),
                                                                  tcpClient_(&loop_, serverAddr_),
-                                                                 fileInfo_(fileinfo),
-                                                                 client_(client)
+                                                                 fileInfo_(fileinfo)
 {
     tcpClient_.setConnectionCallback([this](const TcpConnectionPtr &conn)
                                      { this->onConnection(conn); });

@@ -11,7 +11,7 @@ class Client;
 class Neter
 {
 public:
-    Neter(Client *client) : client_(client), serverAddr_("127.0.0.1", 8000) {}
+    Neter(Client *client, const char *serverAddr) : client_(client), serverAddr_(serverAddr, 8000) {}
     void start();
     void onMessage(const mylib::TcpConnectionPtr &conn, mylib::Buffer *buf, mylib::Timestamp time);
 

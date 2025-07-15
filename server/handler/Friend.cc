@@ -63,13 +63,15 @@ Result FriendLister::getFriendsInfo(Result &friendsId)
 
 void FriendAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
 {
-    std::string to_user_id = js["to_user_id"];
+    std::string email = js["email"];
     std::string from_user_id = js["from_user_id"];
     auto mysql = MySQLConnPool::instance().getConnection();
+    std::string to_user_id = mysql->getIdByEmail(email);
+    if (to_user_id == "")
+        return;
     js["from_user_nickname"] = mysql->getNicknameById(from_user_id);
 
     std::string jsonStr = js.dump();
-    std::cout << jsonStr << std::endl;
 
     auto targetConn = service_->getConnectionPtr(to_user_id);
     if (targetConn != nullptr)

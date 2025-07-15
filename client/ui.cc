@@ -153,6 +153,8 @@ int getValidInt(const std::string &prompt)
         std::cin >> value;
         if (std::cin.fail())
         {
+            if (std::cin.eof())
+                std::exit(0);
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             printStatus("输入无效，请输入数字", "error");
@@ -169,7 +171,8 @@ std::string getValidString(const std::string &prompt)
 {
     std::string value;
     printInput(prompt);
-    std::getline(std::cin, value);
+    if (!std::getline(std::cin, value))
+        std::exit(0);
     return value;
 }
 

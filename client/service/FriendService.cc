@@ -7,11 +7,11 @@
 #include "Client.h"
 
 #include "ui.h"
-void FriendService::addFriend(std::string &friend_id)
+void FriendService::addFriend(std::string &email)
 {
     json addInfo;
     addInfo["msgid"] = ADD_FRIEND;
-    addInfo["to_user_id"] = friend_id;
+    addInfo["email"] = email;
     addInfo["from_user_id"] = client_->user_id_;
     std::string timestamp = Timestamp::now().toFormattedString();
     addInfo["timestamp"] = timestamp;

@@ -16,26 +16,33 @@ void Chatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     std::string content = js["content"];
 
     int chat_errno = 0;
-    // 判断是否为好友
+
     auto result = mysql->select("friends", {{"user_id", user_id},
                                             {"friend_id", receiver_id}});
-    if (!result.empty())
+    if (!result.empty()) // 判断是否为好友
     {
         auto targetConn = service_->getConnectionPtr(receiver_id);
-        if (targetConn != nullptr)
-        { // 在线直接发送
-            sendJson(targetConn, js);
+
+        auto result = mysql->select("friends", {{"user_id", receiver_id},
+                                                {"friend_id", user_id}});
+
+        if (!result.empty()) // 再判断是否屏蔽
+        {
+            if (targetConn != nullptr)
+                // 在线直接发送
+                sendJson(targetConn, js);
+
+            else
+            { // 离线存储离线消息
+                mysql->insert("offlineMessages", {{"sender_id", user_id},
+                                                  {"receiver_id", receiver_id},
+                                                  {"json", js.dump()}});
+            }
+            // 无论是否在线 存储消息
+            mysql->insert("messages", {{"sender_id", user_id},
+                                       {"receiver_id", receiver_id},
+                                       {"content", content}});
         }
-        else
-        { // 离线存储离线消息
-            mysql->insert("offlineMessages", {{"sender_id", user_id},
-                                              {"receiver_id", receiver_id},
-                                              {"json", js.dump()}});
-        }
-        // 存储消息
-        mysql->insert("messages", {{"sender_id", user_id},
-                                   {"receiver_id", receiver_id},
-                                   {"content", content}});
     }
     else
         chat_errno = 1; // 非好友

@@ -38,7 +38,7 @@ class Client
     friend class FtpClient;
 
 public:
-    Client();
+    Client(const char*serverAddr);
     void start();
 
     MsgHanlerMap msgHandlerMap_;
@@ -66,7 +66,7 @@ public:
     std::mutex isReadGroupMapMutex_;
 
 private:
-    std::thread logicThread_;
+    std::string serverAddr_;
     Neter neter_;
 
     UserService userService_;

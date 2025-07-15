@@ -6,7 +6,7 @@
 #include "ui.h"
 #include <filesystem>
 
-State state_ = State::LOGINING;
+State state_ = State::LOG_OR_REG;
 
 void Controller::mainLoop()
 {
@@ -14,6 +14,9 @@ void Controller::mainLoop()
     {
         switch (state_)
         {
+        case State::LOG_OR_REG:
+            showLogOrReg();
+            break;
         case State::REGISTERING:
             showRegister();
             break;
@@ -25,7 +28,6 @@ void Controller::mainLoop()
             break;
         case State::CHAT_PANEL:
             showChatPanel();
-            break;
             break;
         case State::CHAT_FRIEND:
             chatWithFriend();
@@ -81,7 +83,7 @@ void Controller::mainLoop()
 void Controller::showMainMenu()
 {
     clearScreen();
-    printHeader("🏠 聊天室主页", "欢迎回来！选择您要进行的操作");
+    printHeader("🏠 聊天室主页", "选择您要进行的操作");
     printMenuItem(0, "💬", "消息中心", "查看聊天记录和消息");
     printMenuItem(1, "➕", "添加好友", "通过ID添加新好友");
     printMenuItem(2, "🆕", "创建群聊", "创建一个新的群聊");
@@ -158,7 +160,7 @@ void Controller::showChatPanel()
         {
             std::string is_unread = client_->isReadGroupMap_[g.group_id_] ? std::string(ERROR) + " ● 💬 " : "";
             std::cout << SECONDARY << "[" << BOLD << index << RESET SECONDARY << "] "
-                      << "🏢 " << BOLD << g.group_name << "  " << is_unread << RESET << "\n";
+                      << "🏢 " << BOLD << g.group_name << "[" << g.group_id_ << "]" << "  " << is_unread << RESET << "\n";
             types.push_back("group");
             ids.push_back(g.group_id_);
             ++index;
@@ -219,6 +221,28 @@ void Controller::showChatPanel()
     {
         printStatus("无效选择", "error");
         sleep(1);
+    }
+}
+
+void Controller::showLogOrReg()
+{
+    clearScreen();
+    printHeader("登录或注册");
+    printMenuItem(1, "登录", "");
+    printMenuItem(2, "注册", "");
+    int choice = getValidInt("请选择操作：");
+    switch (choice)
+    {
+    case 1:
+        state_ = State::LOGINING;
+        break;
+    case 2:
+        state_ = State::REGISTERING;
+        break;
+    default:
+        printStatus("无效选项，请重新选择", "error");
+        sleep(1);
+        break;
     }
 }
 
@@ -333,13 +357,11 @@ void Controller::chatWithFriend()
     ssize_t offset = 0;
     int count = 20;
     client_->chatService_.loadInitChatLogs(client_->currentFriend_.id_, count);
-    clearScreen();
-    std::cout << "💬 与好友聊天（输入 /e 退出）\n";
     flushLogs();
     std::string content;
     while (true)
     {
-        std::getline(std::cin, content);
+        content = getValidString("");
         if (content.empty())
             continue;
         if (content == "/e")
@@ -359,7 +381,7 @@ void Controller::chatWithFriend()
             flushLogs();
             continue;
         }
-        else if (content == "/ ")
+        else if (content == "/v")
         {
             if (offset >= count)
             {
@@ -395,12 +417,11 @@ void Controller::chatWithGroup()
     ssize_t offset = 0;
     int count = 20;
     client_->chatService_.loadInitChatLogs(client_->currentGroup_.group_id_, count, true);
-    clearScreen();
     flushGroupLogs();
     std::string content;
     while (true)
     {
-        std::getline(std::cin, content);
+        content = getValidString("");
         if (content.empty())
             continue;
         if (content == "/e")
@@ -420,7 +441,7 @@ void Controller::chatWithGroup()
             flushGroupLogs();
             continue;
         }
-        else if (content == "/ ")
+        else if (content == "/v")
         {
             if (offset >= count)
             {
@@ -454,8 +475,8 @@ void Controller::chatWithGroup()
 void Controller::showAddFriend()
 {
     clearScreen();
-    printHeader("➕ 添加好友", "通过用户ID添加新好友");
-    std::string friend_id = getValidString("🆔 请输入好友ID: ");
+    printHeader("➕ 添加好友", "通过邮箱添加新好友");
+    std::string friend_id = getValidString(" 请输入好友邮箱: ");
     printStatus("正在发送好友请求...", "info");
     client_->friendService_.addFriend(friend_id);
     printStatus("好友请求已发送！", "success");
@@ -762,7 +783,7 @@ void Controller::printLogs(ChatLogs &chatLogs, bool is_group)
         if (log.sender_id == client_->user_id_)
             std::cout << RESET;
     }
-    std::cout << DIM << "💡 提示: /c向上翻页,/ 向下翻页,/f传输文件,/e退出聊天,/m管理聊天" << RESET << "\n";
+    std::cout << DIM << "💡 提示: /c向上翻页,/v向下翻页,/f传输文件,/e退出聊天,/m管理聊天" << RESET << "\n";
 }
 
 void Controller::filePanel(bool is_group)

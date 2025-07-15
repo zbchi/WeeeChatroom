@@ -48,6 +48,7 @@ enum class State
     GROUP_PANEL,
 
     DESTROY_ACCOUNT,
+    LOG_OR_REG,
 };
 extern State state_;
 
@@ -96,6 +97,8 @@ private:
     void filePanel(bool is_group = false);
 
     void showDestroyAccount();
+
+    void showLogOrReg();
     Client *client_;
     Neter *neter_;
 };
