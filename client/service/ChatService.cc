@@ -83,6 +83,10 @@ void ChatService::handleMessage(const TcpConnectionPtr &conn, json &js)
         client_->controller_.flushLogs();
     else
     {
+        {
+            std::lock_guard<std::mutex> lock(client_->isReadMapMutex_);
+            client_->isReadMap_[friend_id] = true;
+        }
         printTopBegin();
         std::cout << "好友[" << nickname << "]发来了一条新消息";
         printTopEnd();
@@ -132,6 +136,10 @@ void ChatService::handleGroupMessage(const TcpConnectionPtr &conn, json &js)
         client_->controller_.flushGroupLogs();
     else
     {
+        {
+            std::lock_guard<std::mutex> lock(client_->isReadGroupMapMutex_);
+            client_->isReadGroupMap_[group_id] = true;
+        }
         printTopBegin();
         std::cout << "群[" << group_name << "]发来了一条新消息" << std::endl;
         printTopEnd();
@@ -160,6 +168,7 @@ std::string ChatService::getLogPath(std::string &user_id, std::string &friend_id
     else
         return (log_dir / (user_id + "_" + friend_id + ".log")).string();
 }
+
 
 void ChatService::storeChatLog(std::string &user_id, std::string &peer_id, json &js, bool is_group)
 {

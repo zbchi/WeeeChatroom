@@ -140,9 +140,10 @@ void Controller::showChatPanel()
         for (const auto &f : client_->friendList_)
         {
             std::string status = f.isOnline_ ? std::string(SUCCESS) + "● 在线" : std::string(DIM) + "○ 离线";
+            std::string is_unread = client_->isReadMap_[f.id_] ? std::string(ERROR) + " ● 💬 " : "";
             std::cout << PRIMARY << "[" << BOLD << index << RESET PRIMARY << "] "
                       << "👤 " << BOLD << f.nickname_ << RESET << " "
-                      << status << RESET << "\n";
+                      << status << "  " << is_unread << RESET << "\n";
             types.push_back("friend");
             ids.push_back(f.id_);
             ++index;
@@ -155,8 +156,9 @@ void Controller::showChatPanel()
         printDivider("群聊列表", "─");
         for (const auto &g : client_->groupList_)
         {
+            std::string is_unread = client_->isReadGroupMap_[g.group_id_] ? std::string(ERROR) + " ● 💬 " : "";
             std::cout << SECONDARY << "[" << BOLD << index << RESET SECONDARY << "] "
-                      << "🏢 " << BOLD << g.group_name << RESET << "\n";
+                      << "🏢 " << BOLD << g.group_name << "  " << is_unread << RESET << "\n";
             types.push_back("group");
             ids.push_back(g.group_id_);
             ++index;
@@ -323,6 +325,11 @@ void Controller::showLogin()
 
 void Controller::chatWithFriend()
 {
+    // 清空未读状态
+    {
+        std::lock_guard<std::mutex> lock(client_->isReadMapMutex_);
+        client_->isReadMap_[client_->currentFriend_.id_] = false;
+    }
     ssize_t offset = 0;
     int count = 20;
     client_->chatService_.loadInitChatLogs(client_->currentFriend_.id_, count);
@@ -337,7 +344,7 @@ void Controller::chatWithFriend()
             continue;
         if (content == "/e")
         {
-            state_ = State::MAIN_MENU;
+            state_ = State::CHAT_PANEL;
             break;
         }
         else if (content == "/c")
@@ -398,7 +405,7 @@ void Controller::chatWithGroup()
             continue;
         if (content == "/e")
         {
-            state_ = State::MAIN_MENU;
+            state_ = State::CHAT_PANEL;
             break;
         }
         else if (content == "/c")

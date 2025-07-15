@@ -25,6 +25,8 @@ using FileList = std::vector<FileInfo>;
 using MsgHandler = std::function<void(const TcpConnectionPtr &, json &)>;
 using MsgHanlerMap = std::unordered_map<int, MsgHandler>;
 
+using IsReadMap = std::unordered_map<std::string, bool>; // true为未读
+
 class Client
 {
     friend class Controller;
@@ -57,6 +59,11 @@ public:
 
     Friend currentFriend_;
     Group currentGroup_;
+
+    IsReadMap isReadMap_;
+    IsReadMap isReadGroupMap_;
+    std::mutex isReadMapMutex_;
+    std::mutex isReadGroupMapMutex_;
 
 private:
     std::thread logicThread_;

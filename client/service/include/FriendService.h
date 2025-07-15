@@ -43,6 +43,7 @@ public:
         isOnline_ = friendObj.isOnline_;
     }
     std::string user_id_;
+    
 }; 
 
 class FriendRequest
