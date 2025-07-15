@@ -30,6 +30,7 @@ sudo pacman -S nlohmann-json
 ###  3. 编译项目
 
 ```
+cd WeeeChatroom
 mkdir build
 cd build
 cmake ..
