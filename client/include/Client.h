@@ -33,6 +33,7 @@ class Client
     friend class FriendService;
     friend class GroupService;
     friend class FileService;
+    friend class FtpClient;
 
 public:
     Client();
@@ -44,10 +45,12 @@ public:
 
     std::string user_id_;
     std::string user_email_;
+    std::string nickname_;
+
     FriendList friendList_;
     GroupList groupList_;
     FileList fileList_;
-    FriendChatLogs chatLogs_;           // map< freind_id,vector<log> >
+    FriendChatLogs chatLogs_;     // map< freind_id,vector<log> >
     GroupChatLogs groupChatLogs_; //   map<  group_id,vector<log>  >
     FriendRequests friendRequests_;
     GroupAddRequests groupAddRequests_;

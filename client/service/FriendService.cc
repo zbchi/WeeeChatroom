@@ -6,6 +6,7 @@
 #include "Neter.h"
 #include "Client.h"
 
+#include "ui.h"
 void FriendService::addFriend(std::string &friend_id)
 {
     json addInfo;
@@ -47,6 +48,9 @@ void FriendService::handleFriendRequest(const TcpConnectionPtr &conn, json &js)
         std::lock_guard<std::mutex> lock(friendRequests_mutex_);
         client_->friendRequests_.push_back(rq);
     }
+    printTopBegin();
+    std::cout << "收到了一条好友请求" << std::endl;
+    printTopEnd();
 }
 
 void FriendService::getFriends()

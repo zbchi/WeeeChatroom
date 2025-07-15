@@ -20,7 +20,10 @@ void Loginer::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     if (errno_verify == 0)
     {
         response["errno"] = 0;
-        response["user_id"] = service_->getUserid(conn);
+        std::string user_id = service_->getUserid(conn);
+        response["user_id"] = user_id;
+        auto mysql = MySQLConnPool::instance().getConnection();
+        response["nickname"] = mysql->getNicknameById(user_id);
         response["errmsg"] = "";
     }
     else if (errno_verify == 2)

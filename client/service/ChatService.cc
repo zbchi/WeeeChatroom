@@ -6,6 +6,8 @@
 #include "Neter.h"
 #include "Client.h"
 #include "Timestamp.h"
+
+#include "ui.h"
 using namespace mylib;
 
 std::string ChatService::fixInvalidUtf8(const std::string &input)
@@ -42,6 +44,7 @@ int ChatService::sendMessage(std::string &content)
     json sendInfo;
     sendInfo["msgid"] = CHAT_MSG;
     sendInfo["sender_id"] = client_->user_id_;
+    sendInfo["nickname"] = client_->nickname_;
     sendInfo["receiver_id"] = client_->currentFriend_.id_; // friend_id
     sendInfo["content"] = fixInvalidUtf8(content);
     std::string timestamp = Timestamp::now().toFormattedString();
@@ -67,6 +70,7 @@ void ChatService::handleMessage(const TcpConnectionPtr &conn, json &js)
     std::string friend_id = js["sender_id"];
     std::string content = js["content"];
     std::string timestamp = js["timestamp"];
+    std::string nickname = js["nickname"];
 
     // 将收到消息存入chatLogs_
     ChatMessage msg{friend_id, content, timestamp, client_->user_id_};
@@ -77,6 +81,12 @@ void ChatService::handleMessage(const TcpConnectionPtr &conn, json &js)
     storeChatLog(client_->user_id_, friend_id, js);
     if (state_ == State::CHAT_FRIEND && friend_id == client_->currentFriend_.id_)
         client_->controller_.flushLogs();
+    else
+    {
+        printTopBegin();
+        std::cout << "好友[" << nickname << "]发来了一条新消息";
+        printTopEnd();
+    }
 }
 
 int ChatService::sendGroupMessage(std::string &content)
@@ -88,6 +98,7 @@ int ChatService::sendGroupMessage(std::string &content)
     sendInfo["content"] = fixInvalidUtf8(content);
     std::string timestamp = Timestamp::now().toFormattedString();
     sendInfo["timestamp"] = timestamp;
+    sendInfo["group_name"] = client_->currentGroup_.group_name;
 
     // 将发送单条消息存入chatLogs_
     ChatMessage msg{client_->user_id_, content, timestamp, client_->user_id_};
@@ -109,7 +120,7 @@ void ChatService::handleGroupMessage(const TcpConnectionPtr &conn, json &js)
     std::string content = js["content"];
     std::string sender_id = js["sender_id"];
     std::string timestamp = js["timestamp"];
-
+    std::string group_name = js["group_name"];
     // 将消息存入groupChatLogs_
     ChatMessage msg{sender_id, content, timestamp, client_->user_id_};
     {
@@ -119,6 +130,12 @@ void ChatService::handleGroupMessage(const TcpConnectionPtr &conn, json &js)
     storeChatLog(client_->user_id_, group_id, js, true);
     if (state_ == State::CHAT_GROUP && group_id == client_->currentGroup_.group_id_)
         client_->controller_.flushGroupLogs();
+    else
+    {
+        printTopBegin();
+        std::cout << "群[" << group_name << "]发来了一条新消息" << std::endl;
+        printTopEnd();
+    }
 }
 
 void ChatService::handleMessageAck(const TcpConnectionPtr &conn, json &js)
@@ -158,6 +175,7 @@ ChatLogs ChatService::loadChatLogs(std::string &user_id,
                                    size_t count,
                                    size_t offset,
                                    bool is_group)
+
 {
     std::ifstream ifs(getLogPath(user_id, peer_id, is_group));
     if (!ifs.is_open())

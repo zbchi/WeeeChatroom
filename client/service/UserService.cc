@@ -53,7 +53,10 @@ void UserService::handleLoginAck(const TcpConnectionPtr &conn, json &js)
 {
     client_->user_email_ = js["email"];
     if (js["errno"] == 0)
+    {
         client_->user_id_ = js["user_id"];
+        client_->nickname_ = js["nickname"];
+    }
     loginWaiter_.notify(js["errno"]);
 }
 
@@ -87,7 +90,7 @@ void UserService::handleFindAck(const TcpConnectionPtr &conn, json &js)
 void UserService::destroyAccount()
 {
     json desInfo;
-    desInfo["msgid"]=DESTROY_ACCOUNT;
-    desInfo["user_id"]=client_->user_id_;
+    desInfo["msgid"] = DESTROY_ACCOUNT;
+    desInfo["user_id"] = client_->user_id_;
     neter_->sendJson(desInfo);
 }

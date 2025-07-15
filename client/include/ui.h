@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <iostream>
 #define RESET "\033[0m"
 #define BOLD "\033[1m"
 #define DIM "\033[2m"
@@ -44,3 +45,15 @@ std::string getValidString(const std::string &prompt);
 std::vector<std::string> wrapContent(const std::string &text, int maxWidth);
 std::string repeat(int count, const std::string &ch);
 void clearScreen();
+
+inline void printTopBegin()
+{
+    std::cout << "\033[s\033[1;1H\033[1;33m";
+    std::cout.flush();
+}
+
+inline void printTopEnd()
+{
+    std::cout << "\033[0m\033[u";
+    std::cout.flush();
+}

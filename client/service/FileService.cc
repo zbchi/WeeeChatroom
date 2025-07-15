@@ -7,9 +7,10 @@
 
 #include <unistd.h>
 
-FtpClient::FtpClient(const FileInfo &fileinfo) : serverAddr_("127.0.0.1", 8001),
-                                                 tcpClient_(&loop_, serverAddr_),
-                                                 fileInfo_(fileinfo)
+FtpClient::FtpClient(const FileInfo &fileinfo, Client *client) : serverAddr_("127.0.0.1", 8001),
+                                                                 tcpClient_(&loop_, serverAddr_),
+                                                                 fileInfo_(fileinfo),
+                                                                 client_(client)
 {
     tcpClient_.setConnectionCallback([this](const TcpConnectionPtr &conn)
                                      { this->onConnection(conn); });
@@ -49,6 +50,12 @@ void FtpClient::sendUploadInfo(const TcpConnectionPtr &conn)
     fileInfo_.file_size = getFileSize(fd);
     js["file_size"] = fileInfo_.file_size;
     conn->send(js.dump());
+
+    std::string content = "[文件]:" + fileInfo_.file_name;
+    if (fileInfo_.is_group)
+        client_->chatService_.sendGroupMessage(content);
+    else
+        client_->chatService_.sendMessage(content);
 }
 
 void FtpClient::sendDownloadInfo(const TcpConnectionPtr &conn)

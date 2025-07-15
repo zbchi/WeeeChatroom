@@ -28,14 +28,14 @@ struct FileInfo
 class FtpClient
 {
 public:
-    FtpClient(const FileInfo &fileinfo);
+    FtpClient(const FileInfo &fileinfo, Client *client);
     void downloadFile(const std::string &file_id);
 
 private:
     void sendUploadInfo(const TcpConnectionPtr &conn);
     void sendDownloadInfo(const TcpConnectionPtr &conn);
 
-    std::string makeFilePath(const std::string&file_name);
+    std::string makeFilePath(const std::string &file_name);
     FileInfo fileInfo_;
 
     InetAddress serverAddr_;
@@ -43,36 +43,43 @@ private:
     TcpClient tcpClient_; // 构造顺严格执行，为声明的顺序
     void onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time);
     void onConnection(const TcpConnectionPtr &conn);
+
+    Client *client_;
 };
 
 class FtpClientManager
 {
 public:
+    FtpClientManager(Client *client) : client_(client) {}
     void uploadFile(FileInfo &fileInfo)
     {
-        std::thread([fileInfo]
-                    { auto ftpClient = std::make_unique<FtpClient>(fileInfo); 
+        std::thread([fileInfo, this]
+                    { auto ftpClient = std::make_unique<FtpClient>(fileInfo,client_); 
                     LOG_DEBUG("Thread Die!"); })
             .detach();
     }
     void donwloadFile(FileInfo &fileInfo)
     {
-        std::thread([fileInfo]
-                    { auto ftpClient = std::make_unique<FtpClient>(fileInfo);
+        std::thread([fileInfo, this]
+                    { auto ftpClient = std::make_unique<FtpClient>(fileInfo,client_);
                      LOG_DEBUG("Thread Die!"); })
             .detach();
     }
+
+private:
+    Client *client_;
 };
 
 class FileService
 {
 public:
     FileService(Neter *neter, Client *client) : neter_(neter),
-                                                client_(client) {}
+                                                client_(client),
+                                                ftpClientManager_(client) {}
 
     void getFiles(bool is_group = false);
     void handleFileList(const TcpConnectionPtr &conn, json &js);
-    
+
     void uploadFile(std::string &filePath, bool is_group = false);
     void downloadFile(FileInfo &fileinfo);
     Waiter fileListWaiter_;

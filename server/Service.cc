@@ -157,7 +157,7 @@ void Service::heartBeatCheck()
         auto ctx = std::any_cast<std::shared_ptr<HeartBeatContext>>(conn->getContext());
         if (now.microSecondsSinceEpoch() - ctx->lastCheckTime.microSecondsSinceEpoch() > 30 * 1000 * 1000)
         {
-            LOG_INFO("%s连接超时强制关闭", conn->name().c_str());
+            LOG_WARN("%s:连接超时强制关闭", conn->name().c_str());
             conn->forceClose();
         }
         else

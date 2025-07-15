@@ -3,7 +3,7 @@
 #include "base.h"
 #include "Neter.h"
 #include "Client.h"
-
+#include "ui.h"
 void GroupService::getGroups()
 {
     json getInfo;
@@ -49,6 +49,9 @@ void GroupService::handleGroupRequest(const TcpConnectionPtr &conn, json &js)
         std::lock_guard<std::mutex> lock(groupAddRequests_mutex_);
         client_->groupAddRequests_.push_back(rq);
     }
+    printTopBegin();
+    std::cout << "收到了一条加群申请" << std::endl;
+    printTopEnd();
 }
 void GroupService::responseGroupRequest(GroupAddRequest &groupAddRequest, char *response)
 {

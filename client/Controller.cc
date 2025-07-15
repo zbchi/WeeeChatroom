@@ -4,6 +4,7 @@
 #include <mutex>
 #include <unistd.h>
 #include "ui.h"
+#include <filesystem>
 
 State state_ = State::LOGINING;
 
@@ -759,13 +760,25 @@ void Controller::printLogs(ChatLogs &chatLogs, bool is_group)
 
 void Controller::filePanel(bool is_group)
 {
+    namespace fs = std::filesystem;
     client_->fileService_.getFiles(is_group);
     flushFiles(is_group);
     // printHeader("文件传输");
-    std::string input;
-    input = getValidString("输入序号下载文件,输入绝对路径上传文件:");
-    if (input[0] == '/')
+    std::string input = getValidString("输入序号下载文件,输入绝对路径上传文件,0返回上级:");
+    if (!input.empty() && input[0] == '/')
     {
+        if (!fs::exists(input))
+        {
+            printStatus("该文件不存在。", "error");
+            sleep(1);
+            return;
+        }
+        if (!fs::is_regular_file(input))
+        {
+            printStatus("不是普通文件或无法访问。", "error");
+            sleep(1);
+            return;
+        }
         client_->fileService_.uploadFile(input, is_group);
 
         // int chat_errno = client_->chatService_.sendMessage(content);
@@ -774,14 +787,37 @@ void Controller::filePanel(bool is_group)
     }
     else
     {
-        int choice = std::stoi(input);
+        int choice = -1;
+        try
+        {
+            choice = std::stoi(input);
+        }
+        catch (const std::exception &e)
+        {
+            printStatus("输入无效，应该为编号或绝对路径", "error");
+            sleep(1);
+            return;
+        }
+
+        if (choice == 0)
+        {
+            state_ = is_group ? State::CHAT_GROUP : State::CHAT_FRIEND;
+            return;
+        }
+
+        if (choice < 1 || choice > static_cast<int>(client_->fileList_.size()))
+        {
+            printStatus("无效编号", "error");
+            sleep(1);
+            return;
+        }
         client_->fileService_.downloadFile(client_->fileList_[choice - 1]);
     }
 }
 
 void Controller::flushFiles(bool is_group)
 {
-    // clearScreen();
+    clearScreen();
     printHeader("文件传输");
     std::cout << std::left
               << std::setw(4) << "序号"
