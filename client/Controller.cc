@@ -6,7 +6,7 @@
 #include "ui.h"
 #include <filesystem>
 
-State state_ = State::LOG_OR_REG;
+std::atomic<State> state_ = State::LOG_OR_REG;
 
 void Controller::mainLoop()
 {
@@ -371,6 +371,7 @@ void Controller::chatWithFriend()
         }
         else if (content == "/c")
         {
+            state_ = State::LOG_HISTORY;
             if (client_->chatLogs_[client_->currentFriend_.id_].empty())
             {
                 std::cout << "没有更多聊天记录了" << std::endl;
@@ -389,6 +390,8 @@ void Controller::chatWithFriend()
                 client_->chatService_.loadMoreChatLogs(client_->currentFriend_.id_, count, offset);
                 flushLogs();
             }
+            else if (offset == 0)
+                state_ = State::CHAT_FRIEND;
             continue;
         }
         else if (content == "/f")
@@ -404,7 +407,7 @@ void Controller::chatWithFriend()
         int chat_errno = client_->chatService_.sendMessage(content);
         if (chat_errno == 0)
         {
-            client_->chatService_.loadInitChatLogs(client_->currentFriend_.id_, count);
+            // client_->chatService_.loadInitChatLogs(client_->currentFriend_.id_, count);
             flushLogs();
         }
         else if (chat_errno == 1)
@@ -464,7 +467,7 @@ void Controller::chatWithGroup()
         int chat_errno = client_->chatService_.sendGroupMessage(content);
         if (chat_errno == 0)
         {
-            client_->chatService_.loadInitChatLogs(client_->currentGroup_.group_id_, count, true);
+            //   client_->chatService_.loadInitChatLogs(client_->currentGroup_.group_id_, count, true);
             flushGroupLogs();
         }
         else if (chat_errno == 1)

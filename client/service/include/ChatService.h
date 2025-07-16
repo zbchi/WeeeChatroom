@@ -3,6 +3,7 @@
 #include <vector>
 #include <mutex>
 #include <fstream>
+#include <deque>
 #include "base.h"
 class Neter;
 class Client;
@@ -15,7 +16,7 @@ struct ChatMessage
     std::string timestamp;
     std::string user_id_;
 };
-using ChatLogs = std::vector<ChatMessage>;
+using ChatLogs = std::deque<ChatMessage>;
 
 class ChatService
 {

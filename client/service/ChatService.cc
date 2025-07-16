@@ -55,14 +55,15 @@ int ChatService::sendMessage(std::string &content)
     {
         std::lock_guard<std::mutex> lock(chatLogs_mutex_);
         client_->chatLogs_[client_->currentFriend_.id_].push_back(msg);
+        if (client_->chatLogs_[client_->currentFriend_.id_].size() > 20)
+            client_->chatLogs_[client_->currentFriend_.id_].pop_front();
     }
     neter_->sendJson(sendInfo);
-
-    chatMessageWaiter_.wait();
-    int result = chatMessageWaiter_.getResult();
-    if (result == 0)
-        storeChatLog(client_->user_id_, client_->currentFriend_.id_, sendInfo);
-    return result;
+    // chatMessageWaiter_.wait();
+    // int result = chatMessageWaiter_.getResult();
+    // if (result == 0)
+    storeChatLog(client_->user_id_, client_->currentFriend_.id_, sendInfo);
+    return 0;
 }
 
 void ChatService::handleMessage(const TcpConnectionPtr &conn, json &js)
@@ -73,14 +74,22 @@ void ChatService::handleMessage(const TcpConnectionPtr &conn, json &js)
     std::string nickname = js["nickname"];
 
     // 将收到消息存入chatLogs_
-    ChatMessage msg{friend_id, content, timestamp, client_->user_id_};
+    if (state_ == State::CHAT_FRIEND)
     {
-        std::lock_guard<std::mutex> lock(chatLogs_mutex_);
-        client_->chatLogs_[friend_id].push_back(msg);
+        ChatMessage msg{friend_id, content, timestamp, client_->user_id_};
+        {
+            std::lock_guard<std::mutex> lock(chatLogs_mutex_);
+            client_->chatLogs_[friend_id].push_back(msg);
+            if (client_->chatLogs_[client_->currentFriend_.id_].size() > 20)
+                client_->chatLogs_[client_->currentFriend_.id_].pop_front();
+        }
     }
     storeChatLog(client_->user_id_, friend_id, js);
-    if (state_ == State::CHAT_FRIEND && friend_id == client_->currentFriend_.id_)
+    if ((state_ == State::CHAT_FRIEND) && friend_id == client_->currentFriend_.id_)
+    {
+        // loadInitChatLogs(client_->currentFriend_.id_, 20);
         client_->controller_.flushLogs();
+    }
     else
     {
         {
@@ -109,13 +118,15 @@ int ChatService::sendGroupMessage(std::string &content)
     {
         std::lock_guard<std::mutex> lock(groupChatLogs_mutex_);
         client_->groupChatLogs_[client_->currentGroup_.group_id_].push_back(msg);
+        if (client_->groupChatLogs_[client_->currentGroup_.group_id_].size() > 20)
+            client_->groupChatLogs_[client_->currentGroup_.group_id_].pop_front();
     }
     neter_->sendJson(sendInfo);
-    chatGroupMessageWaiter_.wait();
-    int result = chatGroupMessageWaiter_.getResult();
-    if (result == 0)
-        storeChatLog(client_->user_id_, client_->currentGroup_.group_id_, sendInfo, true);
-    return result;
+    // chatGroupMessageWaiter_.wait();
+    // int result = chatGroupMessageWaiter_.getResult();
+    // if (result == 0)
+    storeChatLog(client_->user_id_, client_->currentGroup_.group_id_, sendInfo, true);
+    return 0;
 }
 
 void ChatService::handleGroupMessage(const TcpConnectionPtr &conn, json &js)
@@ -168,7 +179,6 @@ std::string ChatService::getLogPath(std::string &user_id, std::string &friend_id
     else
         return (log_dir / (user_id + "_" + friend_id + ".log")).string();
 }
-
 
 void ChatService::storeChatLog(std::string &user_id, std::string &peer_id, json &js, bool is_group)
 {

@@ -4,6 +4,14 @@
 #include "Logger.h"
 #include "ui.h"
 
+#include <gperftools/profiler.h>
+void signalHandler(int signum)
+{
+    std::cout << "\n 捕获到 Ctrl+C (SIGINT)，停止 profiler\n";
+    ProfilerStop();
+    exit(signum);
+}
+
 int main(int argc, char *argv[])
 {
     if (argc < 2)
@@ -13,7 +21,11 @@ int main(int argc, char *argv[])
         std::exit(0);
     }
     mylib::Logger::setLogLevel(mylib::Logger::FATAL);
-    signal(SIGCHLD, SIG_IGN);
+    ProfilerStart("cpu.prof");
+    signal(SIGINT, signalHandler);
+
     Client client(argv[1]);
+
     client.start();
+    ProfilerStop();
 }

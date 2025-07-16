@@ -11,6 +11,16 @@ void sendJson(const mylib::TcpConnectionPtr &conn, const json &js)
     conn->send(msg);
 }
 
+void sendJson(const mylib::TcpConnectionPtr &conn, const std::string &jsonStr)
+{
+    int len = static_cast<int>(jsonStr.size());
+    int beLen = htonl(len);
+    std::string msg;
+    msg.append(reinterpret_cast<const char *>(&beLen), sizeof(beLen));
+    msg.append(jsonStr);
+    conn->send(msg);
+}
+
 json makeResponse(int msgid, int errno_, std::string errmsg)
 {
     return {

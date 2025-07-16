@@ -5,6 +5,8 @@
 #include "base.h"
 #include "ChatService.h"
 
+#include <atomic>
+
 #define RESET "\033[0m"
 #define RED "\033[31m"
 #define GREEN "\033[32m"
@@ -49,8 +51,10 @@ enum class State
 
     DESTROY_ACCOUNT,
     LOG_OR_REG,
+
+    LOG_HISTORY,
 };
-extern State state_;
+extern std::atomic<State> state_;
 
 class Client;
 class Neter;

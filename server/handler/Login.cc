@@ -84,9 +84,10 @@ void Loginer::sendFriendRequestOffLine(std::string &to_user_id, const TcpConnect
     auto result = mysql->select("friend_requests", {{"to_user_id", to_user_id}});
     for (const auto &row : result)
     {
-        json js = json::parse(row.at("json"));
-        sendJson(conn, js);
-
+        auto targetConn = service_->getConnectionPtr(to_user_id);
+        if (targetConn == nullptr)
+            return; // 断线后停止发送
+        sendJson(conn, row.at("json"));
         // mysql->del("friend_requests", {{"id", row.at("id")}});  不删除，处理请求后再删除
     }
 }
@@ -97,9 +98,11 @@ void Loginer::sendMessageOffLine(std::string &to_user_id, const TcpConnectionPtr
     auto result = mysql->select("offlineMessages", {{"receiver_id", to_user_id}});
     for (const auto &row : result)
     {
-        json js = json::parse(row.at("json"));
-        sendJson(conn, js);
-
+        auto targetConn = service_->getConnectionPtr(to_user_id);
+        if (targetConn == nullptr)
+            return; // 断线后停止发送
+        sendJson(conn, row.at("json"));
+        LOG_DEBUG("发送离线消息");
         mysql->del("offlineMessages", {{"id", row.at("id")}});
     }
 }
@@ -110,8 +113,10 @@ void Loginer::sendGroupRequestOffLine(std::string &to_user_id, const TcpConnecti
     auto result = mysql->select("group_requests", {{"to_user_id", to_user_id}});
     for (const auto &row : result)
     {
-        json js = json::parse(row.at("json"));
-        sendJson(conn, js);
+        auto targetConn = service_->getConnectionPtr(to_user_id);
+        if (targetConn == nullptr)
+            return; // 断线后停止发送
+        sendJson(conn, row.at("json"));
         // mysql->del("group_requests", {{"id", row.at("id")}});  不删除，处理请求后再删除
     }
 }
