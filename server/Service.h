@@ -33,7 +33,7 @@ private:
     void onConnection(const TcpConnectionPtr &conn);
 
     void heartBeatCheck();
-
+    void handleHeartBeat(const TcpConnectionPtr&conn,Timestamp time);
     ThreadPool threadPool_;
     InetAddress listenAddr_;
     EventLoop loop_;

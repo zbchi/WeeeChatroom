@@ -42,7 +42,6 @@ Service::Service() : threadPool_(16),
     handlers_[GET_FILES] = std::make_shared<FileLister>(this);
     handlers_[BLOCK_FRIEND] = std::make_shared<FriendBlocker>(this);
     handlers_[DESTROY_ACCOUNT] = std::make_shared<AccountKiller>(this);
-    handlers_[HEART_BEAT] = std::make_shared<HeartBeatUpdater>(this);
 
     // 设置连接回调
     server_.setConnectionCallback([this](const TcpConnectionPtr &conn)
@@ -137,9 +136,12 @@ void Service::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp tim
         std::string jsonStr(buf->peek(), len);
         buf->retrieve(len);
         std::cout << jsonStr << std::endl;
+        if (jsonStr == "null") // 将心跳检测处理优先级提到线程池前，防止巨量json请求淹没心跳
+            this->handleHeartBeat(conn, time);
         // 将json字符串分配给线程池
-        threadPool_.add_task([conn, jsonStr, time, this]()
-                             { handleMessage(conn, jsonStr, time); });
+        else
+            threadPool_.add_task([conn, jsonStr, time, this]()
+                                 { handleMessage(conn, jsonStr, time); });
     }
 }
 
@@ -163,4 +165,10 @@ void Service::heartBeatCheck()
         else
             LOG_INFO("%s:heatbeat.", conn->name().c_str());
     }
+}
+
+void Service::handleHeartBeat(const TcpConnectionPtr &conn, Timestamp time)
+{
+    auto ctx = std::any_cast<std::shared_ptr<HeartBeatContext>>(conn->getContext());
+    ctx->lastCheckTime = time;
 }

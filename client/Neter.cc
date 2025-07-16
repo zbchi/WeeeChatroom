@@ -20,8 +20,7 @@ void Neter::start()
     Tcpclient_->connect();
     loop_->runEvery(10.0, [this]()
                     {   json js; 
-                        js["msgid"]=HEART_BEAT;
-                        sendJson(js); }); // 发送心跳包
+                        sendJson(js); }); // 发送心跳包，发送null
 
     // 阻塞等待recv线程连接
     {
