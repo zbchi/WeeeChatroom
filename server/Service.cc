@@ -54,6 +54,7 @@ Service::Service() : threadPool_(16),
 
 void Service::start()
 {
+    this->initCache();
     std::thread t([this]()
                   { FtpServer ftpServer_;
                     ftpServer_.start(); }); // 启动文件传输服务器
@@ -159,7 +160,7 @@ void Service::heartBeatCheck()
         auto ctx = std::any_cast<std::shared_ptr<HeartBeatContext>>(conn->getContext());
         if (now.microSecondsSinceEpoch() - ctx->lastCheckTime.microSecondsSinceEpoch() > 30 * 1000 * 1000)
         {
-            LOG_WARN("%s:连接超时强制关闭", conn->name().c_str());
+            LOG_WARN("%s:连  void initCache();接超时强制关闭", conn->name().c_str());
             conn->forceClose();
         }
         else
@@ -171,4 +172,33 @@ void Service::handleHeartBeat(const TcpConnectionPtr &conn, Timestamp time)
 {
     auto ctx = std::any_cast<std::shared_ptr<HeartBeatContext>>(conn->getContext());
     ctx->lastCheckTime = time;
+}
+
+void Service::initCache()
+{
+    threadPool_.add_task([]() { // 将好友关系放入redis缓存
+        auto mysql = MySQLConnPool::instance().getConnection();
+        Result result = mysql->select("friends");
+        for (const auto &row : result)
+        {
+            std::string user_id = row.at("user_id");
+            std::string friend_id = row.at("friend_id");
+            redis->sadd("friends:" + user_id, friend_id); // 加入当前用户拥有的好友
+            /*   friends:user_id  {好友id1,好友id2,好友id3,好友id4}   */
+        };
+        LOG_INFO("初始化好友关系缓存成功");
+    });
+
+    threadPool_.add_task([]() { // 将群成员放入redis缓存
+        auto mysql = MySQLConnPool::instance().getConnection();
+        Result result = mysql->select("group_members");
+        for (const auto &row : result)
+        {
+            std::string group_id = row.at("group_id");
+            std::string user_id = row.at("user_id");
+            redis->sadd("group:" + group_id, user_id); // 加入当前群聊拥有的群成员
+            /*   group:group_id    {成员id1,i成员id2,成员id3}*/
+        }
+        LOG_INFO("初始化群成员关系缓存成功");
+    });
 }

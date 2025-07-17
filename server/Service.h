@@ -34,6 +34,9 @@ private:
 
     void heartBeatCheck();
     void handleHeartBeat(const TcpConnectionPtr&conn,Timestamp time);
+
+    void initCache();
+
     ThreadPool threadPool_;
     InetAddress listenAddr_;
     EventLoop loop_;

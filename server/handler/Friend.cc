@@ -94,6 +94,9 @@ void FriendAddAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp ti
     auto mysql = MySQLConnPool::instance().getConnection();
     if (response == "accept")
     {
+        // 更新缓存
+        redis->sadd("friends:" + from_user_id, to_user_id);
+        redis->sadd("friends:" + to_user_id, from_user_id);
         mysql->insert("friends", {{"user_id", from_user_id},
                                   {"friend_id", to_user_id}});
 
@@ -102,7 +105,6 @@ void FriendAddAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp ti
     }
     else if (response == "reject")
     {
-        std::cout << "rejectrejectrejectrejectreject" << std::endl;
     }
     // 处理完后删除申请记录
     mysql->del("friend_requests", {{"to_user_id", to_user_id},
@@ -120,6 +122,10 @@ void FriendDeleter::handle(const TcpConnectionPtr &conn, json &js, Timestamp tim
     std::string to_user_id = js["to_user_id"];
 
     auto mysql = MySQLConnPool::instance().getConnection();
+
+    // 更新缓存
+    redis->srem("friends:" + from_user_id, to_user_id);
+    redis->srem("friends:" + to_user_id, from_user_id);
     mysql->del("friends", {{"user_id", from_user_id},
                            {"friend_id", to_user_id}});
     mysql->del("friends", {{"user_id", to_user_id},

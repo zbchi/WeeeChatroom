@@ -1,5 +1,6 @@
 **/build/
 **/.vscode/
+**/cpu.prof
 .gitignore
 
 

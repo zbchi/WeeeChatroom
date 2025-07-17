@@ -129,6 +129,7 @@ int ChatService::sendGroupMessage(std::string &content)
     // int result = chatGroupMessageWaiter_.getResult();
     // if (result == 0)
     storeChatLog(client_->user_id_, client_->currentGroup_.group_id_, sendInfo, true);
+    client_->controller_.printALog(msg, true);
     return 0;
 }
 
@@ -141,13 +142,13 @@ void ChatService::handleGroupMessage(const TcpConnectionPtr &conn, json &js)
     std::string group_name = js["group_name"];
     // 将消息存入groupChatLogs_
     ChatMessage msg{sender_id, content, timestamp, client_->user_id_};
-    {
+    /*{
         std::lock_guard<std::mutex> lock(groupChatLogs_mutex_);
         client_->groupChatLogs_[group_id].push_back(msg);
-    }
+    }*/
     storeChatLog(client_->user_id_, group_id, js, true);
     if (state_ == State::CHAT_GROUP && group_id == client_->currentGroup_.group_id_)
-        client_->controller_.flushGroupLogs();
+        client_->controller_.printALog(msg, true);
     else
     {
         {

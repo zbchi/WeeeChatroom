@@ -16,6 +16,7 @@ void GroupCreater::handle(const TcpConnectionPtr &conn, json &js, Timestamp time
                                {"description", description}});
 
     std::string group_id = std::to_string(mysql_insert_id(mysql->getConnection()));
+    redis->sadd("group:" + group_id, creator_id); // 更新缓存
     mysql->insert("group_members", {{"group_id", group_id},
                                     {"role", "owner"},
                                     {"user_id", creator_id}});
@@ -62,6 +63,8 @@ void GroupAddAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp tim
     auto mysql = MySQLConnPool::instance().getConnection();
     if (response == "accept")
     {
+        // 更新缓存
+        redis->sadd("group:" + group_id, from_user_id);
         mysql->insert("group_members", {{"group_id", group_id},
                                         {"user_id", from_user_id}});
     }
@@ -177,6 +180,7 @@ void GroupExiter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     std::string role = result[0].at("role");
     if (role == "member" || role == "admin")
     {
+        redis->srem("group:" + group_id, user_id); // 更新缓存
         mysql->del("group_members", {{"group_id", group_id},
                                      {"user_id", user_id}});
     }
@@ -187,6 +191,7 @@ void GroupExiter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
         for (auto &member_id : member_ids)
             list.sendGroupList(member_id.at("user_id"));
         // 删库跑路
+        redis->del("group:" + group_id); // 更新缓存
         mysql->del("group_members", {{"group_id", group_id}});
         mysql->del("group_messages", {{"group_id", group_id}});
         mysql->del("`groups`", {{"id", group_id}});
@@ -210,6 +215,8 @@ void MemberKicker::handle(const TcpConnectionPtr &conn, json &js, Timestamp time
     std::string kick_role = kick_result[0].at("role");
     if ((role != "member" && kick_role == "member") || role == "owner")
     {
+        // 更新缓存
+        redis->srem("group:" + group_id, kick_user_id);
         mysql->del("group_members", {{"group_id", group_id},
                                      {"user_id", kick_user_id}});
         // 更新被ti的群列表

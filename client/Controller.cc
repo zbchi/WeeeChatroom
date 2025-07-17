@@ -424,6 +424,11 @@ void Controller::chatWithFriend()
 
 void Controller::chatWithGroup()
 {
+    // 清空未读状态
+    {
+        std::lock_guard<std::mutex> lock(client_->isReadGroupMapMutex_);
+        client_->isReadGroupMap_[client_->currentGroup_.group_id_] = false;
+    }
     ssize_t offset = 0;
     int count = 20;
     client_->chatService_.loadInitChatLogs(client_->currentGroup_.group_id_, count, true);
@@ -441,6 +446,7 @@ void Controller::chatWithGroup()
         }
         else if (content == "/c")
         {
+            state_ = State::LOG_HISTORY;
             if (client_->groupChatLogs_[client_->currentGroup_.group_id_].empty())
             {
                 std::cout << "没有更多聊天记录了" << std::endl;
@@ -459,6 +465,8 @@ void Controller::chatWithGroup()
                 client_->chatService_.loadMoreChatLogs(client_->currentGroup_.group_id_, count, offset, true);
                 flushGroupLogs();
             }
+            else if (offset == 0)
+                state_ = State::CHAT_FRIEND;
             continue;
         }
         else if (content == "/f")
@@ -474,11 +482,15 @@ void Controller::chatWithGroup()
         int chat_errno = client_->chatService_.sendGroupMessage(content);
         if (chat_errno == 0)
         {
-            //   client_->chatService_.loadInitChatLogs(client_->currentGroup_.group_id_, count, true);
-            flushGroupLogs();
+            if (state_ == State::LOG_HISTORY)
+            { // 查看历史消息时发送回到底部
+                client_->chatService_.loadInitChatLogs(client_->currentFriend_.id_, count);
+                flushLogs();
+                state_ = State::CHAT_FRIEND;
+            }
         }
         else if (chat_errno == 1)
-            std::cout << "❌发送失败(你已不在此群聊)" << std::endl;
+            printStatus("发送失败(你们已不是好友)", "error");
     }
 }
 
