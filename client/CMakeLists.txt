@@ -13,8 +13,8 @@ add_executable(chat_client
 target_link_libraries(chat_client PRIVATE 
     netlib
     service_lib
-    profiler
-    pthread
+     #profiler
+   # pthread
 )
 
 target_include_directories(chat_client PRIVATE 

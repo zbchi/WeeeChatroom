@@ -31,9 +31,8 @@ sudo pacman -S nlohmann-json
 
 ```
 cd WeeeChatroom
-mkdir build
+cmake -Bbuild -S. -DO=ON
 cd build
-cmake ..
 make -j
 ```
 
