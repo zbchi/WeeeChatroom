@@ -98,6 +98,7 @@ void Connector::connecting(int sockfd)
 
 void Connector::retry(int sockfd)
 {
+    LOG_INFO("关闭套接字");
     sockets::close(sockfd);
     setState(kDisconnected);
     if (connect_)
@@ -148,6 +149,7 @@ void Connector::handleWrite()
             }
             else
             {
+                LOG_DEBUG("关闭套接字");
                 sockets::close(sockfd);
             }
         }

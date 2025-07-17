@@ -12,7 +12,7 @@
 #define SUCCESS "\033[38;5;82m"    // 绿色
 #define WARNING "\033[38;5;220m"   // 黄色
 #define ERROR "\033[38;5;196m"     // 红色
-#define INFO "\033[38;5;117m"      // 浅蓝色
+#define INFOB "\033[38;5;117m"     // 浅蓝色
 
 #define BG_PRIMARY "\033[48;5;25m"
 #define BG_SECONDARY "\033[48;5;236m"

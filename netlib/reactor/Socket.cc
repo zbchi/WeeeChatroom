@@ -2,6 +2,7 @@
 #include "SocketsOps.h"
 #include "InetAddress.h"
 #include <netinet/tcp.h>
+#include "Logger.h"
 using namespace mylib;
 
 Socket::~Socket() {}

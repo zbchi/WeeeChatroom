@@ -67,6 +67,7 @@ void TcpClient::connect()
 
 void TcpClient::disconnect()
 {
+    LOG_INFO("TcpClient::connect[%p] - disconnect");
     connect_ = false;
     {
         std::unique_lock<std::mutex> lock(mutex_);

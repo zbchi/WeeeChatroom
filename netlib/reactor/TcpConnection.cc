@@ -91,8 +91,9 @@ void TcpConnection::handleWrite()
                         loop_->queueInLoop([self]()
                                            { self->writeCompleteCallback_(self); });
                     }
-                    if (state_ = kDisconnecting)
+                    if (state_ == kDisconnecting)
                     {
+                        LOG_DEBUG("kDisconnecting");
                         shutdownInLoop();
                     }
                 }
@@ -115,7 +116,7 @@ void TcpConnection::handleWrite()
 
 void TcpConnection::handleClose()
 {
-    LOG_TRACE("TcpConnection::handleClose state = %d", state_);
+    LOG_INFO("TcpConnection::handleClose state = %d", state_);
     channel_->disableAll();
     closeCallback_(shared_from_this());
 }
@@ -187,6 +188,7 @@ void TcpConnection::shutdown()
 {
     if (state_ == kConnected)
     {
+        LOG_DEBUG("shutdown");
         setState(kDisconnecting);
         loop_->runInLoop([this]()
                          { shutdownInLoop(); });
@@ -195,6 +197,7 @@ void TcpConnection::shutdown()
 
 void TcpConnection::shutdownInLoop()
 {
+    LOG_DEBUG("shutdownInLoop");
     loop_->assertInLoopThread();
     if (!channel_->isWriting())
     {
@@ -206,6 +209,7 @@ void TcpConnection::forceClose()
 {
     if (state_ == kConnected || state_ == kDisconnecting)
     {
+        LOG_DEBUG("forceClose");
         setState(kDisconnecting);
         loop_->queueInLoop([this]()
                            { forceCloseInLoop(); });
@@ -214,6 +218,7 @@ void TcpConnection::forceClose()
 
 void TcpConnection::forceCloseInLoop()
 {
+    LOG_DEBUG("forceCloseInLoop");
     loop_->assertInLoopThread();
     if (state_ == kConnected || state_ == kDisconnecting)
     {
@@ -224,6 +229,7 @@ void TcpConnection::forceCloseInLoop()
 
 void TcpConnection::connectDestroyed()
 {
+    LOG_DEBUG("shutdown write");
     setState(kDisconnected);
     channel_->disableAll();
     connectionCallback_(shared_from_this());

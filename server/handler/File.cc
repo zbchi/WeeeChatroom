@@ -88,6 +88,7 @@ void FtpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp t
         {
             ::close(ctx->fileFd);
             conn->setContext(std::any());
+            
             conn->shutdown();
         }
     }

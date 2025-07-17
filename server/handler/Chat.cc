@@ -42,9 +42,9 @@ void Chatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
                                                   {"json", js.dump()}});
             }
             // 无论是否在线 存储消息
-            /* mysql->insert("messages", {{"sender_id", user_id},
-                                        {"receiver_id", receiver_id},
-                                        {"content", content}});*/
+            mysql->insert("messages", {{"sender_id", user_id},
+                                       {"receiver_id", receiver_id},
+                                       {"content", content}});
         }
         else
             LOG_DEBUG("屏蔽好友关系的消息");

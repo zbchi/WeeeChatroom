@@ -13,7 +13,7 @@ void Neter::start()
                                     conn_=conn;
                                 }
                                 else
-                                std::cout<<"disconnected!!-----!!!!!!----"<<std::endl;
+                                    std::cout<<"disconnected!!-----!!!!!!----"<<std::endl;
                                 connCond_.notify_one(); });
     Tcpclient_->setMessageCallback([this](const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
                                    { this->onMessage(conn, buf, time); });

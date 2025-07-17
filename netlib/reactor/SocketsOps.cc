@@ -58,6 +58,7 @@ int sockets::createNonblockingOrDie()
 
 void sockets::close(int sockfd)
 {
+    LOG_DEBUG("关闭套接字");
     if (::close(sockfd) < 0)
     {
         LOG_SYSERR("sockets::close");
@@ -118,6 +119,7 @@ struct sockaddr_in sockets::getPeerAddr(int sockfd)
 
 void sockets::shutdownWrite(int sockfd)
 {
+    LOG_DEBUG("关闭写端");
     if (::shutdown(sockfd, SHUT_WR) < 0)
         LOG_SYSERR("sockets::shutdownWrite");
 }

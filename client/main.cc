@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
         printStatus(usage.c_str(), "error");
         std::exit(0);
     }
-    mylib::Logger::setLogLevel(mylib::Logger::FATAL);
+    mylib::Logger::setLogLevel(mylib::Logger::DEBUG);
     ProfilerStart("cpu.prof");
     ::signal(SIGINT, signalHandler);
 

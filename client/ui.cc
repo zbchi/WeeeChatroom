@@ -131,7 +131,7 @@ void printStatus(const std::string &message, const std::string &type)
     }
     else
     {
-        color = INFO;
+        color = INFOB;
         icon = "ℹ";
     }
 

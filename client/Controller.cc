@@ -177,7 +177,7 @@ void Controller::showChatPanel()
     printDivider("快捷操作", "=");
     std::cout << WARNING << BOLD << "[91] " << RESET << "📥 好友请求 "
               << BG_WARNING << " " << client_->friendRequests_.size() << " " << RESET << "\n";
-    std::cout << INFO << BOLD << "[92] " << RESET << "📨 群聊请求 "
+    std::cout << INFOB << BOLD << "[92] " << RESET << "📨 群聊请求 "
               << BG_PRIMARY << " " << client_->groupAddRequests_.size() << " " << RESET << "\n";
     std::cout << DIM << "[0]  🔙 返回主菜单" << RESET << "\n\n";
 
