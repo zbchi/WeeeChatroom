@@ -1,11 +1,17 @@
 #pragma once
 #include <nlohmann/json.hpp>
 #include "TcpConnection.h"
+#include "Redis.h"
 using json = nlohmann::json;
 using namespace mylib;
+
 void sendJson(const mylib::TcpConnectionPtr &conn, const json &js);
 void sendJson(const mylib::TcpConnectionPtr &conn, const std::string &jsonStr);
 json makeResponse(int msgid, int errno_, std::string errmsg = "");
+
+
+void initRedisConnPool();
+
 enum MsgType
 {
     REG_MSG = 1,

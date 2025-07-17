@@ -1,6 +1,18 @@
 #include "Redis.h"
 #include "Logger.h"
+std::shared_ptr<sw::redis::Redis> redis = nullptr;
+void initRedisConnPool()
+{
+    sw::redis::ConnectionPoolOptions pool_opts;
+    pool_opts.size = 8;
 
+    sw::redis::ConnectionOptions conn_opts;
+    conn_opts.host = "127.0.0.1";
+    conn_opts.port = 6379;
+
+    redis = std::make_shared<sw::redis::Redis>(conn_opts, pool_opts);
+}
+/*
 bool Redis::checkReply(redisReply *reply)
 {
     if (reply == nullptr)
@@ -136,4 +148,4 @@ bool Redis::expire(const std::string &key, int seconds)
     bool success = (reply->type == REDIS_REPLY_INTEGER && reply->integer > 0);
     freeReplyObject(reply);
     return success;
-}
+}*/

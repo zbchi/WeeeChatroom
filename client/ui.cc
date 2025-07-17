@@ -170,7 +170,7 @@ int getValidInt(const std::string &prompt)
 std::string getValidString(const std::string &prompt)
 {
     std::string value;
-    printInput(prompt);
+     printInput(prompt);
     if (!std::getline(std::cin, value))
         std::exit(0);
     return value;

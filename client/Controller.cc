@@ -266,18 +266,21 @@ void Controller::showRegister()
         if (reg_errno == 0)
         {
             printStatus("注册成功！", "success");
-            sleep(2);
+            sleep(1);
             state_ = State::LOGINING;
             break;
         }
-        else
+        else if (reg_errno == 1)
         {
-            printStatus("注册失败，错误码: " + std::to_string(reg_errno), "error");
-            if (reg_errno != 1)
-            {
-                state_ = State::REGISTERING;
-                break;
-            }
+            printStatus("验证码错误", "error");
+            sleep(1);
+        }
+        else if (reg_errno == 2)
+        {
+            printStatus("该邮箱已注册", "error");
+            sleep(1);
+            state_ = State::REGISTERING;
+            break;
         }
     }
 }
@@ -407,8 +410,12 @@ void Controller::chatWithFriend()
         int chat_errno = client_->chatService_.sendMessage(content);
         if (chat_errno == 0)
         {
-            // client_->chatService_.loadInitChatLogs(client_->currentFriend_.id_, count);
-            flushLogs();
+            if (state_ == State::LOG_HISTORY)
+            { // 查看历史消息时发送回到底部
+                client_->chatService_.loadInitChatLogs(client_->currentFriend_.id_, count);
+                flushLogs();
+                state_ = State::CHAT_FRIEND;
+            }
         }
         else if (chat_errno == 1)
             printStatus("发送失败(你们已不是好友)", "error");
@@ -753,40 +760,44 @@ void Controller::flushGroupRequests()
 
 void Controller::printLogs(ChatLogs &chatLogs, bool is_group)
 {
-    const int boxWidth = 60;
     for (const auto &log : chatLogs)
-    {
-        std::string time = log.timestamp;
-        std::string sender;
-        if (is_group)
-            sender = log.sender_id == client_->user_id_ ? "我" : client_->currentGroup_.group_members[log.sender_id].nickname_;
-        else
-            sender = log.sender_id == client_->user_id_ ? "我" : client_->currentFriend_.nickname_;
-        std::string content = log.content;
-        std::vector<std::string> lines = wrapContent(content, boxWidth - 2);
+        printALog(log, is_group);
 
-        if (log.sender_id == client_->user_id_)
-            std::cout << GREEN;
-        // 顶部边框
-        std::cout << "┌" << repeat(boxWidth, "─") << "┐\n";
-        // 昵称 + 时间那一行
-        int nameWidth = getDisplayWidth(sender);
-        int timeWidth = getDisplayWidth(time);
-        int spaceBetween = boxWidth - nameWidth - timeWidth - 2; // 两侧空格
-        std::cout << "│ " << sender << std::string(spaceBetween, ' ') << time << " │\n";
-        // 消息正文
-        for (const auto &line : lines)
-        {
-            int padding = boxWidth - getDisplayWidth(line) - 2;
-            std::cout << "│ " << line << std::string(padding, ' ') << " │\n";
-        }
-        // 底部边框
-        std::cout << "└" << repeat(boxWidth, "─") << "┘\n";
-
-        if (log.sender_id == client_->user_id_)
-            std::cout << RESET;
-    }
     std::cout << DIM << "💡 提示: /c向上翻页,/v向下翻页,/f传输文件,/e退出聊天,/m管理聊天" << RESET << "\n";
+}
+
+void Controller::printALog(const ChatMessage &log, bool is_group)
+{
+    const int boxWidth = 60;
+    std::string time = log.timestamp;
+    std::string sender;
+    if (is_group)
+        sender = log.sender_id == client_->user_id_ ? "我" : client_->currentGroup_.group_members[log.sender_id].nickname_;
+    else
+        sender = log.sender_id == client_->user_id_ ? "我" : client_->currentFriend_.nickname_;
+    std::string content = log.content;
+    std::vector<std::string> lines = wrapContent(content, boxWidth - 2);
+
+    if (log.sender_id == client_->user_id_)
+        std::cout << GREEN;
+    // 顶部边框
+    std::cout << "┌" << repeat(boxWidth, "─") << "┐\n";
+    // 昵称 + 时间那一行
+    int nameWidth = getDisplayWidth(sender);
+    int timeWidth = getDisplayWidth(time);
+    int spaceBetween = boxWidth - nameWidth - timeWidth - 2; // 两侧空格
+    std::cout << "│ " << sender << std::string(spaceBetween, ' ') << time << " │\n";
+    // 消息正文
+    for (const auto &line : lines)
+    {
+        int padding = boxWidth - getDisplayWidth(line) - 2;
+        std::cout << "│ " << line << std::string(padding, ' ') << " │\n";
+    }
+    // 底部边框
+    std::cout << "└" << repeat(boxWidth, "─") << "┘\n";
+
+    if (log.sender_id == client_->user_id_)
+        std::cout << RESET;
 }
 
 void Controller::filePanel(bool is_group)

@@ -39,7 +39,7 @@ void printDivider(const std::string &text = "", std::string ch = "-");
 void printMenuItem(int index, const std::string &icon, const std::string &text,
                    const std::string &description = "", bool highlight = false);
 void printStatus(const std::string &message, const std::string &type = "info");
-void printInput(const std::string &prompt, const std::string &icon = "▶");
+void printInput(const std::string &prompt, const std::string &icon = "");
 int getValidInt(const std::string &prompt);
 std::string getValidString(const std::string &prompt);
 std::vector<std::string> wrapContent(const std::string &text, int maxWidth);

@@ -1,5 +1,11 @@
+#pragma once
 #include <hiredis/hiredis.h>
 #include <string>
+#include <sw/redis++/redis++.h>
+using namespace sw::redis;
+extern std::shared_ptr<sw::redis::Redis> redis;
+void initRedisConnPool();
+/*
 class Redis
 {
 public:
@@ -20,4 +26,4 @@ public:
     bool hset(const std::string &key, const std::string &field, const std::string &value);
     std::string hget(const std::string &key, const std::string &field);
     bool hdel(const std::string &key, const std::string &field);
-};
+};*/

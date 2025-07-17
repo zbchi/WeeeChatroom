@@ -52,17 +52,18 @@ int ChatService::sendMessage(std::string &content)
 
     // 将发送单条消息存入chatLogs_
     ChatMessage msg{client_->user_id_, content, timestamp, client_->user_id_};
-    {
+    /*{
         std::lock_guard<std::mutex> lock(chatLogs_mutex_);
         client_->chatLogs_[client_->currentFriend_.id_].push_back(msg);
         if (client_->chatLogs_[client_->currentFriend_.id_].size() > 20)
             client_->chatLogs_[client_->currentFriend_.id_].pop_front();
-    }
+    }*/
     neter_->sendJson(sendInfo);
     // chatMessageWaiter_.wait();
     // int result = chatMessageWaiter_.getResult();
     // if (result == 0)
     storeChatLog(client_->user_id_, client_->currentFriend_.id_, sendInfo);
+    client_->controller_.printALog(msg, false);
     return 0;
 }
 
@@ -74,7 +75,8 @@ void ChatService::handleMessage(const TcpConnectionPtr &conn, json &js)
     std::string nickname = js["nickname"];
 
     // 将收到消息存入chatLogs_
-    if (state_ == State::CHAT_FRIEND)
+    ChatMessage msg{friend_id, content, timestamp, client_->user_id_};
+    /*if (state_ == State::CHAT_FRIEND)
     {
         ChatMessage msg{friend_id, content, timestamp, client_->user_id_};
         {
@@ -83,12 +85,13 @@ void ChatService::handleMessage(const TcpConnectionPtr &conn, json &js)
             if (client_->chatLogs_[client_->currentFriend_.id_].size() > 20)
                 client_->chatLogs_[client_->currentFriend_.id_].pop_front();
         }
-    }
+    }*/
     storeChatLog(client_->user_id_, friend_id, js);
     if ((state_ == State::CHAT_FRIEND) && friend_id == client_->currentFriend_.id_)
     {
         // loadInitChatLogs(client_->currentFriend_.id_, 20);
-        client_->controller_.flushLogs();
+        // client_->controller_.flushLogs();追加打印
+        client_->controller_.printALog(msg, false);
     }
     else
     {

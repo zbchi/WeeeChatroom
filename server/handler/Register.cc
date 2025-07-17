@@ -58,24 +58,23 @@ bool RegisterKiter::storeCode(std::string &email, int code, int expireTime)
 
     std::string key = "verify_email:" + email;
 
-    Redis redis;
-    bool isSet = redis.hset(key, "code", std::to_string(code));
-    bool isExpire = redis.expire(key, expireTime);
-    return isSet && isExpire;
+    redis->hset(key, "code", std::to_string(code));
+    redis->expire(key, expireTime);
+    return true;
 }
 
 int RegisterKiter::verifyCode(std::string &email, int inputCode)
 {
     std::string key = "verify_email:" + email;
-    Redis redis;
-    std::string real_code = redis.hget(key, "code");
+    auto real_code_opt = redis->hget(key, "code");
 
+    std::string real_code = *real_code_opt;
     if (real_code != std::to_string(inputCode))
     {
         LOG_DEBUG("验证码错误");
         return 1;
     }
-    redis.hdel(key, "code");
+    redis->hdel(key, "code");
     LOG_DEBUG("验证成功");
     return 0;
 }

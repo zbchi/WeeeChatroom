@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     }
     mylib::Logger::setLogLevel(mylib::Logger::FATAL);
     ProfilerStart("cpu.prof");
-    signal(SIGINT, signalHandler);
+    ::signal(SIGINT, signalHandler);
 
     Client client(argv[1]);
 

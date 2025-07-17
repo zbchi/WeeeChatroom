@@ -73,6 +73,7 @@ public:
     void flushFriends();
     void flushGroups();
     void flushFiles(bool is_group = false);
+    void printALog(const ChatMessage &log, bool is_group);
 
 private:
     void showMainMenu();
@@ -103,6 +104,7 @@ private:
     void showDestroyAccount();
 
     void showLogOrReg();
+
     Client *client_;
     Neter *neter_;
 };

@@ -17,21 +17,23 @@ void Chatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
 
     int chat_errno = 0;
 
-    auto result = mysql->select("friends", {{"user_id", user_id},
-                                            {"friend_id", receiver_id}});
-    if (!result.empty()) // 判断是否为好友
+    // auto result = mysql->select("friends", {{"user_id", user_id},
+    //                                        {"friend_id", receiver_id}});
+    // if (!result.empty()) // 判断是否为好友
+    if (1)
     {
         auto targetConn = service_->getConnectionPtr(receiver_id);
 
-        auto result = mysql->select("friends", {{"user_id", receiver_id},
-                                                {"friend_id", user_id}});
+        // auto result = mysql->select("friends", {{"user_id", receiver_id},
+        //                                         {"friend_id", user_id}});
 
-        if (!result.empty()) // 再判断是否屏蔽
+        // if (!result.empty()) // 再判断是否屏蔽
+        if (1)
         {
             if (targetConn != nullptr)
-                // 在线直接发送
+            { // 在线直接发送
                 sendJson(targetConn, js);
-
+            }
             else
             { // 离线存储离线消息
                 LOG_DEBUG("存储离线消息");
@@ -40,14 +42,15 @@ void Chatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
                                                   {"json", js.dump()}});
             }
             // 无论是否在线 存储消息
-            mysql->insert("messages", {{"sender_id", user_id},
-                                       {"receiver_id", receiver_id},
-                                       {"content", content}});
+            /* mysql->insert("messages", {{"sender_id", user_id},
+                                        {"receiver_id", receiver_id},
+                                        {"content", content}});*/
         }
     }
     else
         chat_errno = 1; // 非好友
-    sendJson(conn, makeResponse(CHAT_MSG_ACK, chat_errno));
+                        // sendJson(conn, makeResponse(CHAT_MSG_ACK, chat_errno));
+    LOG_DEBUG("处理聊天消息完成");
 }
 
 void GroupChatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)

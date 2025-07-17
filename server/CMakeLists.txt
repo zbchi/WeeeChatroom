@@ -11,4 +11,6 @@ add_executable(chat_server
 target_link_libraries(chat_server PRIVATE 
     handler_lib
     base_lib
+    profiler
+    pthread
 )

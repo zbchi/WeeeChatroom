@@ -25,7 +25,7 @@ public:
     TcpConnectionPtr getConnectionPtr(std::string user_id);
     std::string getUserid(const TcpConnectionPtr &conn);
     void setNumThreads(int numThreads);
-
+    
 private:
     std::unordered_map<int, std::shared_ptr<Handler>> handlers_;
     void handleMessage(const mylib::TcpConnectionPtr &conn, const std::string &jsonStr, mylib::Timestamp time);
