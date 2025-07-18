@@ -105,6 +105,7 @@ private:
 
     void showLogOrReg();
 
+    std::mutex printMutex_;
     Client *client_;
     Neter *neter_;
 };

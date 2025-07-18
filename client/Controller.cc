@@ -89,7 +89,7 @@ void Controller::showMainMenu()
     printMenuItem(2, "🆕", "创建群聊", "创建一个新的群聊");
     printMenuItem(3, "🔗", "加入群聊", "通过ID加入现有群聊");
     printMenuItem(4, "🔒", "找回密码", "重置当前账户密码");
-    printMenuItem(5, "", "注销账户", "彻底销毁当前账户");
+    printMenuItem(5, "  ", "注销账户", "彻底销毁当前账户");
     printMenuItem(6, "🚪", "退出登录", "退出当前账户的登录");
 
     int choice = getValidInt("请选择操作: ");
@@ -788,6 +788,7 @@ void Controller::printLogs(ChatLogs &chatLogs, bool is_group)
 
 void Controller::printALog(const ChatMessage &log, bool is_group)
 {
+    std::lock_guard<std::mutex> lock(printMutex_);
     const int boxWidth = 60;
     std::string time = log.timestamp;
     std::string sender;
@@ -917,6 +918,7 @@ void Controller::friendPanel()
     {
     case 0:
         state_ = State::CHAT_FRIEND;
+        break;
     case 1:
         client_->friendService_.delFriend(client_->currentFriend_.id_);
         state_ = State::CHAT_PANEL;

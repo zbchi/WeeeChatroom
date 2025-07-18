@@ -40,11 +40,12 @@ make -j
 
 ###  4. 运行客户端
 
-假设服务端 IP 为 `43.130.227.236`，可以使用以下命令连接服务端：
+假设服务端 IP 为 `10.30.1.235`，可以使用以下命令连接服务端：
 
 ```bash
-./client/chat_client 43.130.227.236
+./client/chat_client 10.30.1.235
 ```
+> 下载的文件存储在目录:/tmp/ChatRoom/client/chat_files/ 中
 
 
 
