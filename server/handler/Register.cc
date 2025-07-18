@@ -212,6 +212,19 @@ void PasswordFindAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp
 
     if (errno_verify == 0)
     {
+        auto conned = service_->getConnectionPtr(user_id);
+        if (conned != nullptr)
+        { // 如果在线移出在线用户表
+            std::lock_guard<std::mutex> lock(service_->onlienUsersMutex_);
+            for (auto it = service_->onlineUsers_.begin(); it != service_->onlineUsers_.end(); it++)
+            {
+                if (it->second == conned)
+                {
+                    service_->onlineUsers_.erase(it);
+                    break;
+                }
+            }
+        }
         auto mysql = MySQLConnPool::instance().getConnection();
         mysql->update("users", {{"password", password}}, {{"email", email}});
     }

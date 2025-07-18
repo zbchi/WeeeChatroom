@@ -230,6 +230,7 @@ void Controller::showLogOrReg()
     printHeader("登录或注册");
     printMenuItem(1, "登录", "");
     printMenuItem(2, "注册", "");
+    printMenuItem(3, "找回密码", "");
     int choice = getValidInt("请选择操作：");
     switch (choice)
     {
@@ -238,6 +239,9 @@ void Controller::showLogOrReg()
         break;
     case 2:
         state_ = State::REGISTERING;
+        break;
+    case 3:
+        state_ = State::FIND_PASSWORD;
         break;
     default:
         printStatus("无效选项，请重新选择", "error");
@@ -273,7 +277,7 @@ void Controller::showRegister()
         else if (reg_errno == 1)
         {
             printStatus("验证码错误", "error");
-            sleep(1);
+            //sleep(1);
         }
         else if (reg_errno == 2)
         {
@@ -303,17 +307,20 @@ void Controller::showFindPassword()
         {
             printStatus("密码重置成功!", "success");
             state_ = State::LOGINING;
+            sleep(1);
             break;
         }
-        else
+        else if (reg_errno == 1)
         {
-            printStatus("重置失败,错误码:" + std::to_string(reg_errno), "error");
-            if (reg_errno != 1)
-            {
-                sleep(1);
-                state_ = State::REGISTERING;
-                break;
-            }
+            printStatus("验证码错误", "error");
+           // sleep(1);
+        }
+        else if (reg_errno == 2)
+        {
+            printStatus("该邮箱未注册", "error");
+            state_ = State::LOG_OR_REG;
+            sleep(1);
+            break;
         }
     }
 }
@@ -352,7 +359,7 @@ void Controller::showLogin()
         else if (login_errno == 1)
         {
             printStatus("密码错误", "error");
-            sleep(1);
+           // sleep(1);
         }
     }
 }
