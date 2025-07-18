@@ -412,6 +412,7 @@ void Controller::chatWithFriend()
         {
             if (state_ == State::LOG_HISTORY)
             { // 查看历史消息时发送回到底部
+                offset = 0;
                 client_->chatService_.loadInitChatLogs(client_->currentFriend_.id_, count);
                 flushLogs();
                 state_ = State::CHAT_FRIEND;

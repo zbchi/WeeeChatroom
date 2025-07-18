@@ -11,6 +11,9 @@
 using namespace mylib;
 namespace fs = std::filesystem;
 
+const int SEND_FILE_SIZE = 1024 * 128;
+const int SPLICE_SIZE = 65535;
+
 struct FileContext
 {
     int fileFd;
@@ -33,8 +36,7 @@ void sendFileChunk(const TcpConnectionPtr &conn)
     while (ctx->offset < ctx->totalSize)
     {
         off_t remain = ctx->totalSize - ctx->offset;
-        std::cout << ctx->count++ << std::endl;
-        ssize_t sent = ::sendfile(conn->socket()->fd(), ctx->fileFd, &ctx->offset, remain);
+        ssize_t sent = ::sendfile(conn->socket()->fd(), ctx->fileFd, &ctx->offset, SEND_FILE_SIZE);
         if (sent <= 0)
         {
             if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -82,11 +84,9 @@ void recvFileData(const TcpConnectionPtr &conn)
     auto ctx = std::any_cast<std::shared_ptr<FileContext>>(conn->getContext());
     while (1)
     {
-        ssize_t n = splice(conn->socket()->fd(), nullptr, ctx->pipefd[1], nullptr, 65535, SPLICE_F_MOVE);
-        std::cout << n << std::endl;
+        ssize_t n = splice(conn->socket()->fd(), nullptr, ctx->pipefd[1], nullptr, SPLICE_SIZE, SPLICE_F_MOVE);
         if (n > 0)
         {
-            std::cout << n << std::endl;
             ssize_t written = splice(ctx->pipefd[0], nullptr, ctx->fileFd, nullptr, n, SPLICE_F_MOVE);
             ctx->written += written;
             if (ctx->written >= ctx->totalSize)

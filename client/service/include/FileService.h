@@ -38,13 +38,12 @@ private:
     std::string makeFilePath(const std::string &file_name);
     FileInfo fileInfo_;
 
+    Client *client_;
     InetAddress serverAddr_;
     EventLoop loop_;
     TcpClient tcpClient_; // 构造顺严格执行，为声明的顺序
     void onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time);
     void onConnection(const TcpConnectionPtr &conn);
-
-    Client *client_;
 };
 
 class FtpClientManager

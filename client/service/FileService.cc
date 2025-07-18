@@ -4,7 +4,7 @@
 #include "Neter.h"
 #include "Client.h"
 #include "Sendfile.h"
-
+#include "ui.h"
 #include <unistd.h>
 
 FtpClient::FtpClient(const FileInfo &fileinfo, Client *client) : client_(client),
@@ -31,7 +31,9 @@ void FtpClient::onConnection(const TcpConnectionPtr &conn)
     }
     else
     {
-        std::cout << "quitquitquitquitquitquitquitquitquitquitquitquitquitquitquit" << std::endl;
+        printTopBegin();
+        std::cout << "文件[" << fileInfo_.file_name << "]传输完成";
+        printTopEnd();
         loop_.quit();
         LOG_DEBUG("Loop Quit!");
     }
@@ -77,11 +79,9 @@ void FtpClient::sendDownloadInfo(const TcpConnectionPtr &conn)
 
 std::string FtpClient::makeFilePath(const std::string &file_name)
 {
-    fs::path exe_path = fs::canonical("/proc/self/exe");
-    fs::path exe_dir = exe_path.parent_path();
-    fs::path file_dir = exe_dir / "chat_files";
+    fs::path file_dir = "/tmp/ChatRoom/client/chat_files";
     std::string path = (file_dir / file_name).string();
-    fs::create_directories(fs::path(path).parent_path());
+    fs::create_directories(file_dir);
     return path;
 }
 

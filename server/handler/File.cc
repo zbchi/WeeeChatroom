@@ -88,7 +88,7 @@ void FtpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp t
         {
             ::close(ctx->fileFd);
             conn->setContext(std::any());
-            
+
             conn->shutdown();
         }
     }
@@ -130,10 +130,8 @@ void FileLister::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
 
 std::string FtpServer::makeFilePath(const std::string &file_id)
 {
-    fs::path exe_path = fs::canonical("/proc/self/exe");
-    fs::path exe_dir = exe_path.parent_path();
-    fs::path file_dir = exe_dir / "chat_files";
+    fs::path file_dir = "/tmp/ChatRoom/server/files";
     std::string path = (file_dir / file_id).string();
-    fs::create_directories(fs::path(path).parent_path());
+    fs::create_directories(file_dir);
     return path;
 }
