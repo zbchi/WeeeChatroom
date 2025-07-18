@@ -83,6 +83,9 @@ sudo make install
 #安装MySQL开发库
 sudo apt install libmysqlclient-dev
 
+#安装libcurl和libcurl-dev
+sudo apt install -y libcurl4-openssl-dev
+
 ```
 
 ------
