@@ -26,17 +26,10 @@ void Loginer::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
         response["nickname"] = mysql->getNicknameById(user_id);
         response["errmsg"] = "";
     }
-    else if (errno_verify == 2)
-    {
-        response["errno"] = 2;
-        response["errmsg"] = "该邮箱未注册";
-    }
-    else if (errno_verify == 1)
-    {
-        response["errno"] = 1;
-        response["errmsg"] = "密码错误";
-    }
-    sendJson(conn, response);
+    else
+        response["errno"] = errno_verify;
+
+    sendJson(conn, response); // 1密码错误  2该邮箱未注册  3已经登录
 
     if (errno_verify == 0)
     {
@@ -58,6 +51,13 @@ int Loginer::verifyAccount(std::string &email, std::string &password, const TcpC
 
     auto result = mysql->select("users", {{"email", email}, {"state", "alive"}});
 
+    std::string user_id = mysql->getIdByEmail(email);
+    auto conned = service_->getConnectionPtr(user_id);
+    if (conned != nullptr)
+    {
+        LOG_DEBUG("%s已登录", email.c_str());
+        return 3;
+    }
     if (result.empty())
     {
         LOG_DEBUG("%s未注册", email.c_str());

@@ -337,15 +337,22 @@ void Controller::showLogin()
             state_ = State::CHAT_PANEL;
             break;
         }
-        else
+        else if (login_errno == 3)
         {
-            printStatus("登录失败，错误码: " + std::to_string(login_errno), "error");
-            if (login_errno != 1)
-            {
-                state_ = State::LOGINING;
-                sleep(1);
-                break;
-            }
+            printStatus(email + "已经登录", "error");
+            sleep(1);
+            break;
+        }
+        else if (login_errno == 2)
+        {
+            printStatus(email + "未注册", "error");
+            sleep(1);
+            break;
+        }
+        else if (login_errno == 1)
+        {
+            printStatus("密码错误", "error");
+            sleep(1);
         }
     }
 }
