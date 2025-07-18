@@ -1,6 +1,6 @@
-## 客户端安装说明
+## 客户端安装
 
-###  1. 拉取项目
+###  1. 拉取仓库
 
 ```bash
 git clone https://github.com/zbchi/WeeeChatroom.git
@@ -29,7 +29,7 @@ sudo pacman -S nlohmann-json
 
 ###  3. 编译项目
 
-```
+```bash
 cd WeeeChatroom
 cmake -Bbuild -S. -DO=ON
 cd build
@@ -42,6 +42,76 @@ make -j
 
 假设服务端 IP 为 `43.130.227.236`，可以使用以下命令连接服务端：
 
-```
+```bash
 ./client/chat_client 43.130.227.236
+```
+
+
+
+## 服务端安装
+
+### 1.安装依赖
+
+```bash
+#安装Json
+sudo apt update
+sudo apt install nlohmann-json3-dev
+
+#安装并启动Redisls
+sudo apt update
+sudo apt install redis -y
+sudo systemctl start redis
+
+#安装MySQL
+sudo apt install -y mysql-server mysql-client
+
+#安装hiredis库
+git clone https://github.com/redis/hiredis.git
+cd hiredis
+make -j
+sudo make install
+
+#安装redis++库
+git clone https://github.com/sewenew/redis-plus-plus.git
+cd redis-plus-plus
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j
+sudo make install
+
+#安装MySQL开发库
+sudo apt install libmysqlclient-dev
+
+```
+
+------
+
+
+### 2.拉取仓库
+
+``` bash
+git clone https://github.com/zbchi/WeeeChatroom.git
+```
+
+------
+
+
+### 3.初始化数据库
+
+```bash
+cd WeeeChatroom
+sudo mysql < init.sql
+```
+
+------
+
+
+### 4.编译并运行
+
+``` bash
+mkdir build 
+cd build 
+cmake ..
+make -j
+./server/chat_server
 ```
