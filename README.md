@@ -45,13 +45,26 @@ make -j
 ```bash
 ./client/chat_client 10.30.1.235
 ```
+
 > 下载的文件存储在目录:/tmp/ChatRoom/client/chat_files/ 中
 
 
 
 ## 服务端安装
 
-### 1.安装依赖
+### docker安装
+
+```bash
+git clone https://github.com/zbchi/WeeeChatroom.git
+cd Weeechatroom
+docker compose up
+```
+
+------
+
+### 编译安装
+
+#### 1.安装依赖
 
 ```bash
 #安装Json
@@ -88,29 +101,20 @@ sudo apt install -y libcurl4-openssl-dev
 
 ```
 
-------
-
-
-### 2.拉取仓库
+#### 2.拉取仓库
 
 ``` bash
 git clone https://github.com/zbchi/WeeeChatroom.git
 ```
 
-------
-
-
-### 3.初始化数据库
+#### 3.初始化数据库
 
 ```bash
 cd WeeeChatroom
 sudo mysql < init.sql
 ```
 
-------
-
-
-### 4.编译并运行
+#### 4.编译并运行
 
 ``` bash
 mkdir build 
