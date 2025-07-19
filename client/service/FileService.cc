@@ -79,7 +79,7 @@ void FtpClient::sendDownloadInfo(const TcpConnectionPtr &conn)
 
 std::string FtpClient::makeFilePath(const std::string &file_name)
 {
-    fs::path file_dir = "/tmp/ChatRoom/client/chat_files";
+    fs::path file_dir = "/tmp/chatclient/chat_files";
     std::string path = (file_dir / file_name).string();
     fs::create_directories(file_dir);
     return path;

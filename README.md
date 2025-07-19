@@ -1,12 +1,25 @@
-## 客户端安装
+# 客户端安装
+## docker安装
+
+> docker run 最后的参数是服务端的Ip地址。
+如用容器启动并传文件:  
+1.把文件托进/tmp/chatclient中。
+2.使用/tmp/chatclient为父目录传输文件，如:/tmp/chatclient/文件名
+
+```bash
+docker pull zbchi/chatroomcli
+docker run -it -v /tmp/chatclient:/tmp/chatclient zbchi/chatroomcli 10.30.1.235
+```
+
+------
+
+## 编译安装
 
 ###  1. 拉取仓库
 
 ```bash
 git clone https://github.com/zbchi/WeeeChatroom.git
 ```
-
-------
 
 ### 2. 安装 JSON 依赖
 
@@ -25,8 +38,6 @@ sudo apt install nlohmann-json3-dev
 sudo pacman -S nlohmann-json
 ```
 
-------
-
 ###  3. 编译项目
 
 ```bash
@@ -36,8 +47,6 @@ cd build
 make -j
 ```
 
-------
-
 ###  4. 运行客户端
 
 假设服务端 IP 为 `10.30.1.235`，可以使用以下命令连接服务端：
@@ -46,13 +55,12 @@ make -j
 ./client/chat_client 10.30.1.235
 ```
 
-> 下载的文件存储在目录:/tmp/ChatRoom/client/chat_files/ 中
+> 下载的文件存储在目录:/tmp/chatclient/chat_files 中
 
 
+# 服务端安装
 
-## 服务端安装
-
-### docker安装
+## docker安装
 
 ```bash
 git clone https://github.com/zbchi/WeeeChatroom.git
@@ -62,9 +70,9 @@ docker compose up
 
 ------
 
-### 编译安装
+## 编译安装
 
-#### 1.安装依赖
+### 1.安装依赖
 
 ```bash
 #安装Json
@@ -101,20 +109,20 @@ sudo apt install -y libcurl4-openssl-dev
 
 ```
 
-#### 2.拉取仓库
+### 2.拉取仓库
 
 ``` bash
 git clone https://github.com/zbchi/WeeeChatroom.git
 ```
 
-#### 3.初始化数据库
+### 3.初始化数据库
 
 ```bash
 cd WeeeChatroom
 sudo mysql < init.sql
 ```
 
-#### 4.编译并运行
+### 4.编译并运行
 
 ``` bash
 mkdir build 

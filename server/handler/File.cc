@@ -130,7 +130,7 @@ void FileLister::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
 
 std::string FtpServer::makeFilePath(const std::string &file_id)
 {
-    fs::path file_dir = "/tmp/ChatRoom/server/files";
+    fs::path file_dir = "/tmp/files";
     std::string path = (file_dir / file_id).string();
     fs::create_directories(file_dir);
     return path;

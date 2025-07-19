@@ -175,7 +175,7 @@ void ChatService::handleGroupMessageAck(const TcpConnectionPtr &conn, json &js)
 
 std::string ChatService::getLogPath(std::string &user_id, std::string &friend_id, bool is_group)
 {
-    fs::path log_dir = "/tmp/ChatRoom/client/chat_logs";
+    fs::path log_dir = "/tmp/chatclient/chat_logs";
     if (is_group)
         return (log_dir / ("g_" + user_id + "_" + friend_id + ".log")).string();
     else
