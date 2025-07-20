@@ -107,6 +107,9 @@ sudo apt install libmysqlclient-dev
 #安装libcurl和libcurl-dev
 sudo apt install -y libcurl4-openssl-dev
 
+#安装libuuid
+sudo apt-get install uuid-dev
+
 ```
 
 ### 2.拉取仓库

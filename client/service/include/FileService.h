@@ -79,7 +79,7 @@ public:
     void getFiles(bool is_group = false);
     void handleFileList(const TcpConnectionPtr &conn, json &js);
 
-    void uploadFile(std::string &filePath, bool is_group = false);
+    int uploadFile(std::string &filePath, bool is_group = false);
     void downloadFile(FileInfo &fileinfo);
     Waiter fileListWaiter_;
 

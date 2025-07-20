@@ -24,6 +24,12 @@ struct FileContext
     ssize_t written = 0;
     int pipefd[2];
     long long count = 0;
+
+    std::string sender_id;
+    std::string peer_id;
+    std::string file_path;
+
+    bool is_group;
     FileContext(int fd, int id, off_t off, off_t size) : fileFd(fd),
                                                          fileId(id),
                                                          offset(off),
@@ -84,6 +90,14 @@ void recvFileData(const TcpConnectionPtr &conn)
     auto ctx = std::any_cast<std::shared_ptr<FileContext>>(conn->getContext());
     while (1)
     {
+        // 尝试读取少量数据检查连接状态
+        if (!isConnected(conn))
+        {
+            // conn->setContext(std::any());
+            LOG_DEBUG("断开连接");
+            conn->forceClose();
+            break;
+        }
         ssize_t n = splice(conn->socket()->fd(), nullptr, ctx->pipefd[1], nullptr, SPLICE_SIZE, SPLICE_F_MOVE);
         if (n > 0)
         {
@@ -101,13 +115,6 @@ void recvFileData(const TcpConnectionPtr &conn)
         }
         else if (errno == EAGAIN)
         {
-            break;
-        }
-        // 尝试读取少量数据检查连接状态
-        if (!isConnected(conn))
-        {
-            conn->setContext(std::any());
-            conn->forceClose();
             break;
         }
     }

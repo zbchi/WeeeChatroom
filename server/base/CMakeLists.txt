@@ -28,4 +28,5 @@ target_link_libraries(base_lib PUBLIC
     /usr/local/lib/libredis++.a
     /usr/local/lib/libhiredis.a
     mysqlclient
+    uuid
 )

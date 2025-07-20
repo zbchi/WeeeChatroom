@@ -131,6 +131,8 @@ void Controller::showChatPanel()
     std::vector<std::string> ids;
     int index = 1;
 
+    std::lock_guard<std::mutex> lock1(client_->friendListMutex_);
+    std::lock_guard<std::mutex> lock2(client_->groupListMutex_);
     // 显示好友列表
     if (!client_->friendList_.empty())
     {
@@ -860,8 +862,18 @@ void Controller::filePanel(bool is_group)
             sleep(1);
             return;
         }
-        client_->fileService_.uploadFile(input, is_group);
-
+        int up_errno = client_->fileService_.uploadFile(input, is_group);
+        if (up_errno == 1)
+        {
+            printStatus("发送失败(无关系)", "error");
+            sleep(1);
+        }
+        else if (up_errno == 2)
+        {
+            printStatus("发送失败(被对方拒收了)", "error");
+            sleep(1);
+        }
+        state_ = is_group ? State::CHAT_GROUP : State::CHAT_FRIEND;
         // int chat_errno = client_->chatService_.sendMessage(content);
         // if (chat_errno == 1)
         //    printStatus("发送失败(你们已不是好友)", "error");

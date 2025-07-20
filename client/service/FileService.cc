@@ -24,6 +24,9 @@ void FtpClient::onConnection(const TcpConnectionPtr &conn)
 {
     if (conn->connected())
     { // 连接成功后自动传输信息
+        printTopBegin();
+        std::cout << "文件[" << fileInfo_.file_name << "]开始后台传输";
+        printTopEnd();
         if (fileInfo_.is_upload)
             sendUploadInfo(conn);
         else
@@ -97,9 +100,27 @@ void FtpClient::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp t
     }
 }
 
-void FileService::uploadFile(std::string &filePath, bool is_group)
+int FileService::uploadFile(std::string &filePath, bool is_group)
 {
 
+    if (is_group)
+    {
+        std::lock_guard<std::mutex> lock(client_->groupListMutex_);
+        if (!client_->groupList_.count(client_->currentGroup_.group_id_))
+            return 1; // 已经不再群里
+    }
+    else
+    {
+        std::lock_guard<std::mutex> lock(client_->friendListMutex_);
+        auto it = client_->friendList_.find(client_->currentFriend_.id_);
+        if (it == client_->friendList_.end())
+            return 1; // 已经不是好友
+        else
+        {
+            if (it->second.is_blocked)
+                return 2; // 被拉黑了
+        }
+    }
     json js;
     fs::path p(filePath.c_str());
 
@@ -111,6 +132,7 @@ void FileService::uploadFile(std::string &filePath, bool is_group)
     fileInfo.file_name = extractFilename(filePath);
     fileInfo.is_upload = true;
     ftpClientManager_.uploadFile(fileInfo);
+    return 0;
 }
 
 void FileService::downloadFile(FileInfo &fileinfo)

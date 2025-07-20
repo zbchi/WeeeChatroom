@@ -20,6 +20,7 @@ public:
 
 private:
     std::string makeFilePath(const std::string &file_id);
+    std::string generateUUID();
 };
 
 class FileUploader : public Handler
