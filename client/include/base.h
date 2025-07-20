@@ -6,6 +6,7 @@
 #include <condition_variable>
 using json = nlohmann::json;
 using namespace mylib;
+
 enum MsgType
 {
     REG_MSG = 1,
@@ -20,11 +21,13 @@ enum MsgType
     CHAT_GROUP_MSG,
     CHAT_GROUP_MSG_ACK,
     ADD_FRIEND,
-    DEL_FRIEND,
     ADD_FRIEND_ACK,
+    DEL_FRIEND,
+    FRIEND_REQUEST,
     CREATE_GROUP,
     ADD_GROUP,
     ADD_GROUP_ACK,
+    GROUP_REQUEST,
     GET_GROUPS,
     ADD_GROUP_REMOVE,
     GET_GROUPINFO,
@@ -38,8 +41,10 @@ enum MsgType
     DOWNLOAD_FILE,
     DOWNLOAD_FILE_ACK,
     BLOCK_FRIEND,
+    BLOCK_FRIEND_ACK,
+    UNBLOCK_FRIEND,
+    UNBLOCK_FRIEND_ACK,
     DESTROY_ACCOUNT,
-    HEART_BEAT,
 };
 
 class Waiter

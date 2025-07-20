@@ -3,6 +3,7 @@
 #include <iostream>
 #include <functional>
 #include <thread>
+#include <unordered_map>
 #include "base.h"
 
 #include "Neter.h"
@@ -18,8 +19,8 @@ using FriendChatLogs = std::unordered_map<std::string, ChatLogs>;
 using GroupChatLogs = std::unordered_map<std::string, ChatLogs>;
 using FriendRequests = std::vector<FriendRequest>;
 using GroupAddRequests = std::vector<GroupAddRequest>;
-using FriendList = std::vector<Friend>;
-using GroupList = std::vector<Group>;
+using FriendList = std::unordered_map<std::string, Friend>;
+using GroupList = std::unordered_map<std::string,Group>;
 using FileList = std::vector<FileInfo>;
 
 using MsgHandler = std::function<void(const TcpConnectionPtr &, json &)>;
@@ -38,7 +39,7 @@ class Client
     friend class FtpClient;
 
 public:
-    Client(const char*serverAddr);
+    Client(const char *serverAddr);
     void start();
 
     MsgHanlerMap msgHandlerMap_;
@@ -50,7 +51,11 @@ public:
     std::string nickname_;
 
     FriendList friendList_;
+    std::mutex friendListMutex_;
+
     GroupList groupList_;
+    std::mutex groupListMutex_;
+
     FileList fileList_;
     FriendChatLogs chatLogs_;     // map< freind_id,vector<log> >
     GroupChatLogs groupChatLogs_; //   map<  group_id,vector<log>  >

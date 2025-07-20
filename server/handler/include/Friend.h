@@ -3,11 +3,11 @@
 
 using namespace mylib;
 class Service;
-class FriendAddAcker;
+class FriendAddResponser;
 class FriendDeleter;
 class FriendLister : public Handler
 {
-    friend FriendAddAcker;
+    friend FriendAddResponser;
     friend FriendDeleter;
 
 public:
@@ -31,10 +31,10 @@ private:
     Service *service_;
 };
 
-class FriendAddAcker : public Handler
+class FriendAddResponser : public Handler
 {
 public:
-    FriendAddAcker(Service *service) : service_(service) {}
+    FriendAddResponser(Service *service) : service_(service) {}
     void handle(const TcpConnectionPtr &conn, json &js, Timestamp time);
 
 private:
@@ -55,6 +55,16 @@ class FriendBlocker : public Handler
 {
 public:
     FriendBlocker(Service *service) : service_(service) {}
+    void handle(const TcpConnectionPtr &conn, json &js, Timestamp time);
+
+private:
+    Service *service_;
+};
+
+class FriendUnblocker : public Handler
+{
+public:
+    FriendUnblocker(Service *service) : service_(service) {}
     void handle(const TcpConnectionPtr &conn, json &js, Timestamp time);
 
 private:

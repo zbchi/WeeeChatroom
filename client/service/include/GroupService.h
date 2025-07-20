@@ -32,7 +32,8 @@ public:
     void getGroups();
     void getGroupInfo();
     void createGroup(std::string &groupname, std::string &description);
-    void addGroup(std::string &group_id);
+    int addGroup(std::string &group_id);
+    void handleGroupAddAck(const TcpConnectionPtr &conn, json &js);
     void handleGroupRequest(const TcpConnectionPtr &conn, json &js);
     void handleGroupList(const TcpConnectionPtr &conn, json &js);
     void responseGroupRequest(GroupAddRequest &groupAddRequest, char *response);
@@ -46,6 +47,7 @@ public:
 
     Waiter groupListWaiter_;
     Waiter groupInfoWaiter_;
+    Waiter groupAddWaiter_;
 
 private:
     void removeGroupAddRequest(std::string group_id, std::string from_user_id);

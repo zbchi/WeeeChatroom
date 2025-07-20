@@ -14,9 +14,15 @@ public:
     void getFriends();
     void handleFriendsList(const TcpConnectionPtr &conn, json &js);
 
-    void addFriend(std::string &email);
+    int addFriend(std::string &email);
+    void handleAddFriendAck(const TcpConnectionPtr &conn, json &js);
+
     void delFriend(std::string &friend_id);
-    void blockFriend(std::string &friend_id);
+    int blockFriend(std::string &friend_id);
+    void handleBlockFriendAck(const TcpConnectionPtr &conn, json &js);
+    int unblockFriend(std::string &friend_id);
+    void handleUnblockFriendAck(const TcpConnectionPtr &conn, json &js);
+
     void handleFriendRequest(const TcpConnectionPtr &conn, json &js);
     void responseFriendRequest(FriendRequest friendRequest, char *response);
 
@@ -24,6 +30,11 @@ public:
     std::mutex friendList_mutex_;
 
     Waiter friendListWaiter_;
+
+    Waiter friendAddWaiter_;
+
+    Waiter blockWaiter_;
+    Waiter unblockWaiter_;
 
 private:
     Neter *neter_;
@@ -36,6 +47,7 @@ public:
     std::string id_;
     std::string nickname_;
     bool isOnline_;
+    bool is_blocked;
     void setCurrentFriend(Friend &friendObj)
     {
         id_ = friendObj.id_;
@@ -43,8 +55,7 @@ public:
         isOnline_ = friendObj.isOnline_;
     }
     std::string user_id_;
-    
-}; 
+};
 
 class FriendRequest
 {

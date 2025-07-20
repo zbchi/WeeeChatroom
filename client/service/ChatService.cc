@@ -41,6 +41,17 @@ std::string ChatService::fixInvalidUtf8(const std::string &input)
 
 int ChatService::sendMessage(std::string &content)
 {
+    {
+        std::lock_guard<std::mutex> lock(client_->friendListMutex_);
+        auto it = client_->friendList_.find(client_->currentFriend_.id_);
+        if (it == client_->friendList_.end())
+            return 1; // 已经不是好友
+        else
+        {
+            if (it->second.is_blocked)
+                return 2; // 被拉黑了
+        }
+    }
     json sendInfo;
     sendInfo["msgid"] = CHAT_MSG;
     sendInfo["sender_id"] = client_->user_id_;
@@ -52,18 +63,20 @@ int ChatService::sendMessage(std::string &content)
 
     // 将发送单条消息存入chatLogs_
     ChatMessage msg{client_->user_id_, content, timestamp, client_->user_id_};
-    /*{
+    {
         std::lock_guard<std::mutex> lock(chatLogs_mutex_);
-        client_->chatLogs_[client_->currentFriend_.id_].push_back(msg);
-        if (client_->chatLogs_[client_->currentFriend_.id_].size() > 20)
-            client_->chatLogs_[client_->currentFriend_.id_].pop_front();
-    }*/
+        auto &logs = client_->chatLogs_[client_->currentFriend_.id_];
+        logs.push_back(msg);
+        if (logs.size() > 10)
+            logs.pop_front();
+    }
     neter_->sendJson(sendInfo);
     // chatMessageWaiter_.wait();
     // int result = chatMessageWaiter_.getResult();
     // if (result == 0)
     storeChatLog(client_->user_id_, client_->currentFriend_.id_, sendInfo);
-    client_->controller_.printALog(msg, false);
+    // client_->controller_.printALog(msg, false);
+    client_->controller_.flushLogs();
     return 0;
 }
 
@@ -75,23 +88,23 @@ void ChatService::handleMessage(const TcpConnectionPtr &conn, json &js)
     std::string nickname = js["nickname"];
 
     // 将收到消息存入chatLogs_
-    ChatMessage msg{friend_id, content, timestamp, client_->user_id_};
-    /*if (state_ == State::CHAT_FRIEND)
+    // ChatMessage msg{friend_id, content, timestamp, client_->user_id_};
+    if (state_ == State::CHAT_FRIEND)
     {
         ChatMessage msg{friend_id, content, timestamp, client_->user_id_};
         {
             std::lock_guard<std::mutex> lock(chatLogs_mutex_);
             client_->chatLogs_[friend_id].push_back(msg);
-            if (client_->chatLogs_[client_->currentFriend_.id_].size() > 20)
+            if (client_->chatLogs_[client_->currentFriend_.id_].size() > 10)
                 client_->chatLogs_[client_->currentFriend_.id_].pop_front();
         }
-    }*/
+    }
     storeChatLog(client_->user_id_, friend_id, js);
     if ((state_ == State::CHAT_FRIEND) && friend_id == client_->currentFriend_.id_)
     {
         // loadInitChatLogs(client_->currentFriend_.id_, 20);
-        // client_->controller_.flushLogs();追加打印
-        client_->controller_.printALog(msg, false);
+        client_->controller_.flushLogs();
+        // client_->controller_.printALog(msg, false);
     }
     else
     {
@@ -107,6 +120,11 @@ void ChatService::handleMessage(const TcpConnectionPtr &conn, json &js)
 
 int ChatService::sendGroupMessage(std::string &content)
 {
+    {
+        std::lock_guard<std::mutex> lock(client_->groupListMutex_);
+        if (!client_->groupList_.count(client_->currentGroup_.group_id_))
+            return 1; // 已经不再群里
+    }
     json sendInfo;
     sendInfo["msgid"] = CHAT_GROUP_MSG;
     sendInfo["sender_id"] = client_->user_id_;
@@ -121,7 +139,7 @@ int ChatService::sendGroupMessage(std::string &content)
     {
         std::lock_guard<std::mutex> lock(groupChatLogs_mutex_);
         client_->groupChatLogs_[client_->currentGroup_.group_id_].push_back(msg);
-        if (client_->groupChatLogs_[client_->currentGroup_.group_id_].size() > 20)
+        if (client_->groupChatLogs_[client_->currentGroup_.group_id_].size() > 10)
             client_->groupChatLogs_[client_->currentGroup_.group_id_].pop_front();
     }
     neter_->sendJson(sendInfo);
@@ -129,7 +147,8 @@ int ChatService::sendGroupMessage(std::string &content)
     // int result = chatGroupMessageWaiter_.getResult();
     // if (result == 0)
     storeChatLog(client_->user_id_, client_->currentGroup_.group_id_, sendInfo, true);
-    client_->controller_.printALog(msg, true);
+    // client_->controller_.printALog(msg, true);
+    client_->controller_.flushGroupLogs();
     return 0;
 }
 
@@ -142,13 +161,18 @@ void ChatService::handleGroupMessage(const TcpConnectionPtr &conn, json &js)
     std::string group_name = js["group_name"];
     // 将消息存入groupChatLogs_
     ChatMessage msg{sender_id, content, timestamp, client_->user_id_};
-    /*{
+    {
         std::lock_guard<std::mutex> lock(groupChatLogs_mutex_);
         client_->groupChatLogs_[group_id].push_back(msg);
-    }*/
+        if (client_->groupChatLogs_[group_id].size() > 10)
+            client_->groupChatLogs_[group_id].pop_front();
+    }
     storeChatLog(client_->user_id_, group_id, js, true);
     if (state_ == State::CHAT_GROUP && group_id == client_->currentGroup_.group_id_)
-        client_->controller_.printALog(msg, true);
+    {
+        client_->controller_.flushLogs();
+        // client_->controller_.printALog(msg, true);
+    }
     else
     {
         {

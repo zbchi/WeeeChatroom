@@ -29,7 +29,16 @@ void GroupAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     auto mysql = MySQLConnPool::instance().getConnection();
     auto name = mysql->select("`groups`", {{"id", group_id}});
     if (name.empty())
+    {
+        sendJson(conn, makeResponse(ADD_GROUP_ACK, 1)); // 1  不存在该群
         return;
+    }
+    else if (redis->sismember("group:" + group_id, from_user_id))
+    {
+        sendJson(conn, makeResponse(ADD_GROUP_ACK, 2)); // 2 已经群聊
+        return;
+    }
+
     auto admins = mysql->select("group_members", {{"group_id", group_id}},
                                 {{"role", {"admin", "owner"}}});
 
@@ -54,7 +63,7 @@ void GroupAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     }
 }
 
-void GroupAddAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+void GroupAddResponser::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
 {
     // 处理加群请求的回应
     std::string response = js["response"];

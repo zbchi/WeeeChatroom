@@ -25,11 +25,11 @@ Service::Service() : threadPool_(32),
     handlers_[CHAT_MSG] = std::make_shared<Chatter>(this);
     handlers_[ADD_FRIEND] = std::make_shared<FriendAdder>(this);
     handlers_[DEL_FRIEND] = std::make_shared<FriendDeleter>(this);
-    handlers_[ADD_FRIEND_ACK] = std::make_shared<FriendAddAcker>(this);
+    handlers_[FRIEND_REQUEST] = std::make_shared<FriendAddResponser>(this);
     handlers_[CREATE_GROUP] = std::make_shared<GroupCreater>(this);
     handlers_[ADD_GROUP] = std::make_shared<GroupAdder>(this);
     handlers_[GET_GROUPS] = std::make_shared<GroupLister>(this);
-    handlers_[ADD_GROUP_ACK] = std::make_shared<GroupAddAcker>(this);
+    handlers_[GROUP_REQUEST] = std::make_shared<GroupAddResponser>(this);
     handlers_[CHAT_GROUP_MSG] = std::make_shared<GroupChatter>(this);
     handlers_[GET_GROUPINFO] = std::make_shared<GroupInfoSender>(this);
     handlers_[EXIT_GROUP] = std::make_shared<GroupExiter>(this);
@@ -42,6 +42,7 @@ Service::Service() : threadPool_(32),
     handlers_[GET_FILES] = std::make_shared<FileLister>(this);
     handlers_[BLOCK_FRIEND] = std::make_shared<FriendBlocker>(this);
     handlers_[DESTROY_ACCOUNT] = std::make_shared<AccountKiller>(this);
+    handlers_[UNBLOCK_FRIEND] = std::make_shared<FriendUnblocker>(this);
 
     // 设置连接回调
     server_.setConnectionCallback([this](const TcpConnectionPtr &conn)

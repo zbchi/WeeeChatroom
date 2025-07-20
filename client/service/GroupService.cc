@@ -25,7 +25,7 @@ void GroupService::createGroup(std::string &groupname, std::string &description)
     neter_->sendJson(groupInfo);
 }
 
-void GroupService::addGroup(std::string &group_id)
+int GroupService::addGroup(std::string &group_id)
 {
     json addInfo;
     addInfo["msgid"] = ADD_GROUP;
@@ -34,6 +34,14 @@ void GroupService::addGroup(std::string &group_id)
     std::string timestamp = Timestamp::now().toFormattedString();
     addInfo["timestamp"] = timestamp;
     neter_->sendJson(addInfo);
+    groupAddWaiter_.wait();
+    return groupAddWaiter_.getResult();
+}
+
+void GroupService::handleGroupAddAck(const TcpConnectionPtr &conn, json &js)
+{
+    int add_errno = js["errno"];
+    groupAddWaiter_.notify(add_errno);
 }
 
 void GroupService::handleGroupRequest(const TcpConnectionPtr &conn, json &js)
@@ -56,7 +64,7 @@ void GroupService::handleGroupRequest(const TcpConnectionPtr &conn, json &js)
 void GroupService::responseGroupRequest(GroupAddRequest &groupAddRequest, char *response)
 {
     json acceptInfo;
-    acceptInfo["msgid"] = ADD_GROUP_ACK;
+    acceptInfo["msgid"] = GROUP_REQUEST;
     acceptInfo["group_id"] = groupAddRequest.group_id;
     acceptInfo["from_user_id"] = groupAddRequest.from_user_id;
     acceptInfo["response"] = std::string(response);
@@ -72,7 +80,7 @@ void GroupService::handleGroupList(const TcpConnectionPtr &conn, json &js)
     {
         g.group_id_ = agroup["id"];
         g.group_name = agroup["name"];
-        client_->groupList_.push_back(g);
+        client_->groupList_[g.group_id_] = g;
     }
     groupListWaiter_.notify(1);
 }

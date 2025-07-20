@@ -27,6 +27,13 @@ void FriendLister::sendFriendList(std::string &user_id)
     for (const auto &user : friends)
     {
         json u;
+        if (redis->sismember("blacklist:" + user.at("id"), user_id)) // 被拉黑了
+        {
+            LOG_DEBUG("有拉黑痕迹");
+            u["is_blocked"] = true;
+        }
+        else
+            u["is_blocked"] = false;
         u["id"] = user.at("id");
         if (service_->getConnectionPtr(user.at("id")) == nullptr)
             u["isOnline"] = false;
@@ -68,7 +75,20 @@ void FriendAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     auto mysql = MySQLConnPool::instance().getConnection();
     std::string to_user_id = mysql->getIdByEmail(email);
     if (to_user_id == "")
+    {
+        sendJson(conn, makeResponse(ADD_FRIEND_ACK, 1)); // 1  不存在该用户
         return;
+    }
+    else if (to_user_id == from_user_id)
+    {
+        sendJson(conn, makeResponse(ADD_FRIEND_ACK, 2)); // 2  不能添加自己
+        return;
+    }
+    else if (redis->sismember("friends:" + from_user_id, to_user_id))
+    {
+        sendJson(conn, makeResponse(ADD_FRIEND_ACK, 3)); // 3  你们已经是好友关系
+        return;
+    }
     js["from_user_nickname"] = mysql->getNicknameById(from_user_id);
 
     std::string jsonStr = js.dump();
@@ -83,9 +103,10 @@ void FriendAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
     mysql->insert("friend_requests", {{"to_user_id", to_user_id},
                                       {"from_user_id", from_user_id},
                                       {"json", js.dump()}});
+    sendJson(conn, makeResponse(ADD_FRIEND_ACK, 0));
 }
 
-void FriendAddAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+void FriendAddResponser::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
 {
     // 处理好友请求的回应
     std::string response = js["response"];
@@ -102,6 +123,10 @@ void FriendAddAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp ti
 
         mysql->insert("friends", {{"user_id", to_user_id},
                                   {"friend_id", from_user_id}});
+
+        // 清除拉黑痕迹
+        redis->srem("blacklist:" + from_user_id, to_user_id);
+        redis->srem("blacklist:" + to_user_id, from_user_id);
     }
     else if (response == "reject")
     {
@@ -142,8 +167,38 @@ void FriendBlocker::handle(const TcpConnectionPtr &conn, json &js, Timestamp tim
     std::string from_user_id = js["from_user_id"];
     std::string to_user_id = js["to_user_id"];
 
-    auto mysql = MySQLConnPool::instance().getConnection();
-    // 删掉单向好友关系，保留对端的好友关系
-    mysql->del("friends", {{"user_id", from_user_id},
-                           {"friend_id", to_user_id}});
+    if (redis->sismember("blacklist:" + from_user_id, to_user_id))
+    {
+        sendJson(conn, makeResponse(BLOCK_FRIEND_ACK, 1));
+        return; // 已经将此好友拉黑
+    }
+    // 将黑名单存入缓存
+    redis->sadd("blacklist:" + from_user_id, to_user_id);
+
+    sendJson(conn, makeResponse(BLOCK_FRIEND_ACK, 0));
+    // 更新被拉黑用户的好友列表
+    FriendLister list(service_);
+    list.sendFriendList(to_user_id);
+
+    // auto mysql = MySQLConnPool::instance().getConnection();
+    //  删掉单向好友关系，保留对端的好友关系
+    /*mysql->del("friends", {{"user_id", from_user_id},
+                           {"friend_id", to_user_id}});*/
+}
+
+void FriendUnblocker::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    std::string from_user_id = js["from_user_id"];
+    std::string to_user_id = js["to_user_id"];
+    if (!redis->sismember("blacklist:" + from_user_id, to_user_id))
+    {
+        sendJson(conn, makeResponse(UNBLOCK_FRIEND_ACK, 1));
+        return; // 没有将此好友拉黑
+    }
+    redis->srem("blacklist:" + from_user_id, to_user_id);
+    sendJson(conn, makeResponse(UNBLOCK_FRIEND_ACK, 0));
+
+    // 更新被解除拉黑用户的好友列表
+    FriendLister list(service_);
+    list.sendFriendList(to_user_id);
 }

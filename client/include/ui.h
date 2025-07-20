@@ -48,7 +48,7 @@ void clearScreen();
 
 inline void printTopBegin()
 {
-    std::cout << "\033[s\033[1;1H\033[1;33m";
+    std::cout << "\033[s\033[1;1H\033[2K\033[1;33m";
     std::cout.flush();
 }
 

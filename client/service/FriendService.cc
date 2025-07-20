@@ -7,7 +7,7 @@
 #include "Client.h"
 
 #include "ui.h"
-void FriendService::addFriend(std::string &email)
+int FriendService::addFriend(std::string &email)
 {
     json addInfo;
     addInfo["msgid"] = ADD_FRIEND;
@@ -16,6 +16,15 @@ void FriendService::addFriend(std::string &email)
     std::string timestamp = Timestamp::now().toFormattedString();
     addInfo["timestamp"] = timestamp;
     neter_->sendJson(addInfo);
+    // 阻塞等待回应
+    friendAddWaiter_.wait();
+    return friendAddWaiter_.getResult();
+}
+
+void FriendService::handleAddFriendAck(const TcpConnectionPtr &conn, json &js)
+{
+    int add_errno = js["errno"];
+    friendAddWaiter_.notify(add_errno);
 }
 
 void FriendService::delFriend(std::string &friend_id)
@@ -27,13 +36,38 @@ void FriendService::delFriend(std::string &friend_id)
     neter_->sendJson(delInfo);
 }
 
-void FriendService::blockFriend(std::string &friend_id)
+int FriendService::blockFriend(std::string &friend_id)
 {
     json blockInfo;
     blockInfo["msgid"] = BLOCK_FRIEND;
     blockInfo["to_user_id"] = friend_id;
     blockInfo["from_user_id"] = client_->user_id_;
     neter_->sendJson(blockInfo);
+    blockWaiter_.wait();
+    return blockWaiter_.getResult();
+}
+
+void FriendService::handleBlockFriendAck(const TcpConnectionPtr &conn, json &js)
+{
+    int block_errno = js["errno"];
+    blockWaiter_.notify(block_errno);
+}
+
+int FriendService::unblockFriend(std::string &friend_id)
+{
+    json unblockInfo;
+    unblockInfo["msgid"] = UNBLOCK_FRIEND;
+    unblockInfo["from_user_id"] = client_->user_id_;
+    unblockInfo["to_user_id"] = friend_id;
+    neter_->sendJson(unblockInfo);
+    unblockWaiter_.wait();
+    return unblockWaiter_.getResult();
+}
+
+void FriendService::handleUnblockFriendAck(const TcpConnectionPtr &conn, json &js)
+{
+    int unblock_errno = js["errno"];
+    unblockWaiter_.notify(unblock_errno);
 }
 
 void FriendService::handleFriendRequest(const TcpConnectionPtr &conn, json &js)
@@ -72,8 +106,9 @@ void FriendService::handleFriendsList(const TcpConnectionPtr &conn, json &js)
         f.id_ = afriend["id"];
         f.nickname_ = afriend["nickname"];
         f.isOnline_ = afriend["isOnline"];
+        f.is_blocked = afriend["is_blocked"];
         f.user_id_ = client_->user_id_;
-        client_->friendList_.push_back(f);
+        client_->friendList_[f.id_] = f;
     }
     friendListWaiter_.notify(0);
 }
@@ -81,7 +116,7 @@ void FriendService::handleFriendsList(const TcpConnectionPtr &conn, json &js)
 void FriendService::responseFriendRequest(FriendRequest friendRequest, char *response)
 {
     json acceptInfo;
-    acceptInfo["msgid"] = ADD_FRIEND_ACK;
+    acceptInfo["msgid"] = FRIEND_REQUEST;
     acceptInfo["from_user_id"] = friendRequest.from_user_id;
     acceptInfo["to_user_id"] = friendRequest.user_id_;
     acceptInfo["response"] = std::string(response);

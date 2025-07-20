@@ -37,10 +37,10 @@ private:
     Service *service_;
 };
 
-class GroupAddAcker : public Handler
+class GroupAddResponser : public Handler
 {
 public:
-    GroupAddAcker(Service *service) : service_(service) {}
+    GroupAddResponser(Service *service) : service_(service) {}
     void handle(const TcpConnectionPtr &conn, json &js, Timestamp time);
 
 private:

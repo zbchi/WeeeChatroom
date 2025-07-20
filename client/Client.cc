@@ -28,8 +28,12 @@ Client::Client(const char *serverAddr) : serverAddr_(serverAddr),
     { this->chatService_.handleMessage(conn, js); };
     msgHandlerMap_[ADD_FRIEND] = [this](const TcpConnectionPtr &conn, json &js)
     { this->friendService_.handleFriendRequest(conn, js); };
+    msgHandlerMap_[ADD_FRIEND_ACK] = [this](const TcpConnectionPtr &conn, json &js)
+    { this->friendService_.handleAddFriendAck(conn, js); };
     msgHandlerMap_[ADD_GROUP] = [this](const TcpConnectionPtr &conn, json &js)
     { this->groupService_.handleGroupRequest(conn, js); };
+    msgHandlerMap_[ADD_GROUP_ACK] = [this](const TcpConnectionPtr &conn, json &js)
+    { this->groupService_.handleGroupAddAck(conn, js); };
     msgHandlerMap_[GET_GROUPS] = [this](const TcpConnectionPtr &conn, json &js)
     { this->groupService_.handleGroupList(conn, js); };
     msgHandlerMap_[ADD_GROUP_REMOVE] = [this](const TcpConnectionPtr &conn, json &js)
@@ -44,6 +48,10 @@ Client::Client(const char *serverAddr) : serverAddr_(serverAddr),
     { this->chatService_.handleGroupMessageAck(conn, js); };
     msgHandlerMap_[GET_FILES] = [this](const TcpConnectionPtr &conn, json &js)
     { this->fileService_.handleFileList(conn, js); };
+    msgHandlerMap_[BLOCK_FRIEND_ACK] = [this](const TcpConnectionPtr &conn, json &js)
+    { this->friendService_.handleBlockFriendAck(conn, js); };
+    msgHandlerMap_[UNBLOCK_FRIEND_ACK] = [this](const TcpConnectionPtr &conn, json &js)
+    { this->friendService_.handleUnblockFriendAck(conn, js); };
 }
 
 void Client::start()

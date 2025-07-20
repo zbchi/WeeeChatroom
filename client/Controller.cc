@@ -90,7 +90,6 @@ void Controller::showMainMenu()
     printMenuItem(3, "🔗", "加入群聊", "通过ID加入现有群聊");
     printMenuItem(4, "🔒", "找回密码", "重置当前账户密码");
     printMenuItem(5, "  ", "注销账户", "彻底销毁当前账户");
-    printMenuItem(6, "🚪", "退出登录", "退出当前账户的登录");
 
     int choice = getValidInt("请选择操作: ");
     switch (choice)
@@ -112,9 +111,6 @@ void Controller::showMainMenu()
         break;
     case 5:
         state_ = State::DESTROY_ACCOUNT;
-        break;
-    case 6:
-        state_ = State::LOGINING;
         break;
     default:
         printStatus("无效选项，请重新选择", "error");
@@ -139,7 +135,7 @@ void Controller::showChatPanel()
     if (!client_->friendList_.empty())
     {
         printDivider("好友列表", "─");
-        for (const auto &f : client_->friendList_)
+        for (const auto &[id, f] : client_->friendList_)
         {
             std::string status = f.isOnline_ ? std::string(SUCCESS) + "● 在线" : std::string(DIM) + "○ 离线";
             std::string is_unread = client_->isReadMap_[f.id_] ? std::string(ERROR) + " ● 💬 " : "";
@@ -156,7 +152,7 @@ void Controller::showChatPanel()
     if (!client_->groupList_.empty())
     {
         printDivider("群聊列表", "─");
-        for (const auto &g : client_->groupList_)
+        for (const auto &[id, g] : client_->groupList_)
         {
             std::string is_unread = client_->isReadGroupMap_[g.group_id_] ? std::string(ERROR) + " ● 💬 " : "";
             std::cout << SECONDARY << "[" << BOLD << index << RESET SECONDARY << "] "
@@ -193,7 +189,7 @@ void Controller::showChatPanel()
     {
         if (types[choice - 1] == "friend")
         {
-            for (auto &f : client_->friendList_)
+            for (auto &[id, f] : client_->friendList_)
             {
                 if (f.id_ == ids[choice - 1])
                 {
@@ -205,7 +201,7 @@ void Controller::showChatPanel()
         }
         else
         {
-            for (auto &g : client_->groupList_)
+            for (auto &[id, g] : client_->groupList_)
             {
                 if (g.group_id_ == ids[choice - 1])
                 {
@@ -277,7 +273,7 @@ void Controller::showRegister()
         else if (reg_errno == 1)
         {
             printStatus("验证码错误", "error");
-            //sleep(1);
+            // sleep(1);
         }
         else if (reg_errno == 2)
         {
@@ -313,7 +309,7 @@ void Controller::showFindPassword()
         else if (reg_errno == 1)
         {
             printStatus("验证码错误", "error");
-           // sleep(1);
+            // sleep(1);
         }
         else if (reg_errno == 2)
         {
@@ -359,7 +355,7 @@ void Controller::showLogin()
         else if (login_errno == 1)
         {
             printStatus("密码错误", "error");
-           // sleep(1);
+            // sleep(1);
         }
     }
 }
@@ -434,6 +430,8 @@ void Controller::chatWithFriend()
         }
         else if (chat_errno == 1)
             printStatus("发送失败(你们已不是好友)", "error");
+        else if (chat_errno == 2)
+            printStatus("发送失败(对方拒收了)", "error");
     }
 }
 
@@ -505,7 +503,7 @@ void Controller::chatWithGroup()
             }
         }
         else if (chat_errno == 1)
-            printStatus("发送失败(你们已不是好友)", "error");
+            printStatus("发送失败(你已不在群聊)", "error");
     }
 }
 
@@ -515,8 +513,15 @@ void Controller::showAddFriend()
     printHeader("➕ 添加好友", "通过邮箱添加新好友");
     std::string friend_id = getValidString(" 请输入好友邮箱: ");
     printStatus("正在发送好友请求...", "info");
-    client_->friendService_.addFriend(friend_id);
-    printStatus("好友请求已发送！", "success");
+    int add_errno = client_->friendService_.addFriend(friend_id);
+    if (add_errno == 0)
+        printStatus("好友请求已发送！", "success");
+    else if (add_errno == 1)
+        printStatus("该用户未注册。", "error");
+    else if (add_errno == 2)
+        printStatus("不能添加自己。", "error");
+    else if (add_errno == 3)
+        printStatus("你们已经是好友关系。", "success");
     sleep(1);
     state_ = State::MAIN_MENU;
 }
@@ -524,6 +529,7 @@ void Controller::showAddFriend()
 void Controller::showCreateGroup()
 {
     clearScreen();
+    printHeader("创建群聊", "");
     std::string name, desc;
     name = getValidString("📛 群名:");
     desc = getValidString("📝 群描述: ");
@@ -534,10 +540,16 @@ void Controller::showCreateGroup()
 void Controller::showAddGroup()
 {
     clearScreen();
+    printHeader("添加群聊", "");
     std::string gid = getValidString("🔗 输入要加入的群ID: ");
     printStatus("正在发送加群请求...", "info");
-    client_->groupService_.addGroup(gid);
-    printStatus("加群请求发送成功。", "success");
+    int add_errno = client_->groupService_.addGroup(gid);
+    if (add_errno == 0)
+        printStatus("加群请求发送成功！", "success");
+    else if (add_errno == 1)
+        printStatus("不存在该群聊。", "error");
+    else if (add_errno == 2)
+        printStatus("你已经在此群聊。", "success");
     sleep(1);
     state_ = State::MAIN_MENU;
 }
@@ -795,7 +807,6 @@ void Controller::printLogs(ChatLogs &chatLogs, bool is_group)
 
 void Controller::printALog(const ChatMessage &log, bool is_group)
 {
-    std::lock_guard<std::mutex> lock(printMutex_);
     const int boxWidth = 60;
     std::string time = log.timestamp;
     std::string sender;
@@ -917,7 +928,8 @@ void Controller::friendPanel()
     std::string head = "好友ID:" + client_->currentFriend_.id_ + "  昵称:" + client_->currentFriend_.nickname_;
     printHeader(head.c_str());
     printMenuItem(1, "删掉Ta", "你们将结束好友关系");
-    printMenuItem(2, "屏蔽Ta", "你将再也收不到此好友的消息");
+    printMenuItem(2, "屏蔽Ta", "你将拒收此好友的消息");
+    printMenuItem(3, "解除屏蔽", "不再拒收此好友的消息");
     printMenuItem(0, "返回上级", "");
 
     int choice = getValidInt("请选择操作:");
@@ -933,11 +945,27 @@ void Controller::friendPanel()
         sleep(1);
         break;
     case 2:
-        client_->friendService_.blockFriend(client_->currentFriend_.id_);
-        state_ = State::CHAT_PANEL;
-        printStatus("屏蔽好友成功", "success");
+    {
+        int block_errno = client_->friendService_.blockFriend(client_->currentFriend_.id_);
+        state_ = State::CHAT_FRIEND;
+        if (block_errno == 0)
+            printStatus("屏蔽好友成功", "success");
+        else if (block_errno == 1)
+            printStatus("你已经将此好友屏蔽", "error");
         sleep(1);
         break;
+    }
+    case 3:
+    {
+        int unblock_errno = client_->friendService_.unblockFriend(client_->currentFriend_.id_);
+        state_ = State::CHAT_FRIEND;
+        if (unblock_errno == 0)
+            printStatus("解除屏蔽此好友成功", "success");
+        else if (unblock_errno == 1)
+            printStatus("你未将存此好友屏蔽", "error");
+        sleep(1);
+        break;
+    }
     default:
         printStatus("无效选项，请重新选择", "error");
         sleep(1);
