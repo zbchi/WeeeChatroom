@@ -14,7 +14,7 @@ public:
     Neter(Client *client, const char *serverAddr) : client_(client), serverAddr_(serverAddr, 8000) {}
     void start();
     void onMessage(const mylib::TcpConnectionPtr &conn, mylib::Buffer *buf, mylib::Timestamp time);
-
+    void onConnection(const mylib::TcpConnectionPtr&conn);
     void sendJson(json &js);
     mylib::TcpConnectionPtr conn_;
 

@@ -59,6 +59,8 @@ private:
 
 class GroupExiter : public Handler
 {
+    friend class AccountKiller;
+
 public:
     GroupExiter(Service *service) : service_(service) {}
     void handle(const TcpConnectionPtr &conn, json &js, Timestamp time);

@@ -14,7 +14,7 @@ void FriendLister::handle(const TcpConnectionPtr &conn, json &js, Timestamp time
     sendFriendList(user_id);
 }
 
-void FriendLister::sendFriendList(std::string &user_id)
+void FriendLister::sendFriendList(const std::string &user_id)
 {
     auto conn = service_->getConnectionPtr(user_id);
     if (conn == nullptr)
@@ -46,7 +46,7 @@ void FriendLister::sendFriendList(std::string &user_id)
     sendJson(conn, friendList);
 }
 
-Result FriendLister::getFriendsId(std::string &user_id)
+Result FriendLister::getFriendsId(const std::string &user_id)
 {
     auto mysql = MySQLConnPool::instance().getConnection();
     return mysql->select("friends", {{"status", "accepted"},

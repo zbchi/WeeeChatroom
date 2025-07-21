@@ -202,16 +202,19 @@ void GroupExiter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
                                      {"user_id", user_id}});
     }
     else if (role == "owner")
-    { // 如果解散，更新群成员的群列表
+    {
         auto member_ids = mysql->select("group_members", {{"group_id", group_id}});
-        GroupLister list(service_);
-        for (auto &member_id : member_ids)
-            list.sendGroupList(member_id.at("user_id"));
+
         // 删库跑路
         redis->del("group:" + group_id); // 更新缓存
         mysql->del("group_members", {{"group_id", group_id}});
         mysql->del("group_messages", {{"group_id", group_id}});
         mysql->del("`groups`", {{"id", group_id}});
+
+        // 如果解散，更新群成员的群列表
+        GroupLister list(service_);
+        for (auto &member_id : member_ids)
+            list.sendGroupList(member_id.at("user_id"));
     }
 }
 

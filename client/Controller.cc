@@ -104,10 +104,8 @@ void Controller::showMainMenu()
     else if (choice == "4")
         state_ = State::DESTROY_ACCOUNT;
     else
-    {
         printStatus("无效选项，请重新选择", "error");
-        sleep(1);
-    }
+
 }
 
 void Controller::showChatPanel()

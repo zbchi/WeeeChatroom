@@ -17,9 +17,7 @@ CREATE TABLE IF NOT EXISTS messages
     sender_id INT NOT NULL,
     receiver_id INT NOT NULL,
     content TEXT NOT NULL,
-    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (sender_id) REFERENCES users(id),
-    FOREIGN KEY (receiver_id) REFERENCES users(id)
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS offlineMessages
@@ -125,10 +123,7 @@ CREATE TABLE IF NOT EXISTS files
     file_size BIGINT,
     file_name TEXT,
     is_group BOOL DEFAULT FALSE,
-    send_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (sender_id) REFERENCES users(id),
-    FOREIGN KEY (receiver_id) REFERENCES users(id),
-    FOREIGN KEY (group_id) REFERENCES `groups`(id)
+    send_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE USER IF NOT EXISTS 'zb'@'localhost' IDENTIFIED BY '1662308219@Zb';

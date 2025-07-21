@@ -13,10 +13,10 @@ class FriendLister : public Handler
 public:
     FriendLister(Service *service) : service_(service) {}
     void handle(const TcpConnectionPtr &conn, json &js, Timestamp time);
-    void sendFriendList(std::string &user_id);
+    void sendFriendList(const std::string &user_id);
 
 private:
-    Result getFriendsId(std::string &user_id);
+    Result getFriendsId(const std::string &user_id);
     Result getFriendsInfo(Result &friendsId);
     Service *service_;
 };

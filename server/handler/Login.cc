@@ -1,4 +1,6 @@
 #include "Login.h"
+#include "Friend.h"
+#include "Group.h"
 
 #include "Service.h"
 #include "Timestamp.h"
@@ -124,6 +126,67 @@ void Loginer::sendGroupRequestOffLine(std::string &to_user_id, const TcpConnecti
 void AccountKiller::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
 {
     std::string user_id = js["user_id"];
+
+    // 清除在线状态
+    {
+        std::lock_guard<std::mutex> lock(service_->onlienUsersMutex_);
+        for (auto it = service_->onlineUsers_.begin(); it != service_->onlineUsers_.end(); it++)
+        {
+            if (it->second == conn)
+            {
+                service_->onlineUsers_.erase(it);
+                break;
+            }
+        }
+    }
     auto mysql = MySQLConnPool::instance().getConnection();
-    mysql->update("users", {{"state", "die"}}, {{"id", user_id}});
+
+    // 解散是群主的群
+    auto groups = mysql->select("`groups`", {{"creator_id", user_id}});
+    for (const auto &group : groups)
+    {
+        json js;
+        js["group_id"] = group.at("id");
+        js["user_id"] = user_id;
+        GroupExiter groupExiter(service_);
+        groupExiter.handle(conn, js, time);
+    }
+
+    // 清除离线消息
+    mysql->del("offlineMessages", {{"sender_id", user_id}});
+    mysql->del("offlineMessages", {{"receiver_id", user_id}});
+
+    // 清除拉黑关系
+    redis->del("blacklist:" + user_id);
+
+    // 清除加好友请求和加群请求
+    mysql->del("friend_requests", {{"from_user_id", user_id}});
+    mysql->del("friend_requests", {{"to_user_id", user_id}});
+
+    mysql->del("group_requests", {{"from_user_id", user_id}});
+    mysql->del("group_requests", {{"to_user_id", user_id}});
+
+    // 清除好友关系
+    mysql->del("friends", {{"user_id", user_id}});
+    mysql->del("friends", {{"friend_id", user_id}});
+    redis->del("friends:" + user_id);
+    auto users = mysql->select("users");
+    for (const auto &user : users)
+    {
+        if (redis->srem("friends:" + user.at("id"), user_id))
+        {
+            // 更新销毁用户的好友的好友列表
+            FriendLister list(service_);
+            list.sendFriendList(user.at("id"));
+        }
+    }
+
+    // 清除群关系
+    mysql->del("group_members", {{"user_id", user_id}});
+    auto groupss = mysql->select("`groups`");
+    for (const auto &group : groupss)
+        redis->srem("group:" + group.at("id"), user_id);
+
+    // 删除用户表中的用户
+    mysql->del("users", {{"id", user_id}});
 }
