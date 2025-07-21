@@ -39,6 +39,13 @@ void GroupAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
         return;
     }
 
+    auto result = mysql->select("group_requests", {{"from_user_id", from_user_id},
+                                                   {"group_id", group_id}});
+    if (!result.empty())
+    {
+        sendJson(conn, makeResponse(ADD_GROUP_ACK, 3)); // 3 已经有一条一样的申请
+        return;
+    }
     auto admins = mysql->select("group_members", {{"group_id", group_id}},
                                 {{"role", {"admin", "owner"}}});
 
@@ -61,6 +68,7 @@ void GroupAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
                                          {"group_id", group_id},
                                          {"json", js.dump()}});
     }
+    sendJson(conn, makeResponse(ADD_GROUP_ACK, 0));
 }
 
 void GroupAddResponser::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)

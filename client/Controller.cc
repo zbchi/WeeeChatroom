@@ -84,38 +84,29 @@ void Controller::showMainMenu()
 {
     clearScreen();
     printHeader("🏠 聊天室主页", "选择您要进行的操作");
-    printMenuItem(0, "💬", "消息中心", "查看聊天记录和消息");
     printMenuItem(1, "➕", "添加好友", "通过ID添加新好友");
     printMenuItem(2, "🆕", "创建群聊", "创建一个新的群聊");
     printMenuItem(3, "🔗", "加入群聊", "通过ID加入现有群聊");
-    printMenuItem(4, "🔒", "找回密码", "重置当前账户密码");
-    printMenuItem(5, "  ", "注销账户", "彻底销毁当前账户");
-
-    int choice = getValidInt("请选择操作: ");
-    switch (choice)
+    printMenuItem(4, "  ", "注销账户", "彻底销毁当前账户");
+    std::cout << DIM << "[ESC]  🔙 返回" << RESET << "\n\n";
+    std::string choice = getValidString("请选择操作: ");
+    if (choice == "ESC")
     {
-    case 0:
         state_ = State::CHAT_PANEL;
-        break;
-    case 1:
+        return;
+    }
+    else if (choice == "1")
         state_ = State::ADD_FRIEND;
-        break;
-    case 2:
+    else if (choice == "2")
         state_ = State::CREATE_GROUP;
-        break;
-    case 3:
+    else if (choice == "3")
         state_ = State::ADD_GROUP;
-        break;
-    case 4:
-        state_ = State::FIND_PASSWORD;
-        break;
-    case 5:
+    else if (choice == "4")
         state_ = State::DESTROY_ACCOUNT;
-        break;
-    default:
+    else
+    {
         printStatus("无效选项，请重新选择", "error");
         sleep(1);
-        break;
     }
 }
 
@@ -177,13 +168,27 @@ void Controller::showChatPanel()
               << BG_WARNING << " " << client_->friendRequests_.size() << " " << RESET << "\n";
     std::cout << INFOB << BOLD << "[92] " << RESET << "📨 群聊请求 "
               << BG_PRIMARY << " " << client_->groupAddRequests_.size() << " " << RESET << "\n";
-    std::cout << DIM << "[0]  🔙 返回主菜单" << RESET << "\n\n";
+    std::cout << DIM << "[ESC]  🔙 返回主菜单" << RESET << "\n\n";
 
-    int choice = getValidInt("请选择");
+    std::string choice_str = getValidString("请选择");
 
-    if (choice == 0)
+    if (choice_str == "ESC")
+    {
         state_ = State::MAIN_MENU;
-    else if (choice == 91)
+        return;
+    }
+    int choice;
+    try
+    {
+        choice = std::stoi(choice_str);
+    }
+    catch (const std::exception &e)
+    {
+        printStatus("输入无效。", "error");
+        sleep(1);
+        return;
+    }
+    if (choice == 91)
         state_ = State::HANDLE_FRIEND_REQUEST;
     else if (choice == 92)
         state_ = State::HANDLE_GROUP_REQUEST;
@@ -251,18 +256,50 @@ void Controller::showLogOrReg()
 void Controller::showRegister()
 {
     clearScreen();
-    printHeader("📝 用户注册", "创建您的账户");
+    printHeader("📝 用户注册(ESC返回)", "创建您的账户");
     std::string email, password, nickname;
 
     email = getValidString("📧 请输入邮箱地址: ");
-    password = getValidString("🔐 请输入密码: ");
-    nickname = getValidString("👤 请输入昵称: ");
+    if (email == "ESC")
+    {
+        state_ = State::LOG_OR_REG;
+        return;
+    }
+    password = getValidString("🔐 请输入密码: ", false);
+    if (password == "ESC")
+    {
+        state_ = State::LOG_OR_REG;
+        return;
+    }
+    nickname = getValidStringGetline("👤 请输入昵称(ESC+回车返回): ");
+    if (nickname.back() == 27)
+    {
+        state_ = State::LOG_OR_REG;
+        return;
+    }
 
     client_->userService_.regiSter(email, password, nickname);
 
     while (true)
     {
-        int code = getValidInt("📩 请输入验证码: ");
+        std::string code_str = getValidString("📩 请输入验证码: ");
+        if (code_str == "ESC")
+        {
+            state_ == State::LOG_OR_REG;
+            return;
+        }
+        int code;
+        try
+        {
+            code = std::stoi(code_str);
+        }
+        catch (const std::exception &e)
+        {
+            printStatus("输入无效。", "error");
+            sleep(1);
+            continue;
+        }
+
         int reg_errno = client_->userService_.registerCode(email, password, nickname, code);
 
         if (reg_errno == 0)
@@ -290,16 +327,42 @@ void Controller::showRegister()
 void Controller::showFindPassword()
 {
     clearScreen();
-    printHeader("🔒 找回密码", "重置您的账户密码");
+    printHeader("🔒 找回密码(ESC返回)", "重置您的账户密码");
     std::string email, password;
     email = getValidString("📧 请输入账户的邮箱:");
-    password = getValidString("🔐请输入新的密码:");
+    if (email == "ESC")
+    {
+        state_ = State::LOG_OR_REG;
+        return;
+    }
+    password = getValidString("🔐请输入新的密码:", false);
+    if (password == "ESC")
+    {
+        state_ = State::LOG_OR_REG;
+        return;
+    }
     printStatus("正在发送验证码到您的邮箱...", "info");
     client_->userService_.findPassword(email);
 
     while (true)
     {
-        int code = getValidInt("📩 输入验证码: ");
+        std::string code_str = getValidString("📩 请输入验证码: ");
+        if (code_str == "ESC")
+        {
+            state_ == State::LOG_OR_REG;
+            return;
+        }
+        int code;
+        try
+        {
+            code = std::stoi(code_str);
+        }
+        catch (const std::exception &e)
+        {
+            printStatus("输入无效。", "error");
+            sleep(1);
+            continue;
+        }
         int reg_errno = client_->userService_.findPasswordCode(email, password, code);
         if (reg_errno == 0)
         {
@@ -326,12 +389,22 @@ void Controller::showFindPassword()
 void Controller::showLogin()
 {
     clearScreen();
-    printHeader("🔑 用户登录", "欢迎回来");
+    printHeader("🔑 用户登录(ESC返回)", "欢迎回来");
     std::string email, password;
     email = getValidString("📧 邮箱地址: ");
+    if (email == "ESC")
+    {
+        state_ = State::LOG_OR_REG;
+        return;
+    }
     while (true)
     {
-        password = getValidString("🔐 密码: ");
+        password = getValidString("🔐 密码: ", false);
+        if (password == "ESC")
+        {
+            state_ = State::LOG_OR_REG;
+            return;
+        }
         printStatus("正在验证身份...", "info");
         int login_errno = client_->userService_.login(email, password);
 
@@ -376,10 +449,10 @@ void Controller::chatWithFriend()
     std::string content;
     while (true)
     {
-        content = getValidString("");
+        content = getValidStringGetline("");
         if (content.empty())
             continue;
-        if (content == "/e")
+        if (content.back() == 27)
         {
             state_ = State::CHAT_PANEL;
             break;
@@ -451,10 +524,10 @@ void Controller::chatWithGroup()
     std::string content;
     while (true)
     {
-        content = getValidString("");
+        content = getValidStringGetline("");
         if (content.empty())
             continue;
-        if (content == "/e")
+        if (content.back() == 27)
         {
             state_ = State::CHAT_PANEL;
             break;
@@ -514,6 +587,11 @@ void Controller::showAddFriend()
     clearScreen();
     printHeader("➕ 添加好友", "通过邮箱添加新好友");
     std::string friend_id = getValidString(" 请输入好友邮箱: ");
+    if (friend_id == "ESC")
+    {
+        state_ = State::MAIN_MENU;
+        return;
+    }
     printStatus("正在发送好友请求...", "info");
     int add_errno = client_->friendService_.addFriend(friend_id);
     if (add_errno == 0)
@@ -524,6 +602,8 @@ void Controller::showAddFriend()
         printStatus("不能添加自己。", "error");
     else if (add_errno == 3)
         printStatus("你们已经是好友关系。", "success");
+    else if (add_errno == 4)
+        printStatus("已经申请过(待对方处理)", "info");
     sleep(1);
     state_ = State::MAIN_MENU;
 }
@@ -531,10 +611,20 @@ void Controller::showAddFriend()
 void Controller::showCreateGroup()
 {
     clearScreen();
-    printHeader("创建群聊", "");
+    printHeader("创建群聊(ESC+回车返回)", "");
     std::string name, desc;
-    name = getValidString("📛 群名:");
+    name = getValidStringGetline("📛 群名:");
+    if (name.back() == 27)
+    {
+        state_ = State::MAIN_MENU;
+        return;
+    }
     desc = getValidString("📝 群描述: ");
+    if (desc.back() == 27)
+    {
+        state_ = State::MAIN_MENU;
+        return;
+    }
     client_->groupService_.createGroup(name, desc);
     state_ = State::MAIN_MENU;
 }
@@ -544,6 +634,11 @@ void Controller::showAddGroup()
     clearScreen();
     printHeader("添加群聊", "");
     std::string gid = getValidString("🔗 输入要加入的群ID: ");
+    if (gid == "ESC")
+    {
+        state_ = State::MAIN_MENU;
+        return;
+    }
     printStatus("正在发送加群请求...", "info");
     int add_errno = client_->groupService_.addGroup(gid);
     if (add_errno == 0)
@@ -552,6 +647,8 @@ void Controller::showAddGroup()
         printStatus("不存在该群聊。", "error");
     else if (add_errno == 2)
         printStatus("你已经在此群聊。", "success");
+    else if (add_errno == 3)
+        printStatus("已经申请过(待群主或管理员处理)", "info");
     sleep(1);
     state_ = State::MAIN_MENU;
 }
@@ -563,32 +660,47 @@ void Controller::showHandleFriendRequest()
             std::lock_guard<std::mutex> lock(client_->friendService_.friendRequests_mutex_);
             flushRequests();
         }
+        std::string choice_str = getValidString("请选择(ESC返回)");
 
-        int i = getValidInt("🔢 选择请求编号 (0 返回): ");
-        if (i == 0)
+        if (choice_str == "ESC")
         {
             state_ = State::CHAT_PANEL;
             return;
         }
+        int choice;
+        try
+        {
+            choice = std::stoi(choice_str);
+        }
+        catch (const std::exception &e)
+        {
+            printStatus("输入无效。", "error");
+            sleep(1);
+            return;
+        }
 
-        if (i < 1 || i > static_cast<int>(client_->friendRequests_.size()))
+        if (choice < 1 || choice > static_cast<int>(client_->friendRequests_.size()))
         {
             printStatus("无效编号", "error");
             sleep(1);
             continue;
         }
+        printMenuItem(1, "✅ 接受", "");
+        printMenuItem(2, "❌ 拒绝", "");
+        printMenuItem(0, "?  返回", "");
 
-        std::cout << "1. ✅ 接受\n2. ❌ 拒绝\n";
         int action = getValidInt("请选择操作: ");
         if (action == 0)
         {
-            state_ = State::CHAT_PANEL;
+            state_ = State::HANDLE_FRIEND_REQUEST;
             return;
         }
         else if (action == 1)
-            client_->friendService_.responseFriendRequest(client_->friendRequests_[i - 1], "accept");
+            client_->friendService_.responseFriendRequest(client_->friendRequests_[choice - 1], "accept");
         else if (action == 2)
-            client_->friendService_.responseFriendRequest(client_->friendRequests_[i - 1], "reject");
+            client_->friendService_.responseFriendRequest(client_->friendRequests_[choice - 1], "reject");
+        else if (action == 0)
+            continue;
         else
         {
             printStatus("无效编号", "error");
@@ -603,31 +715,48 @@ void Controller::showHandleGroupRequest()
     {
         flushGroupRequests();
 
-        int i = getValidInt("🔢 选择请求编号 (0 返回): ");
-        if (i == 0)
+        std::string choice_str = getValidString("请选择(ESC返回)");
+
+        if (choice_str == "ESC")
         {
             state_ = State::CHAT_PANEL;
             return;
         }
+        int choice;
+        try
+        {
+            choice = std::stoi(choice_str);
+        }
+        catch (const std::exception &e)
+        {
+            printStatus("输入无效。", "error");
+            sleep(1);
+            return;
+        }
 
-        if (i < 1 || i > static_cast<int>(client_->groupAddRequests_.size()))
+        if (choice < 1 || choice > static_cast<int>(client_->groupAddRequests_.size()))
         {
             printStatus("无效编号", "error");
             sleep(1);
             continue;
         }
 
-        std::cout << "1. ✅ 接受\n2. ❌ 拒绝\n";
+        printMenuItem(1, "✅ 接受", "");
+        printMenuItem(2, "❌ 拒绝", "");
+        printMenuItem(0, "?  返回", "");
+
         int action = getValidInt("请选择操作: ");
         if (action == 0)
         {
-            state_ = State::CHAT_PANEL;
+            state_ = State::HANDLE_GROUP_REQUEST;
             return;
         }
         else if (action == 1)
-            client_->groupService_.responseGroupRequest(client_->groupAddRequests_[i - 1], "accept");
+            client_->groupService_.responseGroupRequest(client_->groupAddRequests_[choice - 1], "accept");
         else if (action == 2)
-            client_->groupService_.responseGroupRequest(client_->groupAddRequests_[i - 1], "reject");
+            client_->groupService_.responseGroupRequest(client_->groupAddRequests_[choice - 1], "reject");
+        else if (action == 0)
+            continue;
         else
         {
             printStatus("无效编号", "error");
@@ -640,18 +769,50 @@ void Controller::showGroupMembers()
 {
     clearScreen();
     printHeader("👥 群成员列表");
+
     std::vector<std::string> member_ids;
     std::vector<std::string> roles;
+
+    // 使用现有的样式常量
+    std::cout << BOLD << PRIMARY << "序号  昵称                    角色        用户ID" << RESET << "\n";
+    printDivider("", "─");
+
     int i = 0;
     for (const auto &pair : client_->currentGroup_.group_members)
     {
-        std::cout << i + 1 << ". 👤 " << pair.second.nickname_
-                  << " | 🏷 角色: " << pair.second.role_
-                  << " | 🆔: " << pair.second.id_ << "\n";
+        std::string displayName = pair.second.nickname_;
+        if (getDisplayWidth(displayName) > 20)
+        {
+
+            while (getDisplayWidth(displayName + "...") > 20 && !displayName.empty())
+                displayName.pop_back();
+            displayName += "...";
+        }
+
+        std::string displayRole = pair.second.role_;
+        if (getDisplayWidth(displayRole) > 10)
+        {
+            while (getDisplayWidth(displayRole + "...") > 10 && !displayRole.empty())
+            {
+                displayRole.pop_back();
+            }
+            displayRole += "...";
+        }
+
+        int nameWidth = getDisplayWidth(displayName);
+        int roleWidth = getDisplayWidth(displayRole);
+
+        printf("%-4d  %-*s%*s  %-*s%*s  %s\n",
+               i + 1,
+               (int)displayName.length(), displayName.c_str(), 20 - nameWidth, "",
+               (int)displayRole.length(), displayRole.c_str(), 10 - roleWidth, "",
+               pair.second.id_.c_str());
+
         member_ids.push_back(pair.second.id_);
         roles.push_back(pair.second.role_);
         ++i;
     }
+    std::cout << "\n";
 
     int choice = getValidInt("🔢 选择成员编号进行管理 (0 返回): ");
     if (choice == 0)
@@ -690,8 +851,18 @@ void Controller::showGroupMembers()
     case 0:
         break;
     case 1:
-        client_->groupService_.kickMember(target_id);
-        printStatus("已踢出成员", "info");
+        if (target_id == client_->user_id_)
+            printStatus("不能踢自己。", "error");
+        else if (target_role == "owner")
+            printStatus("不能踢群主。", "error");
+        else if (target_role == "admin" && my_role == "admin")
+            printStatus("无权限踢其他管理员。", "error");
+        else
+        {
+            printStatus("已踢出成员", "success");
+            client_->groupService_.kickMember(target_id);
+        }
+        sleep(1);
         break;
     case 2:
         if (target_role == "admin" || target_role == "owner")
@@ -699,8 +870,9 @@ void Controller::showGroupMembers()
         else
         {
             client_->groupService_.addAdmin(target_id);
-            printStatus("已设为管理员", "info");
+            printStatus("已设为管理员", "success");
         }
+        sleep(1);
         break;
     case 3:
         if (target_role != "admin")
@@ -708,8 +880,9 @@ void Controller::showGroupMembers()
         else
         {
             client_->groupService_.removeAdmin(target_id);
-            printStatus("已取消管理员。", "info");
+            printStatus("已取消管理员。", "success");
         }
+        sleep(1);
         break;
     default:
         printStatus("无效选择", "error");
@@ -722,6 +895,7 @@ void Controller::showGroupMembers()
 void Controller::showDestroyGroup()
 {
     clearScreen();
+    printHeader("退出/解散群聊");
     bool isOwner = client_->currentGroup_.group_members[client_->user_id_].role_ == "owner";
     if (isOwner)
         printStatus("你是群主，此操作将解散群聊！", "warning");
@@ -733,27 +907,31 @@ void Controller::showDestroyGroup()
     {
         client_->groupService_.exitGroup();
         printStatus("操作已完成。", "success");
+        sleep(1);
+        state_ = State::CHAT_PANEL;
     }
     else if (confirm == 0)
         state_ = State::CHAT_GROUP;
-    sleep(1);
 }
 
 void Controller::showDestroyAccount()
 {
     clearScreen();
+    printHeader("销毁账户", "");
     printStatus("你将销毁账户。", "warning");
 
-    int confirm = getValidInt("确认操作？(1=是,0=否): ");
-    if (confirm == 1)
+    std::string confirm = getValidString("确认操作？(1=是,0=否): ");
+    if (confirm == "1")
     {
         client_->userService_.destroyAccount();
         printStatus("操作已完成。", "success");
+        sleep(1);
         state_ = State::LOGINING;
     }
-    else if (confirm == 0)
+    else if (confirm == "0")
         state_ = State::MAIN_MENU;
-    sleep(1);
+    else if (confirm == "ESC")
+        state_ = State::MAIN_MENU;
 }
 
 void Controller::flushLogs()
@@ -773,30 +951,73 @@ void Controller::flushGroupLogs()
 void Controller::flushRequests()
 {
     clearScreen();
-    printHeader("📥好友请求列表");
-    int i = 1;
-    for (const auto &req : client_->friendRequests_)
+    printHeader("📥 好友请求列表");
+
+    std::cout << BOLD << PRIMARY << "序号  昵称                用户ID           请求时间" << RESET << "\n";
+
+    for (size_t i = 0; i < client_->friendRequests_.size(); ++i)
     {
-        std::cout << i << ". 👤 昵称: " << req.nickname_
-                  << " | 🆔: " << req.from_user_id
-                  << " | 🕒 时间: " << req.timestamp_ << "\n";
-        ++i;
+        const auto &req = client_->friendRequests_[i];
+        std::string displayNick = req.nickname_;
+
+        if (getDisplayWidth(displayNick) > 18)
+        {
+            while (getDisplayWidth(displayNick + "...") > 18 && !displayNick.empty())
+                displayNick.pop_back();
+            displayNick += "...";
+        }
+        int nickWidth = getDisplayWidth(displayNick);
+
+        printf("%-4zu  %-*s%*s  %-16s  %-s\n",
+               i + 1,
+               (int)displayNick.length(), displayNick.c_str(), 18 - nickWidth, "",
+               req.from_user_id.c_str(),
+               req.timestamp_.c_str());
     }
+
+    std::cout << "\n";
 }
 
 void Controller::flushGroupRequests()
 {
     clearScreen();
     printHeader("📨 群聊请求列表");
-    int i = 1;
-    std::lock_guard<std::mutex> lock(client_->groupService_.groupAddRequests_mutex_);
-    for (const auto &req : client_->groupAddRequests_)
+
+    std::cout << BOLD << PRIMARY << "序号  群聊名                     用户昵称            请求时间" << RESET << "\n";
+    std::lock_guard lock(client_->groupService_.groupAddRequests_mutex_);
+
+    for (size_t i = 0; i < client_->groupAddRequests_.size(); ++i)
     {
-        std::cout << i << ". 📛 群: " << req.group_name
-                  << " | 👤 用户: " << req.nickname
-                  << " | 🕒 时间: " << req.timestamp << "\n";
-        ++i;
+        const auto &req = client_->groupAddRequests_[i];
+
+        std::string displayGroup = req.group_name;
+        std::string displayNick = req.nickname;
+
+        if (getDisplayWidth(displayGroup) > 26)
+        {
+            while (getDisplayWidth(displayGroup + "...") > 26 && !displayGroup.empty())
+                displayGroup.pop_back();
+            displayGroup += "...";
+        }
+
+        if (getDisplayWidth(displayNick) > 18)
+        {
+            while (getDisplayWidth(displayNick + "...") > 18 && !displayNick.empty())
+                displayNick.pop_back();
+            displayNick += "...";
+        }
+
+        int groupWidth = getDisplayWidth(displayGroup);
+        int nickWidth = getDisplayWidth(displayNick);
+
+        printf("%-4zu  %-*s%*s  %-*s%*s  %-s\n",
+               i + 1,
+               (int)displayGroup.length(), displayGroup.c_str(), 26 - groupWidth, "",
+               (int)displayNick.length(), displayNick.c_str(), 18 - nickWidth, "",
+               req.timestamp.c_str());
     }
+
+    std::cout << "\n";
 }
 
 void Controller::printLogs(ChatLogs &chatLogs, bool is_group)
@@ -804,7 +1025,7 @@ void Controller::printLogs(ChatLogs &chatLogs, bool is_group)
     for (const auto &log : chatLogs)
         printALog(log, is_group);
 
-    std::cout << DIM << "💡 提示: /c向上翻页,/v向下翻页,/f传输文件,/e退出聊天,/m管理聊天" << RESET << "\n";
+    std::cout << DIM << "💡 提示: /c向上翻页,/v向下翻页,/f传输文件,/m管理聊天,ESC+回车退出聊天" << RESET << "\n";
 }
 
 void Controller::printALog(const ChatMessage &log, bool is_group)
@@ -847,7 +1068,12 @@ void Controller::filePanel(bool is_group)
     client_->fileService_.getFiles(is_group);
     flushFiles(is_group);
     // printHeader("文件传输");
-    std::string input = getValidString("输入序号下载文件,输入绝对路径上传文件,0返回上级:");
+    std::string input = getValidStringGetline("输入序号下载文件,输入绝对路径上传文件,ESC+回车返回上级:");
+    if (input.back() == 27)
+    {
+        state_ = is_group ? State::CHAT_GROUP : State::CHAT_FRIEND;
+        return;
+    }
     if (!input.empty() && input[0] == '/')
     {
         if (!fs::exists(input))
@@ -864,19 +1090,16 @@ void Controller::filePanel(bool is_group)
         }
         int up_errno = client_->fileService_.uploadFile(input, is_group);
         if (up_errno == 1)
-        {
             printStatus("发送失败(无关系)", "error");
-            sleep(1);
-        }
         else if (up_errno == 2)
-        {
             printStatus("发送失败(被对方拒收了)", "error");
-            sleep(1);
-        }
-        state_ = is_group ? State::CHAT_GROUP : State::CHAT_FRIEND;
-        // int chat_errno = client_->chatService_.sendMessage(content);
-        // if (chat_errno == 1)
-        //    printStatus("发送失败(你们已不是好友)", "error");
+        else if (up_errno == 0)
+            printStatus("开始发送文件(后台传输)", "success");
+        sleep(1);
+        // state_ = is_group ? State::CHAT_GROUP : State::CHAT_FRIEND;
+        //  int chat_errno = client_->chatService_.sendMessage(content);
+        //  if (chat_errno == 1)
+        //     printStatus("发送失败(你们已不是好友)", "error");
     }
     else
     {
@@ -889,12 +1112,6 @@ void Controller::filePanel(bool is_group)
         {
             printStatus("输入无效，应该为编号或绝对路径", "error");
             sleep(1);
-            return;
-        }
-
-        if (choice == 0)
-        {
-            state_ = is_group ? State::CHAT_GROUP : State::CHAT_FRIEND;
             return;
         }
 
@@ -912,26 +1129,42 @@ void Controller::flushFiles(bool is_group)
 {
     clearScreen();
     printHeader("文件传输");
-    std::cout << std::left
-              << std::setw(4) << "序号"
-              << std::setw(32) << "文件名"
-              << std::setw(12) << "文件大小"
-              << std::setw(20) << "发送时间"
-              << std::setw(10) << "发送者"
-              << "ID" << "\n";
+    std::cout << BOLD << PRIMARY << "序号  文件名                          文件大小    发送时间            发送者" << RESET << "\n";
 
     for (size_t i = 0; i < client_->fileList_.size(); ++i)
     {
         const auto &file = client_->fileList_[i];
         std::string sender = is_group ? client_->currentGroup_.group_members[file.sender_id].nickname_ : file.sender_id;
-        std::cout << std::left
-                  << std::setw(4) << (i + 1)
-                  << std::setw(32) << (file.file_name.size() > 31 ? file.file_name.substr(0, 29) + "..." : file.file_name)
-                  << std::setw(12) << file.file_size_str
-                  << std::setw(20) << file.timestamp
-                  << std::setw(10) << sender
-                  << file.id << "\n";
+
+        std::string displayName = file.file_name;
+        if (getDisplayWidth(displayName) > 30)
+        {
+
+            while (getDisplayWidth(displayName + "...") > 30 && !displayName.empty())
+                displayName.pop_back();
+            displayName += "...";
+        }
+
+        std::string displaySender = sender;
+        if (getDisplayWidth(displaySender) > 10)
+        {
+            while (getDisplayWidth(displaySender + "...") > 10 && !displaySender.empty())
+                displaySender.pop_back();
+            displaySender += "...";
+        }
+
+        int nameWidth = getDisplayWidth(displayName);
+        int senderWidth = getDisplayWidth(displaySender);
+
+        printf("%-4zu  %-*s%*s  %-10s  %-18s  %-*s%*s\n",
+               i + 1,
+               (int)displayName.length(), displayName.c_str(), 30 - nameWidth, "",
+               file.file_size_str.c_str(),
+               file.timestamp.c_str(),
+               (int)displaySender.length(), displaySender.c_str(), 10 - senderWidth, "");
     }
+
+    std::cout << "\n";
 }
 
 void Controller::friendPanel()
@@ -942,21 +1175,18 @@ void Controller::friendPanel()
     printMenuItem(1, "删掉Ta", "你们将结束好友关系");
     printMenuItem(2, "屏蔽Ta", "你将拒收此好友的消息");
     printMenuItem(3, "解除屏蔽", "不再拒收此好友的消息");
-    printMenuItem(0, "返回上级", "");
 
-    int choice = getValidInt("请选择操作:");
-    switch ((choice))
-    {
-    case 0:
+    std::string choice = getValidString("请选择操作：");
+    if (choice == "ESC")
         state_ = State::CHAT_FRIEND;
-        break;
-    case 1:
+    else if (choice == "1")
+    {
         client_->friendService_.delFriend(client_->currentFriend_.id_);
         state_ = State::CHAT_PANEL;
         printStatus("删除好友成功", "success");
         sleep(1);
-        break;
-    case 2:
+    }
+    else if (choice == "2")
     {
         int block_errno = client_->friendService_.blockFriend(client_->currentFriend_.id_);
         state_ = State::CHAT_FRIEND;
@@ -965,9 +1195,8 @@ void Controller::friendPanel()
         else if (block_errno == 1)
             printStatus("你已经将此好友屏蔽", "error");
         sleep(1);
-        break;
     }
-    case 3:
+    else if (choice == "3")
     {
         int unblock_errno = client_->friendService_.unblockFriend(client_->currentFriend_.id_);
         state_ = State::CHAT_FRIEND;
@@ -976,12 +1205,11 @@ void Controller::friendPanel()
         else if (unblock_errno == 1)
             printStatus("你未将存此好友屏蔽", "error");
         sleep(1);
-        break;
     }
-    default:
-        printStatus("无效选项，请重新选择", "error");
+    else
+    {
+        printStatus("无效编号", "error");
         sleep(1);
-        break;
     }
 }
 
@@ -993,23 +1221,16 @@ void Controller::groupPanel()
     printHeader(head.c_str());
     printMenuItem(1, "查看群成员列表", "");
     printMenuItem(2, "退出群/解散群", "");
-    printMenuItem(0, "返回上级", "");
-    int choice = getValidInt("请选择操作：");
-    switch (choice)
-    {
-    case 0:
+    std::string choice = getValidString("请选择操作：");
+    if (choice == "ESC")
         state_ = State::CHAT_GROUP;
-        break;
-    case 1:
+    else if (choice == "1")
         state_ = State::SHOW_MEMBERS;
-        break;
-    case 2:
-        showDestroyGroup();
-        state_ = State::CHAT_PANEL;
-        break;
-    default:
+    else if (choice == "2")
+        state_ = State::DESTORY_GROUP;
+    else
+    {
         printStatus("无效选项，请重新选择", "error");
         sleep(1);
-        break;
     }
 }

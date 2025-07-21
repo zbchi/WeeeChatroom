@@ -41,7 +41,8 @@ void printMenuItem(int index, const std::string &icon, const std::string &text,
 void printStatus(const std::string &message, const std::string &type = "info");
 void printInput(const std::string &prompt, const std::string &icon = "");
 int getValidInt(const std::string &prompt);
-std::string getValidString(const std::string &prompt);
+std::string getValidString(const std::string &prompt, bool echo = true);
+std::string getValidStringGetline(const std::string &prompt);
 std::vector<std::string> wrapContent(const std::string &text, int maxWidth);
 std::string repeat(int count, const std::string &ch);
 void clearScreen();

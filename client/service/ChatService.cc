@@ -76,7 +76,8 @@ int ChatService::sendMessage(std::string &content)
     // if (result == 0)
     storeChatLog(client_->user_id_, client_->currentFriend_.id_, sendInfo);
     // client_->controller_.printALog(msg, false);
-    client_->controller_.flushLogs();
+    if (state_ != State::FILE_FRIEND)
+        client_->controller_.flushLogs();
     return 0;
 }
 
@@ -94,9 +95,10 @@ void ChatService::handleMessage(const TcpConnectionPtr &conn, json &js)
         ChatMessage msg{friend_id, content, timestamp, client_->user_id_};
         {
             std::lock_guard<std::mutex> lock(chatLogs_mutex_);
-            client_->chatLogs_[friend_id].push_back(msg);
-            if (client_->chatLogs_[client_->currentFriend_.id_].size() > 10)
-                client_->chatLogs_[client_->currentFriend_.id_].pop_front();
+            auto &logs = client_->chatLogs_[client_->currentFriend_.id_];
+            logs.push_back(msg);
+            if (logs.size() > 10)
+                logs.pop_front();
         }
     }
     storeChatLog(client_->user_id_, friend_id, js);
@@ -138,9 +140,10 @@ int ChatService::sendGroupMessage(std::string &content)
     ChatMessage msg{client_->user_id_, content, timestamp, client_->user_id_};
     {
         std::lock_guard<std::mutex> lock(groupChatLogs_mutex_);
-        client_->groupChatLogs_[client_->currentGroup_.group_id_].push_back(msg);
-        if (client_->groupChatLogs_[client_->currentGroup_.group_id_].size() > 10)
-            client_->groupChatLogs_[client_->currentGroup_.group_id_].pop_front();
+        auto &logs = client_->groupChatLogs_[client_->currentGroup_.group_id_];
+        logs.push_back(msg);
+        if (logs.size() > 10)
+            logs.pop_front();
     }
     neter_->sendJson(sendInfo);
     // chatGroupMessageWaiter_.wait();
@@ -148,7 +151,8 @@ int ChatService::sendGroupMessage(std::string &content)
     // if (result == 0)
     storeChatLog(client_->user_id_, client_->currentGroup_.group_id_, sendInfo, true);
     // client_->controller_.printALog(msg, true);
-    client_->controller_.flushGroupLogs();
+    if (state_ != State::FILE_GROUP)
+        client_->controller_.flushGroupLogs();
     return 0;
 }
 
@@ -163,14 +167,15 @@ void ChatService::handleGroupMessage(const TcpConnectionPtr &conn, json &js)
     ChatMessage msg{sender_id, content, timestamp, client_->user_id_};
     {
         std::lock_guard<std::mutex> lock(groupChatLogs_mutex_);
-        client_->groupChatLogs_[group_id].push_back(msg);
-        if (client_->groupChatLogs_[group_id].size() > 10)
-            client_->groupChatLogs_[group_id].pop_front();
+        auto &logs = client_->groupChatLogs_[group_id];
+        logs.push_back(msg);
+        if (logs.size() > 10)
+            logs.pop_front();
     }
     storeChatLog(client_->user_id_, group_id, js, true);
     if (state_ == State::CHAT_GROUP && group_id == client_->currentGroup_.group_id_)
     {
-        client_->controller_.flushLogs();
+        client_->controller_.flushGroupLogs();
         // client_->controller_.printALog(msg, true);
     }
     else

@@ -89,6 +89,15 @@ void FriendAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
         sendJson(conn, makeResponse(ADD_FRIEND_ACK, 3)); // 3  你们已经是好友关系
         return;
     }
+
+    auto result = mysql->select("friend_requests", {{"from_user_id", from_user_id},
+                                                    {"to_user_id", to_user_id}});
+    if (!result.empty())
+    {
+        sendJson(conn, makeResponse(ADD_FRIEND_ACK, 4)); // 4 已经有一条一样的申请
+        return;
+    }
+
     js["from_user_nickname"] = mysql->getNicknameById(from_user_id);
 
     std::string jsonStr = js.dump();

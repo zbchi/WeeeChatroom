@@ -3,6 +3,12 @@
 #include <iomanip>
 #include <limits>
 
+#include <iostream>
+#include <string>
+#include <termios.h>
+#include <unistd.h>
+#include <cstdlib>
+
 std::string repeat(int count, const std::string &ch)
 {
     std::string result;
@@ -167,10 +173,78 @@ int getValidInt(const std::string &prompt)
     }
 }
 
-std::string getValidString(const std::string &prompt)
+// 设置终端为原始模式
+void setRawMode()
+{
+    struct termios term;
+    tcgetattr(STDIN_FILENO, &term);
+    term.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &term);
+}
+
+// 恢复终端正常模式
+void restoreMode()
+{
+    struct termios term;
+    tcgetattr(STDIN_FILENO, &term);
+    term.c_lflag |= (ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &term);
+}
+
+std::string getValidString(const std::string &prompt, bool echo)
+{
+    printInput(prompt);
+    std::cout.flush();
+
+    std::string value;
+    setRawMode();
+
+    char ch;
+    while (read(STDIN_FILENO, &ch, 1) == 1)
+    {
+        if (ch == 27)
+        { // ESC键的ASCII码
+            restoreMode();
+            std::cout << "\n";
+            return "ESC"; // 返回特殊标识表示按了ESC
+        }
+        else if (ch == '\r' || ch == '\n')
+        { // 回车键
+            restoreMode();
+            std::cout << "\n";
+            return value;
+        }
+        else if (ch == 127 || ch == 8)
+        { // 退格键
+            if (!value.empty())
+            {
+                value.pop_back();
+                if (echo)
+                    std::cout << "\b \b"; // 只有开启回显时才删除显示
+                else
+                    std::cout << "\b \b"; // 密码模式也需要处理光标位置
+                std::cout.flush();
+            }
+        }
+        else if (ch >= 32 && ch <= 126)
+        { // 可打印字符
+            value += ch;
+            if (echo)
+                std::cout << ch; // 正常显示字符
+            else
+                std::cout << "*"; // 密码模式显示星号
+            std::cout.flush();
+        }
+    }
+
+    restoreMode();
+    return value;
+}
+
+std::string getValidStringGetline(const std::string &prompt)
 {
     std::string value;
-     printInput(prompt);
+    printInput(prompt);
     if (!std::getline(std::cin, value))
         std::exit(0);
     return value;
