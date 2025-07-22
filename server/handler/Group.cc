@@ -77,7 +77,18 @@ void GroupAddResponser::handle(const TcpConnectionPtr &conn, json &js, Timestamp
     std::string response = js["response"];
     std::string from_user_id = js["from_user_id"];
     std::string group_id = js["group_id"];
+    std::string user_id = js["user_id"];
     auto mysql = MySQLConnPool::instance().getConnection();
+
+    // 判断是否有权限
+    auto result = mysql->select("group_members", {{"user_id", user_id},
+                                                  {"group_id", group_id}});
+    if (result.empty())
+        return; // 被踢
+    std::string role = result[0].at("role");
+    if (role == "member")
+        return;
+
     if (response == "accept")
     {
         // 更新缓存
@@ -90,13 +101,13 @@ void GroupAddResponser::handle(const TcpConnectionPtr &conn, json &js, Timestamp
         std::cout << "rejectrejectrejectrejectrejectrejectreject" << std::endl;
     }
 
-    // 更新用户群列表
-    GroupLister list(service_);
-    list.sendGroupList(from_user_id);
-
     // 处理完后删除group_requests表里的记录，防止用户上线再发
     mysql->del("group_requests", {{"from_user_id", from_user_id},
                                   {"group_id", group_id}});
+
+    // 更新用户群列表
+    GroupLister list(service_);
+    list.sendGroupList(from_user_id);
 
     // 广播给所有管理员
     json notice;
@@ -231,6 +242,8 @@ void MemberKicker::handle(const TcpConnectionPtr &conn, json &js, Timestamp time
                                                   {"group_id", group_id}});
     auto kick_result = mysql->select("group_members", {{"user_id", kick_user_id},
                                                        {"group_id", group_id}});
+    if (result.empty())
+        return;
     std::string role = result[0].at("role");
     std::string kick_role = kick_result[0].at("role");
     if ((role != "member" && kick_role == "member") || role == "owner")

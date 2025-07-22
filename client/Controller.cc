@@ -790,6 +790,7 @@ void Controller::showHandleGroupRequest()
 
 void Controller::showGroupMembers()
 {
+    client_->groupService_.getGroupInfo();
     clearScreen();
     printHeader("👥 群成员列表");
 
@@ -837,10 +838,21 @@ void Controller::showGroupMembers()
     }
     std::cout << "\n";
 
-    int choice = getValidInt("🔢 选择成员编号进行管理 (0 返回): ");
-    if (choice == 0)
+    std::string choice_str = getValidString("🔢 选择成员编号进行管理 (ESC返回): ");
+    if (choice_str == "ESC")
     {
         state_ = State::GROUP_PANEL;
+        return;
+    }
+    int choice;
+    try
+    {
+        choice = std::stoi(choice_str);
+    }
+    catch (const std::exception &e)
+    {
+        printStatus("输入无效。", "error");
+        sleep(1);
         return;
     }
 
@@ -861,7 +873,6 @@ void Controller::showGroupMembers()
     {
         printStatus("你没有管理权限。", "error");
         sleep(1);
-        state_ = State::SHOW_GROUPS;
         return;
     }
     printMenuItem(1, "❌", "踢出成员");
@@ -888,17 +899,22 @@ void Controller::showGroupMembers()
         sleep(1);
         break;
     case 2:
-        if (target_role == "admin" || target_role == "owner")
+        if (my_role == "admin")
+            printStatus("无权限。", "error");
+        else if (target_role == "admin" || target_role == "owner")
             printStatus("对方已经是管理员或群主。", "warning");
-        else
+        else if (my_role == "owner")
         {
             client_->groupService_.addAdmin(target_id);
             printStatus("已设为管理员", "success");
         }
+
         sleep(1);
         break;
     case 3:
-        if (target_role != "admin")
+        if (my_role == "admin")
+            printStatus("无权限。", "error");
+        else if (target_role != "admin")
             printStatus("对方不是管理员，无法取消。", "warning");
         else
         {
@@ -912,7 +928,7 @@ void Controller::showGroupMembers()
         sleep(1);
         break;
     }
-    state_ = State::GROUP_PANEL;
+    state_ = State::SHOW_MEMBERS;
 }
 
 void Controller::showDestroyGroup()
@@ -1256,7 +1272,6 @@ void Controller::friendPanel()
 
 void Controller::groupPanel()
 {
-    client_->groupService_.getGroupInfo();
     clearScreen();
     std::string head = "群聊ID:" + client_->currentGroup_.user_id_ + "  群名:" + client_->currentGroup_.group_name;
     printHeader(head.c_str());
