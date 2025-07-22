@@ -145,7 +145,7 @@ void Service::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp tim
 
         std::string jsonStr(buf->peek(), len);
         buf->retrieve(len);
-        std::cout << jsonStr << std::endl;
+        // std::cout << jsonStr << std::endl;
         if (jsonStr == "null") // 将心跳检测处理优先级提到线程池前，防止巨量json请求淹没心跳
             this->handleHeartBeat(conn, time);
         // 将json字符串分配给线程池

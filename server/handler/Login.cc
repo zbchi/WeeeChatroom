@@ -57,12 +57,12 @@ int Loginer::verifyAccount(std::string &email, std::string &password, const TcpC
     auto conned = service_->getConnectionPtr(user_id);
     if (conned != nullptr)
     {
-        LOG_DEBUG("%s已登录", email.c_str());
+        LOG_WARN("[%s]已登录", email.c_str());
         return 3;
     }
     if (result.empty())
     {
-        LOG_DEBUG("%s未注册", email.c_str());
+        LOG_WARN("[%s]未注册", email.c_str());
         return 2;
     }
 
@@ -70,12 +70,12 @@ int Loginer::verifyAccount(std::string &email, std::string &password, const TcpC
     {
         std::lock_guard<std::mutex> lock(service_->onlienUsersMutex_);
         service_->onlineUsers_[result[0]["id"]] = conn;
-        LOG_DEBUG("密码正确");
+        LOG_INFO("[%s]密码正确", email.c_str());
         return 0;
     }
     else
     {
-        LOG_DEBUG("密码错误");
+        LOG_WARN("[%s]密码错误", email.c_str());
         return 1;
     }
 }
@@ -109,7 +109,7 @@ void Loginer::sendMessageOffLine(std::string &to_user_id, const TcpConnectionPtr
         if (!json.has_value())
             break;
         sendJson(conn, json.value());
-        LOG_DEBUG("发送离线消息");
+        LOG_INFO("发送离线消息给[%s]", to_user_id.c_str());
     }
 }
 
@@ -193,4 +193,5 @@ void AccountKiller::handle(const TcpConnectionPtr &conn, json &js, Timestamp tim
 
     // 删除用户表中的用户
     mysql->del("users", {{"id", user_id}});
+    LOG_INFO("[%s]要求注销账户", user_id.c_str());
 }

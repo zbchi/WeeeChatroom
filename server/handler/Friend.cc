@@ -113,6 +113,7 @@ void FriendAdder::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
                                       {"from_user_id", from_user_id},
                                       {"json", js.dump()}});
     sendJson(conn, makeResponse(ADD_FRIEND_ACK, 0));
+    LOG_INFO("[%s]请求添加[%s]",from_user_id,to_user_id);
 }
 
 void FriendAddResponser::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
@@ -148,6 +149,7 @@ void FriendAddResponser::handle(const TcpConnectionPtr &conn, json &js, Timestam
     FriendLister list(service_);
     list.sendFriendList(from_user_id);
     list.sendFriendList(to_user_id);
+    LOG_INFO("[%s]处理来自[%s]的好友请求",to_user_id,from_user_id);
 }
 
 void FriendDeleter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
@@ -169,6 +171,7 @@ void FriendDeleter::handle(const TcpConnectionPtr &conn, json &js, Timestamp tim
     FriendLister list(service_);
     list.sendFriendList(from_user_id);
     list.sendFriendList(to_user_id);
+    LOG_INFO("[%s]删除好友[%s]",from_user_id,to_user_id);
 }
 
 void FriendBlocker::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
@@ -193,6 +196,7 @@ void FriendBlocker::handle(const TcpConnectionPtr &conn, json &js, Timestamp tim
     //  删掉单向好友关系，保留对端的好友关系
     /*mysql->del("friends", {{"user_id", from_user_id},
                            {"friend_id", to_user_id}});*/
+    LOG_INFO("[%s]将好友[%s]拉黑",from_user_id,to_user_id);
 }
 
 void FriendUnblocker::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
@@ -210,4 +214,5 @@ void FriendUnblocker::handle(const TcpConnectionPtr &conn, json &js, Timestamp t
     // 更新被解除拉黑用户的好友列表
     FriendLister list(service_);
     list.sendFriendList(to_user_id);
+    LOG_INFO("[%s]将好友[%s]解除拉黑",from_user_id,to_user_id);
 }

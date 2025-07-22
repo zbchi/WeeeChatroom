@@ -1,6 +1,6 @@
 # 客户端安装
 ## docker安装
-
+<!-- 
 > docker run 最后的参数是服务端的Ip地址。
 如用容器启动并传文件:  
 1.把文件托进/tmp/chatclient中。
@@ -11,7 +11,7 @@ docker pull zbchi/chatroomcli
 docker run -it -v /tmp/chatclient:/tmp/chatclient zbchi/chatroomcli 10.30.1.235
 ```
 
-------
+------ -->
 
 ## 编译安装
 

@@ -31,7 +31,7 @@ services:
       start_period: 10s
 
   chatserver:
-    image: zbchi/weeechatroom:1.2
+    image: zbchi/weeechatroom:1.3
     container_name: chat-server
     depends_on:
       mysql:

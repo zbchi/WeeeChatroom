@@ -48,14 +48,14 @@ void Chatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
                                        {"content", content}});
         */}
           else
-              LOG_DEBUG("屏蔽好友关系的消息");
+              LOG_WARN("屏蔽好友关系的消息,来自[%s]发给[%s]", user_id.c_str(), receiver_id.c_str());
     }
     else
     {
         chat_errno = 1; // 非好友
-        LOG_DEBUG("非好友关系的消息");
+        LOG_WARN("非好友关系的消息来自[%s]发给[%s]", user_id.c_str(), receiver_id.c_str());
     } // sendJson(conn, makeResponse(CHAT_MSG_ACK, chat_errno));
-    LOG_DEBUG("处理聊天消息完成");
+    LOG_INFO("处理聊天消息完成来自[%s]发给[%s]", user_id.c_str(), receiver_id.c_str());
 }
 
 void GroupChatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
@@ -86,6 +86,7 @@ void GroupChatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time
                 }
                 else // 离线存储离线消息
                 {
+                    LOG_DEBUG("存储离线消息");
                     redis->lpush("offlineMessages:" + member_id, js.dump());
                     /*  mysql->insert("offlineMessages", {{"sender_id", sender_id},
                                                         {"receiver_id", member_id},
@@ -100,7 +101,7 @@ void GroupChatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time
     else
     {
         chat_errno = 1; // 不在群里面
-        LOG_DEBUG("非群成员的消息");
+        LOG_WARN("非群成员的消息来自[%s]发给群[%s]", sender_id.c_str(), group_id.c_str());
     }
-    LOG_DEBUG("处理聊天消息完成");
+    LOG_INFO("处理群聊天消息完成来自[%s]发给群[%s]", sender_id.c_str(), group_id.c_str());
 }
