@@ -105,7 +105,6 @@ void Controller::showMainMenu()
         state_ = State::DESTROY_ACCOUNT;
     else
         printStatus("无效选项，请重新选择", "error");
-
 }
 
 void Controller::showChatPanel()
@@ -934,16 +933,34 @@ void Controller::showDestroyAccount()
 
 void Controller::flushLogs()
 {
-    clearScreen();
-    printHeader("💬" + client_->currentFriend_.nickname_);
-    printLogs(client_->chatLogs_[client_->currentFriend_.id_]);
+    ChatLogs logs_copy;
+    { // 拷贝一份避免长时间占用锁
+        std::lock_guard<std::mutex> lock(client_->chatService_.chatLogs_mutex_);
+        logs_copy = client_->chatLogs_[client_->currentFriend_.id_];
+    }
+    std::string title = "💬" + client_->currentFriend_.nickname_;
+
+    pool_.add_last_task([title, logs_copy, this]()
+                        {
+         clearScreen();    
+        printHeader(title);
+     printLogs(logs_copy); }); // 如果打印任务堆积，则执行最新的任务
 }
 
 void Controller::flushGroupLogs()
 {
-    clearScreen();
-    printHeader("💬" + client_->currentGroup_.group_name);
-    printLogs(client_->groupChatLogs_[client_->currentGroup_.group_id_], true);
+    ChatLogs logs_copy;
+    { // 拷贝一份避免长时间占用锁
+        std::lock_guard<std::mutex> lock(client_->chatService_.groupChatLogs_mutex_);
+        logs_copy = client_->groupChatLogs_[client_->currentGroup_.group_id_];
+    }
+    std::string title = "💬" + client_->currentGroup_.group_id_;
+
+    pool_.add_last_task([title, logs_copy, this]()
+                        {
+         clearScreen();    
+        printHeader(title);
+        printLogs(logs_copy); }); // 如果打印任务堆积，则执行最新的任务
 }
 
 void Controller::flushRequests()
@@ -1018,7 +1035,7 @@ void Controller::flushGroupRequests()
     std::cout << "\n";
 }
 
-void Controller::printLogs(ChatLogs &chatLogs, bool is_group)
+void Controller::printLogs(const ChatLogs &chatLogs, bool is_group)
 {
     for (const auto &log : chatLogs)
         printALog(log, is_group);

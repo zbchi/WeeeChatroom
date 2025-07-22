@@ -2,7 +2,7 @@ add_library(base_lib STATIC
     base.cc
     MySQLConn.cc
     Redis.cc
-    ThreadPool.cc
+   # ThreadPool.cc
 )
 
 include_directories(/usr/include/mysql)

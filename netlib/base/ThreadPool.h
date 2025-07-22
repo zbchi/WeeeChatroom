@@ -19,7 +19,7 @@ public:
     ThreadPool(int threads);
     ~ThreadPool();
     void add_task(std::function<void()> tmp);
-
+    void add_last_task(std::function<void()>tmp);
 private:
     void work();
     void stop();

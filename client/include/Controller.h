@@ -4,7 +4,7 @@
 #include <condition_variable>
 #include "base.h"
 #include "ChatService.h"
-
+#include "ThreadPool.h"
 #include <atomic>
 
 #define RESET "\033[0m"
@@ -62,10 +62,10 @@ class Neter;
 class Controller
 {
 public:
-    Controller(Neter *neter, Client *client) : client_(client), neter_(neter) {}
+    Controller(Neter *neter, Client *client) : client_(client), neter_(neter), pool_(1) {}
     void mainLoop();
 
-    void printLogs(ChatLogs &chatLogs, bool is_group = false);
+    void printLogs(const ChatLogs &chatLogs, bool is_group = false);
     void flushLogs();
     void flushGroupLogs();
     void flushRequests();
@@ -108,4 +108,5 @@ private:
     std::mutex printMutex_;
     Client *client_;
     Neter *neter_;
+    ThreadPool pool_;
 };

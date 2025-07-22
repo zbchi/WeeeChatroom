@@ -26,6 +26,18 @@ void ThreadPool::add_task(std::function<void()> tmp)
     }
     condition_consumer.notify_one();
 }
+
+void ThreadPool::add_last_task(std::function<void()> tmp)
+{
+    {
+        std::lock_guard<std::mutex> lock(m_consumer);
+        std::queue<std::function<void()>> empty;
+        std::swap(tasks, empty);
+        tasks.push(tmp);
+    }
+    condition_consumer.notify_one();
+}
+
 void ThreadPool::work()
 {
     while (1)
