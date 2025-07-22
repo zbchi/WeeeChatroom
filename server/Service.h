@@ -38,6 +38,7 @@ private:
     void initCache();
 
     ThreadPool threadPool_;
+    ThreadPool chatThreadPool_;
     InetAddress listenAddr_;
     EventLoop loop_;
     TcpServer server_;

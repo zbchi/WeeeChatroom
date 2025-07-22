@@ -8,7 +8,7 @@ class RegisterKiter
 protected:
     static int gVerificationCode();
     static bool storeCode(std::string &email, int code, int expireTime = 120);
-    static bool sendCode(std::string &email, int code,bool is_find=false);
+    static bool sendCode(std::string &email, int code, bool is_find = false);
     static int verifyCode(std::string &email, int inputCode);
 
     static bool inputAccount(std::string &email, std::string &password, std::string &nickname);
@@ -43,7 +43,6 @@ public:
 private:
     Service *service_;
 };
-
 
 class PasswordFindAcker : public Handler, protected RegisterKiter
 {

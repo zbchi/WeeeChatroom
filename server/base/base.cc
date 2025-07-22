@@ -28,5 +28,3 @@ json makeResponse(int msgid, int errno_, std::string errmsg)
         {"errmsg", errmsg},
         {"errno", errno_}};
 }
-
-

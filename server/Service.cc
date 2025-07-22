@@ -14,7 +14,8 @@
 #include "base.h"
 #include <arpa/inet.h>
 
-Service::Service() : threadPool_(32),
+Service::Service() : threadPool_(8),
+                     chatThreadPool_(24),
                      listenAddr_(8000),
                      server_(&loop_, listenAddr_)
 {
@@ -70,7 +71,14 @@ void Service::handleMessage(const mylib::TcpConnectionPtr &conn,
 {
     json data = json::parse(jsonStr);
     int msgid = data["msgid"].get<int>();
+    if (msgid == CHAT_MSG)
+    { // 消息独用消息线程池
+        chatThreadPool_.add_task([conn, data, time, this]()
+                                 { json copy=std::move(data);
+                                    this->handlers_[CHAT_MSG]->handle(conn, copy, time); });
 
+        return;
+    }
     auto it = handlers_.find(msgid);
     if (it != handlers_.end())
         it->second->handle(conn, data, time);

@@ -26,6 +26,3 @@ public:
 private:
     Service *service_;
 };
-
-
-

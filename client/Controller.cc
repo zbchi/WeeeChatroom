@@ -476,7 +476,19 @@ void Controller::chatWithFriend()
                 flushLogs();
             }
             else if (offset == 0)
+            {
                 state_ = State::CHAT_FRIEND;
+                client_->chatService_.loadMoreChatLogs(client_->currentFriend_.id_, count, offset);
+                flushLogs();
+            }
+            continue;
+        }
+        else if (content == "/d")
+        {
+            offset = 0;
+            client_->chatService_.loadMoreChatLogs(client_->currentFriend_.id_, count, offset);
+            flushLogs();
+            state_ = State::CHAT_FRIEND;
             continue;
         }
         else if (content == "/f")
@@ -551,7 +563,19 @@ void Controller::chatWithGroup()
                 flushGroupLogs();
             }
             else if (offset == 0)
-                state_ = State::CHAT_FRIEND;
+            {
+                state_ = State::CHAT_GROUP;
+                client_->chatService_.loadMoreChatLogs(client_->currentGroup_.group_id_, count, offset, true);
+                flushGroupLogs();
+            }
+            continue;
+        }
+        else if (content == "/d")
+        {
+            offset = 0;
+            client_->chatService_.loadMoreChatLogs(client_->currentGroup_.group_id_, count, offset, true);
+            flushGroupLogs();
+            state_ = State::CHAT_GROUP;
             continue;
         }
         else if (content == "/f")
@@ -571,7 +595,7 @@ void Controller::chatWithGroup()
             { // 查看历史消息时发送回到底部
                 client_->chatService_.loadInitChatLogs(client_->currentFriend_.id_, count);
                 flushLogs();
-                state_ = State::CHAT_FRIEND;
+                state_ = State::CHAT_GROUP;
             }
         }
         else if (chat_errno == 1)
@@ -623,6 +647,8 @@ void Controller::showCreateGroup()
         return;
     }
     client_->groupService_.createGroup(name, desc);
+    printStatus("创建群聊成功。", "success");
+    sleep(1);
     state_ = State::MAIN_MENU;
 }
 
@@ -1040,7 +1066,7 @@ void Controller::printLogs(const ChatLogs &chatLogs, bool is_group)
     for (const auto &log : chatLogs)
         printALog(log, is_group);
 
-    std::cout << DIM << "💡 提示: /c向上翻页,/v向下翻页,/f传输文件,/m管理聊天,ESC+回车退出聊天" << RESET << "\n";
+    std::cout << DIM << "💡 提示: /c向上翻页,/v向下翻页,/d回到底部,/f传输文件,/m管理聊天,ESC+回车退出聊天" << RESET << "\n";
 }
 
 void Controller::printALog(const ChatMessage &log, bool is_group)

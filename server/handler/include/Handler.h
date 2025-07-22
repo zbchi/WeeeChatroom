@@ -7,6 +7,6 @@ using namespace mylib;
 class Handler
 {
 public:
-    virtual void handle(const mylib::TcpConnectionPtr &conn, json &js, mylib::Timestamp time)=0;
+    virtual void handle(const mylib::TcpConnectionPtr &conn, json &js, mylib::Timestamp time) = 0;
     virtual ~Handler() = default;
 };

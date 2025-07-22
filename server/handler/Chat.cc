@@ -37,17 +37,18 @@ void Chatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
             else
             { // 离线存储离线消息
                 LOG_DEBUG("存储离线消息");
-                mysql->insert("offlineMessages", {{"sender_id", user_id},
-                                                  {"receiver_id", receiver_id},
-                                                  {"json", js.dump()}});
+                redis->lpush("offlineMessages:" + receiver_id, js.dump());
+                /* mysql->insert("offlineMessages", {{"sender_id", user_id},
+                                                   {"receiver_id", receiver_id},
+                                                   {"json", js.dump()}});*/
             }
             // 无论是否在线 存储消息
-            mysql->insert("messages", {{"sender_id", user_id},
+          /*  mysql->insert("messages", {{"sender_id", user_id},
                                        {"receiver_id", receiver_id},
                                        {"content", content}});
-        }
-        else
-            LOG_DEBUG("屏蔽好友关系的消息");
+        */}
+          else
+              LOG_DEBUG("屏蔽好友关系的消息");
     }
     else
     {
@@ -85,9 +86,10 @@ void GroupChatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time
                 }
                 else // 离线存储离线消息
                 {
-                    mysql->insert("offlineMessages", {{"sender_id", sender_id},
-                                                      {"receiver_id", member_id},
-                                                      {"json", js.dump()}});
+                    redis->lpush("offlineMessages:" + member_id, js.dump());
+                    /*  mysql->insert("offlineMessages", {{"sender_id", sender_id},
+                                                        {"receiver_id", member_id},
+                                                        {"json", js.dump()}});*/
                 }
             }
             /* mysql->insert("group_messages", {{"group_id", group_id},
@@ -100,5 +102,5 @@ void GroupChatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time
         chat_errno = 1; // 不在群里面
         LOG_DEBUG("非群成员的消息");
     }
-    sendJson(conn, makeResponse(CHAT_GROUP_MSG_ACK, chat_errno));
+    LOG_DEBUG("处理聊天消息完成");
 }

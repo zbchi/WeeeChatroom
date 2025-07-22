@@ -96,16 +96,20 @@ void Loginer::sendFriendRequestOffLine(std::string &to_user_id, const TcpConnect
 
 void Loginer::sendMessageOffLine(std::string &to_user_id, const TcpConnectionPtr &conn)
 {
-    auto mysql = MySQLConnPool::instance().getConnection();
-    auto result = mysql->select("offlineMessages", {{"receiver_id", to_user_id}});
-    for (const auto &row : result)
+    // auto mysql = MySQLConnPool::instance().getConnection();
+    // auto result = mysql->select("offlineMessages", {{"receiver_id", to_user_id}});
+
+    std::string redis_key = "offlineMessages:" + to_user_id;
+    while (1)
     {
         auto targetConn = service_->getConnectionPtr(to_user_id);
         if (targetConn == nullptr)
             return; // 断线后停止发送
-        sendJson(conn, row.at("json"));
+        std::optional<std::string> json = redis->rpop(redis_key);
+        if (!json.has_value())
+            break;
+        sendJson(conn, json.value());
         LOG_DEBUG("发送离线消息");
-        mysql->del("offlineMessages", {{"id", row.at("id")}});
     }
 }
 
