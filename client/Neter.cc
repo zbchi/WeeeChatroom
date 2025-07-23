@@ -11,9 +11,6 @@ void Neter::start()
     Tcpclient_->setMessageCallback([this](const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
                                    { this->onMessage(conn, buf, time); });
     Tcpclient_->connect();
-    loop_->runEvery(10.0, [this]()
-                    {   json js; 
-                        sendJson(js); }); // 发送心跳包，发送null
 
     // 阻塞等待recv线程连接
     {
@@ -22,6 +19,9 @@ void Neter::start()
                        { return conn_ != nullptr; });
     }
 
+    loop_->runEvery(10.0, [this]()
+                    {   json js; 
+                        sendJson(js); }); // 发送心跳包，发送null
     // 主线程入口
 }
 
