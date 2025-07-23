@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <cstdlib>
 
+#include <regex>
+
 std::string repeat(int count, const std::string &ch)
 {
     std::string result;
@@ -17,29 +19,30 @@ std::string repeat(int count, const std::string &ch)
     return result;
 }
 
-int getDisplayWidth(const std::string &str)
+int getDisplayWidth(const std::string &str, int tabSize)
 {
     int width = 0;
     for (size_t i = 0; i < str.size();)
     {
         unsigned char c = str[i];
+
         if (c < 0x80)
         {
             width += 1;
             i += 1;
         }
-        else if ((c >> 5) == 0x6)
-        { // 2-byte UTF-8
+        else if ((c >> 5) == 0x6) // 2-byte UTF-8
+        {
             width += 2;
             i += 2;
         }
-        else if ((c >> 4) == 0xE)
-        { // 3-byte UTF-8
+        else if ((c >> 4) == 0xE) // 3-byte UTF-8
+        {
             width += 2;
             i += 3;
         }
-        else if ((c >> 3) == 0x1E)
-        { // 4-byte UTF-8
+        else if ((c >> 3) == 0x1E) // 4-byte UTF-8
+        {
             width += 2;
             i += 4;
         }
@@ -232,7 +235,7 @@ std::string getValidString(const std::string &prompt, bool echo)
             if (echo)
                 std::cout << ch; // 正常显示字符
             else
-                std::cout << "*"; // 密码模式显示星号
+                std::cout << "●";
             std::cout.flush();
         }
     }
@@ -301,6 +304,60 @@ std::vector<std::string> wrapContent(const std::string &text, int maxWidth)
     }
 
     return lines;
+}
+
+std::string expandTabs(const std::string &str, int tabSize)
+{
+    std::string result;
+    int col = 0;
+    for (size_t i = 0; i < str.size();)
+    {
+        unsigned char c = str[i];
+        if (c == '\t')
+        {
+            int spaces = tabSize - (col % tabSize);
+            result.append(spaces, ' ');
+            col += spaces;
+            i += 1;
+        }
+        else if (c < 0x80)
+        {
+            result.push_back(c);
+            col += 1;
+            i += 1;
+        }
+        else if ((c >> 5) == 0x6)
+        {
+            result.append(str.substr(i, 2));
+            col += 2;
+            i += 2;
+        }
+        else if ((c >> 4) == 0xE)
+        {
+            result.append(str.substr(i, 3));
+            col += 2;
+            i += 3;
+        }
+        else if ((c >> 3) == 0x1E)
+        {
+            result.append(str.substr(i, 4));
+            col += 2;
+            i += 4;
+        }
+        else
+        {
+            result.push_back(c);
+            col += 1;
+            i += 1;
+        }
+    }
+    return result;
+}
+
+bool isValidEmail(const std::string &email)
+{
+    const std::regex pattern(R"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)");
+    return std::regex_match(email, pattern);
 }
 
 void clearScreen()

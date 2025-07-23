@@ -33,7 +33,8 @@
 #define CROSS "✗"
 #define HEART "♥"
 
-int getDisplayWidth(const std::string &str);
+int getDisplayWidth(const std::string &str, int tabSize = 8);
+std::string expandTabs(const std::string &str, int tabSize = 8);
 void printHeader(const std::string &title, const std::string &subtitle = "");
 void printDivider(const std::string &text = "", std::string ch = "-");
 void printMenuItem(int index, const std::string &icon, const std::string &text,
@@ -45,6 +46,7 @@ std::string getValidString(const std::string &prompt, bool echo = true);
 std::string getValidStringGetline(const std::string &prompt);
 std::vector<std::string> wrapContent(const std::string &text, int maxWidth);
 std::string repeat(int count, const std::string &ch);
+bool isValidEmail(const std::string &email);
 void clearScreen();
 
 inline void printTopBegin()

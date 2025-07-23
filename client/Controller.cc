@@ -155,9 +155,7 @@ void Controller::showChatPanel()
     }
 
     if (index == 1)
-    {
         printStatus("暂无好友或群聊，快去添加吧！", "warning");
-    }
 
     // 快捷操作
     printDivider("快捷操作", "=");
@@ -182,7 +180,6 @@ void Controller::showChatPanel()
     catch (const std::exception &e)
     {
         printStatus("输入无效。", "error");
-        sleep(1);
         return;
     }
     if (choice == 91)
@@ -218,10 +215,7 @@ void Controller::showChatPanel()
         }
     }
     else
-    {
         printStatus("无效选择", "error");
-        sleep(1);
-    }
 }
 
 void Controller::showLogOrReg()
@@ -262,6 +256,12 @@ void Controller::showRegister()
         state_ = State::LOG_OR_REG;
         return;
     }
+    else if (!isValidEmail(email))
+    {
+        printStatus("邮箱格式不正确", "error");
+        sleep(1);
+        return;
+    }
     password = getValidString("🔐 请输入密码: ", false);
     if (password == "ESC")
     {
@@ -274,7 +274,7 @@ void Controller::showRegister()
         state_ = State::LOG_OR_REG;
         return;
     }
-
+    printStatus("正在发送验证码到邮箱...", "info");
     client_->userService_.regiSter(email, password, nickname);
 
     while (true)
@@ -282,7 +282,7 @@ void Controller::showRegister()
         std::string code_str = getValidString("📩 请输入验证码: ");
         if (code_str == "ESC")
         {
-            state_ == State::LOG_OR_REG;
+            state_ = State::LOG_OR_REG;
             return;
         }
         int code;
@@ -332,13 +332,19 @@ void Controller::showFindPassword()
         state_ = State::LOG_OR_REG;
         return;
     }
+    else if (!isValidEmail(email))
+    {
+        printStatus("邮箱格式不正确", "error");
+        sleep(1);
+        return;
+    }
     password = getValidString("🔐请输入新的密码:", false);
     if (password == "ESC")
     {
         state_ = State::LOG_OR_REG;
         return;
     }
-    printStatus("正在发送验证码到您的邮箱...", "info");
+    printStatus("正在发送验证码到邮箱...", "info");
     client_->userService_.findPassword(email);
 
     while (true)
@@ -346,7 +352,7 @@ void Controller::showFindPassword()
         std::string code_str = getValidString("📩 请输入验证码: ");
         if (code_str == "ESC")
         {
-            state_ == State::LOG_OR_REG;
+            state_ = State::LOG_OR_REG;
             return;
         }
         int code;
@@ -369,10 +375,8 @@ void Controller::showFindPassword()
             break;
         }
         else if (reg_errno == 1)
-        {
             printStatus("验证码错误", "error");
-            // sleep(1);
-        }
+        // sleep(1);
         else if (reg_errno == 2)
         {
             printStatus("该邮箱未注册", "error");
@@ -425,10 +429,8 @@ void Controller::showLogin()
             break;
         }
         else if (login_errno == 1)
-        {
             printStatus("密码错误", "error");
-            // sleep(1);
-        }
+        // sleep(1);
     }
 }
 
@@ -511,6 +513,8 @@ void Controller::chatWithFriend()
                 flushLogs();
                 state_ = State::CHAT_FRIEND;
             }
+            else
+                flushLogs();
         }
         else if (chat_errno == 1)
             printStatus("发送失败(你们已不是好友)", "error");
@@ -593,10 +597,13 @@ void Controller::chatWithGroup()
         {
             if (state_ == State::LOG_HISTORY)
             { // 查看历史消息时发送回到底部
-                client_->chatService_.loadInitChatLogs(client_->currentFriend_.id_, count);
-                flushLogs();
+                offset = 0;
+                client_->chatService_.loadInitChatLogs(client_->currentGroup_.group_id_, count, true);
+                flushGroupLogs();
                 state_ = State::CHAT_GROUP;
             }
+            else
+                flushGroupLogs();
         }
         else if (chat_errno == 1)
             printStatus("发送失败(你已不在群聊)", "error");
@@ -984,6 +991,7 @@ void Controller::flushLogs()
 
     pool_.add_last_task([title, logs_copy, this]()
                         {
+        std::lock_guard<std::mutex>lock(printMutex_);
          clearScreen();    
         printHeader(title);
      printLogs(logs_copy); }); // 如果打印任务堆积，则执行最新的任务
@@ -1000,9 +1008,10 @@ void Controller::flushGroupLogs()
 
     pool_.add_last_task([title, logs_copy, this]()
                         {
-         clearScreen();    
+               std::lock_guard<std::mutex>lock(printMutex_);
+                            clearScreen();    
         printHeader(title);
-        printLogs(logs_copy); }); // 如果打印任务堆积，则执行最新的任务
+        printLogs(logs_copy,true); }); // 如果打印任务堆积，则执行最新的任务
 }
 
 void Controller::flushRequests()
@@ -1094,7 +1103,7 @@ void Controller::printALog(const ChatMessage &log, bool is_group)
         sender = log.sender_id == client_->user_id_ ? "我" : client_->currentGroup_.group_members[log.sender_id].nickname_;
     else
         sender = log.sender_id == client_->user_id_ ? "我" : client_->currentFriend_.nickname_;
-    std::string content = log.content;
+    std::string content = expandTabs(log.content);
     std::vector<std::string> lines = wrapContent(content, boxWidth - 2);
 
     if (log.sender_id == client_->user_id_)
