@@ -34,6 +34,12 @@ void FtpClient::onConnection(const TcpConnectionPtr &conn)
     }
     else
     {
+        std::string content = "[文件]:" + fileInfo_.file_name;
+        if (fileInfo_.is_group)
+            client_->chatService_.sendGroupMessage(content);
+        else
+            client_->chatService_.sendMessage(content);
+
         printTopBegin();
         std::cout << "文件[" << fileInfo_.file_name << "]传输完成";
         printTopEnd();
@@ -55,12 +61,6 @@ void FtpClient::sendUploadInfo(const TcpConnectionPtr &conn)
     fileInfo_.file_size = getFileSize(fd);
     js["file_size"] = fileInfo_.file_size;
     conn->send(js.dump());
-
-    std::string content = "[文件]:" + fileInfo_.file_name;
-    if (fileInfo_.is_group)
-        client_->chatService_.sendGroupMessage(content);
-    else
-        client_->chatService_.sendMessage(content);
 }
 
 void FtpClient::sendDownloadInfo(const TcpConnectionPtr &conn)
