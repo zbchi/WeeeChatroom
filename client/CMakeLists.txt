@@ -10,9 +10,11 @@ add_executable(chat_client
     ui.cc
 )
 
+
 target_link_libraries(chat_client PRIVATE 
     netlib
     service_lib
+    readline
      #profiler
    # pthread
 )

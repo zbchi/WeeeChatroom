@@ -14,6 +14,8 @@
 #define ERROR "\033[38;5;196m"     // 红色
 #define INFOB "\033[38;5;117m"     // 浅蓝色
 
+#define GREEN "\033[32m"
+
 #define BG_PRIMARY "\033[48;5;25m"
 #define BG_SECONDARY "\033[48;5;236m"
 #define BG_SUCCESS "\033[48;5;22m"
@@ -44,11 +46,13 @@ void printInput(const std::string &prompt, const std::string &icon = "");
 int getValidInt(const std::string &prompt);
 std::string getValidString(const std::string &prompt, bool echo = true);
 std::string getValidStringGetline(const std::string &prompt);
+std::string getValidStringReadline(const std::string &prompt);
 std::vector<std::string> wrapContent(const std::string &text, int maxWidth);
 std::string repeat(int count, const std::string &ch);
 bool isValidEmail(const std::string &email);
 void clearScreen();
-
+void disableKeys();
+void saveOriginalTerios();
 inline void printTopBegin()
 {
     std::cout << "\033[s\033[1;1H\033[2K\033[1;33m";

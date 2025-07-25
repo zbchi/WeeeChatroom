@@ -9,7 +9,12 @@
 #include <unistd.h>
 #include <cstdlib>
 
+#include <termios.h>
+#include <fcntl.h>
+
 #include <regex>
+
+#include <readline/readline.h>
 
 std::string repeat(int count, const std::string &ch)
 {
@@ -175,41 +180,62 @@ int getValidInt(const std::string &prompt)
         }
     }
 }
-
-// 设置终端为原始模式
-void setRawMode()
+struct termios orig_termios;
+void saveOriginalTerios()
 {
-    struct termios term;
-    tcgetattr(STDIN_FILENO, &term);
-    term.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &term);
+    tcgetattr(STDIN_FILENO, &orig_termios);
 }
 
-// 恢复终端正常模式
-void restoreMode()
+void setRawMode()
 {
-    struct termios term;
-    tcgetattr(STDIN_FILENO, &term);
-    term.c_lflag |= (ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &term);
+    struct termios raw = orig_termios;
+    raw.c_lflag &= ~(ICANON | ECHO | ISIG | IEXTEN);
+    raw.c_iflag &= ~(IXON | ICRNL | BRKINT | INPCK | ISTRIP);
+    raw.c_oflag &= ~(OPOST);
+    raw.c_cflag |= CS8;
+    raw.c_cc[VMIN] = 1;
+    raw.c_cc[VTIME] = 0;
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+}
+
+void restoreMode()
+{ // 恢复原始设置
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
+}
+
+void clearStdinBuffer()
+{
+    // 将 STDIN 设置为非阻塞
+    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+    char dump[64];
+    while (read(STDIN_FILENO, dump, sizeof(dump)) > 0)
+    {
+    }
+    fcntl(STDIN_FILENO, F_SETFL, flags);
 }
 
 std::string getValidString(const std::string &prompt, bool echo)
 {
     printInput(prompt);
     std::cout.flush();
-
     std::string value;
+    tcflush(STDIN_FILENO, TCIFLUSH);
     setRawMode();
-
     char ch;
     while (read(STDIN_FILENO, &ch, 1) == 1)
     {
-        if (ch == 27)
-        { // ESC键的ASCII码
+        if (ch == 3) // Ctrl+C
+        {
+            restoreMode();
+            std::cout << "^C\n";
+            std::exit(0);
+        }
+        else if (ch == 27)
+        {
             restoreMode();
             std::cout << "\n";
-            return "ESC"; // 返回特殊标识表示按了ESC
+            return "ESC";
         }
         else if (ch == '\r' || ch == '\n')
         { // 回车键
@@ -239,7 +265,6 @@ std::string getValidString(const std::string &prompt, bool echo)
             std::cout.flush();
         }
     }
-
     restoreMode();
     return value;
 }
@@ -250,6 +275,16 @@ std::string getValidStringGetline(const std::string &prompt)
     printInput(prompt);
     if (!std::getline(std::cin, value))
         std::exit(0);
+    return value;
+}
+
+std::string getValidStringReadline(const std::string &prompt)
+{
+    char *input = readline(prompt.c_str());
+    if (!input) // Ctrl+D
+        return "";
+    std::string value(input);
+    free(input);
     return value;
 }
 
@@ -285,24 +320,18 @@ std::vector<std::string> wrapContent(const std::string &text, int maxWidth)
             charLen = 4;
             charWidth = 2;
         }
-
         if (currentWidth + charWidth > maxWidth)
         {
             lines.push_back(currentLine);
             currentLine.clear();
             currentWidth = 0;
         }
-
         currentLine += text.substr(i, charLen);
         currentWidth += charWidth;
         i += charLen;
     }
-
     if (!currentLine.empty())
-    {
         lines.push_back(currentLine);
-    }
-
     return lines;
 }
 
@@ -363,4 +392,17 @@ bool isValidEmail(const std::string &email)
 void clearScreen()
 {
     system("clear");
+}
+
+void disableKeys()
+{
+    rl_bind_key('\t', rl_insert); // Tab
+    rl_unbind_key(1);             // Ctrl+A
+    rl_unbind_key(5);             // Ctrl+E
+    rl_unbind_key(11);            // Ctrl+K
+    rl_unbind_key(21);            // Ctrl+U
+    rl_unbind_key(23);            // Ctrl+W
+    rl_unbind_key(12);            // Ctrl+L
+    rl_unbind_key(18);            // Ctrl+R
+    rl_unbind_key(20);            // Ctrl+T
 }

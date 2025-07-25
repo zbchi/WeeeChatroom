@@ -21,7 +21,7 @@ docker run -it -v /tmp/chatclient:/tmp/chatclient zbchi/chatroomcli 10.30.1.235
 git clone https://github.com/zbchi/WeeeChatroom.git
 ```
 
-### 2. 安装 JSON 依赖
+### 2. 安装依赖
 
 > 客户端依赖 [`nlohmann/json`](https://github.com/nlohmann/json) 用于解析与构建 JSON 数据。
 
@@ -30,12 +30,17 @@ git clone https://github.com/zbchi/WeeeChatroom.git
 ```bash
 sudo apt update
 sudo apt install nlohmann-json3-dev
+
+sudo apt install libreadline-dev
+
 ```
 
 #### Arch / Manjaro：
 
 ```bash
 sudo pacman -S nlohmann-json
+
+sudo pacman -S readline
 ```
 
 ###  3. 编译项目

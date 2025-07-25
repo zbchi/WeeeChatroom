@@ -45,7 +45,6 @@ std::string ChatService::fixInvalidUtf8(const std::string &input)
                 break;
             }
         }
-
         if (valid)
             result.append(input.substr(i, len));
 

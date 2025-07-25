@@ -5,11 +5,14 @@
 #include <unistd.h>
 #include "ui.h"
 #include <filesystem>
-
+#include <readline/readline.h>
+#include <readline/history.h>
 std::atomic<State> state_ = State::LOG_OR_REG;
 
 void Controller::mainLoop()
 {
+    saveOriginalTerios();
+    disableKeys();
     while (true)
     {
         switch (state_)
@@ -448,10 +451,10 @@ void Controller::chatWithFriend()
     std::string content;
     while (true)
     {
-        content = getValidStringGetline("");
+        content = getValidStringReadline("");
         if (content.empty())
             continue;
-        if (content.back() == 27)
+        if (content == "/e")
         {
             state_ = State::CHAT_PANEL;
             break;
@@ -537,10 +540,10 @@ void Controller::chatWithGroup()
     std::string content;
     while (true)
     {
-        content = getValidStringGetline("");
+        content = getValidStringReadline("");
         if (content.empty())
             continue;
-        if (content.back() == 27)
+        if (content == "/e")
         {
             state_ = State::CHAT_PANEL;
             break;
@@ -991,10 +994,10 @@ void Controller::flushLogs()
 
     pool_.add_last_task([title, logs_copy, this]()
                         {
-        std::lock_guard<std::mutex>lock(printMutex_);
-         clearScreen();    
-        printHeader(title);
-     printLogs(logs_copy); }); // 如果打印任务堆积，则执行最新的任务
+                            std::lock_guard<std::mutex> lock(printMutex_);
+                            std::cout << "\033[2J\033[H" << std::flush;
+                            printHeader(title);
+                            printLogs(logs_copy); }); // 如果打印任务堆积，则执行最新的任务
 }
 
 void Controller::flushGroupLogs()
@@ -1008,10 +1011,10 @@ void Controller::flushGroupLogs()
 
     pool_.add_last_task([title, logs_copy, this]()
                         {
-               std::lock_guard<std::mutex>lock(printMutex_);
-                            clearScreen();    
-        printHeader(title);
-        printLogs(logs_copy,true); }); // 如果打印任务堆积，则执行最新的任务
+                            std::lock_guard<std::mutex> lock(printMutex_);
+                            std::cout << "\033[2J\033[H" << std::flush;
+                            printHeader(title);
+                            printLogs(logs_copy, true); }); // 如果打印任务堆积，则执行最新的任务
 }
 
 void Controller::flushRequests()
@@ -1091,7 +1094,7 @@ void Controller::printLogs(const ChatLogs &chatLogs, bool is_group)
     for (const auto &log : chatLogs)
         printALog(log, is_group);
 
-    std::cout << DIM << "💡 提示: /c向上翻页,/v向下翻页,/d回到底部,/f传输文件,/m管理聊天,ESC+回车退出聊天" << RESET << "\n";
+    std::cout << DIM << "💡 提示: /c向上翻页,/v向下翻页,/d回到底部,/f传输文件,/m管理聊天,/e退出聊天" << RESET << "\n";
 }
 
 void Controller::printALog(const ChatMessage &log, bool is_group)
