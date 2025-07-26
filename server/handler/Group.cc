@@ -5,6 +5,8 @@
 #include "Logger.h"
 #include "base.h"
 
+#include "Chat.h"
+
 void GroupCreater::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
 {
     std::string creator_id = js["creator_id"];
@@ -98,7 +100,17 @@ void GroupAddResponser::handle(const TcpConnectionPtr &conn, json &js, Timestamp
     }
     else if (response == "reject")
     {
-        std::cout << "rejectrejectrejectrejectrejectrejectreject" << std::endl;
+        // 通知被拒绝
+        json jss;
+        jss["msgid"] = CHAT_MSG;
+        jss["sender_id"] = "1";
+        jss["receiver_id"] = from_user_id;
+        jss["content"] = "你向群[" + group_id + "]发送的加群请求被拒绝了";
+        jss["nickname"] = "系统消息";
+        std::string timestamp = Timestamp::now().toFormattedString();
+        jss["timestamp"] = timestamp;
+        Chatter chatter(service_);
+        chatter.handle(conn, jss, time);
     }
 
     // 处理完后删除group_requests表里的记录，防止用户上线再发

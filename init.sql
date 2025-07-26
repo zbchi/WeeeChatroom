@@ -4,12 +4,15 @@ USE chatdb;
 CREATE TABLE IF NOT EXISTS users
 (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    email VARCHAR(32) NOT NULL,
-    nickname VARCHAR(32) NOT NULL,
-    password VARCHAR(16) NOT NULL,
+    email VARCHAR(64) NOT NULL,
+    nickname VARCHAR(64) NOT NULL,
+    password VARCHAR(64) NOT NULL,
     state ENUM('alive','die')DEFAULT 'alive',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE users AUTO_INCREMENT = 2;
+INSERT INTO users (id, email, nickname, password)
+VALUES (1, '1662308219', '系统消息', '1662308219@Zb');
 
 CREATE TABLE IF NOT EXISTS messages
 (
@@ -49,7 +52,7 @@ CREATE TABLE IF NOT EXISTS friends
 CREATE TABLE IF NOT EXISTS `groups`
 (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(32) NOT NULL,
+    name TEXT,
     description TEXT,
     creator_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

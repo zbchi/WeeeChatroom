@@ -10,48 +10,6 @@
 #include "ui.h"
 using namespace mylib;
 
-std::string ChatService::fixInvalidUtf8(const std::string &input)
-{
-    std::string result;
-    size_t i = 0;
-    while (i < input.size())
-    {
-        unsigned char c = static_cast<unsigned char>(input[i]);
-        size_t len = 0;
-
-        if (c <= 0x7F)
-            len = 1;
-        else if ((c & 0xE0) == 0xC0)
-            len = 2;
-        else if ((c & 0xF0) == 0xE0)
-            len = 3;
-        else if ((c & 0xF8) == 0xF0)
-            len = 4;
-        else
-        {
-            i++; // 非法起始字节
-            continue;
-        }
-
-        if (i + len > input.size())
-            break; // 不完整的 UTF-8 末尾
-
-        bool valid = true;
-        for (size_t j = 1; j < len; ++j)
-        {
-            if ((static_cast<unsigned char>(input[i + j]) & 0xC0) != 0x80)
-            {
-                valid = false;
-                break;
-            }
-        }
-        if (valid)
-            result.append(input.substr(i, len));
-
-        i += len;
-    }
-    return result;
-}
 
 int ChatService::sendMessage(std::string &content)
 {

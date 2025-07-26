@@ -38,7 +38,18 @@ void RegisterAcker::handle(const TcpConnectionPtr &conn, json &js, Timestamp tim
     if (errno_verify == 0)
     {
         if (inputAccount(email, password, nickname))
+        {
             errno_verify = 0;
+            // 注册成功自动加系统消息为好友
+            std::string user_id = mysql->getIdByEmail(email);
+            std::string system_id = "1";
+            mysql->insert("friends", {{"user_id", user_id},
+                                      {"friend_id", system_id}});
+            mysql->insert("friends", {{"friend_id", user_id},
+                                      {"user_id", system_id}});
+            redis->sadd("friends:" + user_id, system_id);
+            redis->sadd("friends:" + system_id, user_id);
+        }
         else
             errno_verify = -1;
     }

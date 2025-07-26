@@ -50,7 +50,6 @@ private:
                           size_t count,
                           size_t offset = 0,
                           bool is_group = false);
-    std::string fixInvalidUtf8(const std::string &input);
     Neter *neter_;
     Client *client_;
 };

@@ -36,6 +36,7 @@ void Neter::onConnection(const TcpConnectionPtr &conn)
     else
     {
         printStatus("连接超时 断开连接", "error");
+        restoreMode();
         std::exit(0);
     }
 }

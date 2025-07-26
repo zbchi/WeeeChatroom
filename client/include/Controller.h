@@ -40,7 +40,7 @@ enum class State
     DESTROY_ACCOUNT,
     LOG_OR_REG,
 
-    LOG_HISTORY,
+    LOG_HISTORY
 };
 extern std::atomic<State> state_;
 

@@ -49,9 +49,11 @@ std::string getValidStringGetline(const std::string &prompt);
 std::string getValidStringReadline(const std::string &prompt);
 std::vector<std::string> wrapContent(const std::string &text, int maxWidth);
 std::string repeat(int count, const std::string &ch);
+std::string fixInvalidUtf8(const std::string &input);
 bool isValidEmail(const std::string &email);
 void clearScreen();
 void disableKeys();
+void restoreMode();
 void saveOriginalTerios();
 inline void printTopBegin()
 {

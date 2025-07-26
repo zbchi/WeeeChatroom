@@ -4,13 +4,14 @@
 
 #include "base.h"
 #include "Neter.h"
+#include "ui.h"
 #include "Client.h"
 void UserService::regiSter(std::string &email, std::string &password, std::string &nickname)
 {
     json regInfo;
     regInfo["msgid"] = REG_MSG;
     regInfo["email"] = email;
-    regInfo["nickname"] = nickname;
+    regInfo["nickname"] = fixInvalidUtf8(nickname);
     regInfo["password"] = password;
 
     neter_->sendJson(regInfo);

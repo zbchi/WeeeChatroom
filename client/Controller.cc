@@ -124,6 +124,7 @@ void Controller::showChatPanel()
 
     std::lock_guard<std::mutex> lock1(client_->friendListMutex_);
     std::lock_guard<std::mutex> lock2(client_->groupListMutex_);
+
     // 显示好友列表
     if (!client_->friendList_.empty())
     {
@@ -271,8 +272,10 @@ void Controller::showRegister()
         state_ = State::LOG_OR_REG;
         return;
     }
-    nickname = getValidStringGetline("👤 请输入昵称(ESC+回车返回): ");
-    if (nickname.back() == 27)
+    nickname = getValidStringReadline("👤 请输入昵称(/e返回): ");
+    if (nickname.size() > 64)
+        nickname.resize(64);
+    if (nickname == "/e")
     {
         state_ = State::LOG_OR_REG;
         return;
@@ -439,6 +442,7 @@ void Controller::showLogin()
 
 void Controller::chatWithFriend()
 {
+    std::string friend_id = client_->currentFriend_.id_;
     // 清空未读状态
     {
         std::lock_guard<std::mutex> lock(client_->isReadMapMutex_);
@@ -496,12 +500,12 @@ void Controller::chatWithFriend()
             state_ = State::CHAT_FRIEND;
             continue;
         }
-        else if (content == "/f")
+        else if (content == "/f" && friend_id != "1")
         {
             state_ = State::FILE_FRIEND;
             break;
         }
-        else if (content == "/m")
+        else if (content == "/m" && friend_id != "1")
         {
             state_ = State::FRIEND_PANEL;
             break;
@@ -642,16 +646,20 @@ void Controller::showAddFriend()
 void Controller::showCreateGroup()
 {
     clearScreen();
-    printHeader("创建群聊(ESC+回车返回)", "");
+    printHeader("创建群聊(/e返回)", "");
     std::string name, desc;
-    name = getValidStringGetline("📛 群名:");
-    if (name.back() == 27)
+    name = getValidStringReadline("📛 群名:");
+    if (name.size() > 64)
+        name.resize(64);
+    if (name == "/e")
     {
         state_ = State::MAIN_MENU;
         return;
     }
-    desc = getValidString("📝 群描述: ");
-    if (desc.back() == 27)
+    desc = getValidStringReadline("📝 群描述: ");
+    if (desc.size() > 64)
+        desc.resize(64);
+    if (desc == "/e")
     {
         state_ = State::MAIN_MENU;
         return;
@@ -1007,7 +1015,7 @@ void Controller::flushGroupLogs()
         std::lock_guard<std::mutex> lock(client_->chatService_.groupChatLogs_mutex_);
         logs_copy = client_->groupChatLogs_[client_->currentGroup_.group_id_];
     }
-    std::string title = "💬" + client_->currentGroup_.group_id_;
+    std::string title = "💬" + client_->currentGroup_.group_name;
 
     pool_.add_last_task([title, logs_copy, this]()
                         {
@@ -1239,7 +1247,7 @@ void Controller::flushFiles(bool is_group)
 void Controller::friendPanel()
 {
     clearScreen();
-    std::string head = "好友ID:" + client_->currentFriend_.id_ + "  昵称:" + client_->currentFriend_.nickname_;
+    std::string head = "昵称:" + client_->currentFriend_.nickname_;
     printHeader(head.c_str());
     printMenuItem(1, "删掉Ta", "你们将结束好友关系");
     printMenuItem(2, "屏蔽Ta", "你将拒收此好友的消息");
@@ -1285,7 +1293,7 @@ void Controller::friendPanel()
 void Controller::groupPanel()
 {
     clearScreen();
-    std::string head = "群聊ID:" + client_->currentGroup_.user_id_ + "  群名:" + client_->currentGroup_.group_name;
+    std::string head = "群名:" + client_->currentGroup_.group_name;
     printHeader(head.c_str());
     printMenuItem(1, "查看群成员列表", "");
     printMenuItem(2, "退出群/解散群", "");

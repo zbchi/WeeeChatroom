@@ -20,8 +20,8 @@ void GroupService::createGroup(std::string &groupname, std::string &description)
     json groupInfo;
     groupInfo["msgid"] = CREATE_GROUP;
     groupInfo["creator_id"] = client_->user_id_;
-    groupInfo["name"] = groupname;
-    groupInfo["description"] = description;
+    groupInfo["name"] = fixInvalidUtf8(groupname);
+    groupInfo["description"] = fixInvalidUtf8(description);
     neter_->sendJson(groupInfo);
 }
 
@@ -67,7 +67,7 @@ void GroupService::responseGroupRequest(GroupAddRequest &groupAddRequest, char *
     acceptInfo["msgid"] = GROUP_REQUEST;
     acceptInfo["group_id"] = groupAddRequest.group_id;
     acceptInfo["from_user_id"] = groupAddRequest.from_user_id;
-    acceptInfo["user_id"]=client_->user_id_;
+    acceptInfo["user_id"] = client_->user_id_;
     acceptInfo["response"] = std::string(response);
     neter_->sendJson(acceptInfo);
     removeGroupAddRequest(groupAddRequest.group_id, groupAddRequest.from_user_id); // 传递引用将覆盖内存导致全等
