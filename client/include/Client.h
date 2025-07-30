@@ -20,9 +20,8 @@ using GroupChatLogs = std::unordered_map<std::string, ChatLogs>;
 using FriendRequests = std::vector<FriendRequest>;
 using GroupAddRequests = std::vector<GroupAddRequest>;
 using FriendList = std::unordered_map<std::string, Friend>;
-using GroupList = std::unordered_map<std::string,Group>;
+using GroupList = std::unordered_map<std::string, Group>;
 using FileList = std::vector<FileInfo>;
-
 using MsgHandler = std::function<void(const TcpConnectionPtr &, json &)>;
 using MsgHanlerMap = std::unordered_map<int, MsgHandler>;
 

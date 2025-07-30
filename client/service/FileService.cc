@@ -35,11 +35,13 @@ void FtpClient::onConnection(const TcpConnectionPtr &conn)
     else
     {
         std::string content = "[文件]:" + fileInfo_.file_name;
-        if (fileInfo_.is_group)
-            client_->chatService_.sendGroupMessage(content);
-        else
-            client_->chatService_.sendMessage(content);
-
+        if (fileInfo_.is_upload)
+        {
+            if (fileInfo_.is_group)
+                client_->chatService_.sendGroupMessage(content);
+            else
+                client_->chatService_.sendMessage(content);
+        }
         printTopBegin();
         std::cout << "文件[" << fileInfo_.file_name << "]传输完成";
         printTopEnd();
@@ -83,11 +85,22 @@ void FtpClient::sendDownloadInfo(const TcpConnectionPtr &conn)
 std::string FtpClient::makeFilePath(const std::string &file_name)
 {
     fs::path file_dir = "/tmp/chatclient/chat_files";
-    std::string path = (file_dir / file_name).string();
     fs::create_directories(file_dir);
-    return path;
-}
 
+    fs::path original_path = file_dir / file_name;
+    fs::path path = original_path;
+
+    std::string stem = path.stem().string();
+    std::string ext = path.extension().string();
+    int counter = 1;
+    // 如果文件已存在，就在文件名后追加 _1, _2, ... 直到不存在为止
+    while (fs::exists(path))
+    {
+        path = file_dir / (stem + "_" + std::to_string(counter) + ext);
+        ++counter;
+    }
+    return path.string();
+}
 void FtpClient::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
 {
     if (!conn->getContext().has_value())

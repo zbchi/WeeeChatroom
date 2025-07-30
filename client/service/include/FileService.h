@@ -84,7 +84,7 @@ public:
     Waiter fileListWaiter_;
 
     FtpClientManager ftpClientManager_;
-
+    
 private:
     Neter *neter_;
     Client *client_;
