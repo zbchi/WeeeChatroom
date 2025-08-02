@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS messages
     sender_id INT NOT NULL,
     receiver_id INT NOT NULL,
     content TEXT NOT NULL,
+    json TEXT NOT NULL,
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -112,6 +113,7 @@ CREATE TABLE IF NOT EXISTS group_messages
     group_id INT NOT NULL,
     sender_id INT NOT NULL,
     content TEXT NOT NULL,
+    json TEXT NOT NULL,
     send_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (group_id) REFERENCES `groups`(id),
     FOREIGN KEY (sender_id) REFERENCES users(id)

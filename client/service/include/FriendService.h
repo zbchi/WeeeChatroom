@@ -14,7 +14,7 @@ public:
     void getFriends();
     void handleFriendsList(const TcpConnectionPtr &conn, json &js);
 
-    int addFriend(std::string &email);
+    int addFriend(std::string &id);
     void handleAddFriendAck(const TcpConnectionPtr &conn, json &js);
 
     void delFriend(std::string &friend_id);

@@ -275,8 +275,8 @@ std::string getValidStringGetline(const std::string &prompt)
     printInput(prompt);
     if (!std::getline(std::cin, value))
         std::exit(0);
-    if (value.size() > 64)
-        value.resize(64);
+    // if (value.size() > 64)
+    //     value.resize(64);
     return value;
 }
 

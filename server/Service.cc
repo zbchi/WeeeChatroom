@@ -44,6 +44,7 @@ Service::Service() : threadPool_(8),
     handlers_[BLOCK_FRIEND] = std::make_shared<FriendBlocker>(this);
     handlers_[DESTROY_ACCOUNT] = std::make_shared<AccountKiller>(this);
     handlers_[UNBLOCK_FRIEND] = std::make_shared<FriendUnblocker>(this);
+    handlers_[GET_LOGS] = std::make_shared<LogsLister>(this);
 
     // 设置连接回调
     server_.setConnectionCallback([this](const TcpConnectionPtr &conn)

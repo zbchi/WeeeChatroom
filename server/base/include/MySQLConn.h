@@ -11,7 +11,6 @@ class MySQLConn
 {
 private:
     MYSQL *conn_;
-    std::string escapeStr(const std::string &input);
     std::string join(const std::vector<std::string> &vec, const std::string &delimiter);
 
 public:
@@ -35,13 +34,15 @@ public:
                 const std::map<std::string, std::string> &conditions);
     Result select(const std::string &table,
                   const std::map<std::string, std::string> &conditions = {},
-                  const std::map<std::string, std::vector<std::string>> &in_conditions = {});
+                  const std::map<std::string, std::vector<std::string>> &in_conditions = {},
+                  const std::vector<std::pair<std::string, std::string>> &or_conditions = {});
 
     std::string getEmailById(std::string &user_id);
     std::string getNicknameById(std::string &user_id);
     std::string getIdByEmail(std::string &email);
 
     int getLastInsertId() { return mysql_insert_id(conn_); }
+    std::string escapeStr(const std::string &input);
 };
 
 class MySQLConnPool

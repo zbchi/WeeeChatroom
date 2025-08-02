@@ -10,7 +10,6 @@
 #include "ui.h"
 using namespace mylib;
 
-
 int ChatService::sendMessage(std::string &content)
 {
     {
@@ -190,8 +189,8 @@ std::string ChatService::getLogPath(std::string &user_id, std::string &friend_id
 void ChatService::storeChatLog(std::string &user_id, std::string &peer_id, json &js, bool is_group)
 {
     std::string path = getLogPath(user_id, peer_id, is_group);
-    std::ofstream ofs(path, std::ios::app);
     fs::create_directories(fs::path(path).parent_path());
+    std::ofstream ofs(path, std::ios::app);
     if (ofs.is_open())
         ofs << js.dump() << "\n";
 }
@@ -256,4 +255,19 @@ void ChatService::loadMoreChatLogs(std::string &peer_id, ssize_t count, ssize_t 
         std::lock_guard<std::mutex> lock(chatLogs_mutex_);
         client_->chatLogs_[peer_id] = logs;
     }
+}
+
+void ChatService::getChatLogs(bool is_group)
+{
+    std::string peer_id = is_group ? client_->currentGroup_.group_id_ : client_->currentFriend_.id_;
+    std::string log_path = getLogPath(client_->user_id_, peer_id, is_group);
+    if (fs::exists(log_path))
+        return;
+    json getInfo;
+    getInfo["msgid"] = GET_LOGS;
+    getInfo["is_group"] = is_group;
+    getInfo["peer_id"] = peer_id;
+    getInfo["user_id"] = client_->user_id_;
+    neter_->sendJson(getInfo);
+    // getLogsWaiter_.wait();
 }

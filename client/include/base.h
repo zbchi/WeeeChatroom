@@ -45,6 +45,8 @@ enum MsgType
     UNBLOCK_FRIEND,
     UNBLOCK_FRIEND_ACK,
     DESTROY_ACCOUNT,
+    GET_LOGS,
+    GET_LOGS_ACK,
 };
 
 class Waiter

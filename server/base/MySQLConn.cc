@@ -138,18 +138,18 @@ Result MySQLConn::queryResult(const std::string &sql)
 
 std::string MySQLConn::getEmailById(std::string &user_id)
 {
-    auto result = select("users", {{"id", user_id},{"state","alive"}});
+    auto result = select("users", {{"id", user_id}, {"state", "alive"}});
     return result[0]["email"];
 }
 
 std::string MySQLConn::getNicknameById(std::string &user_id)
 {
-    auto result = select("users", {{"id", user_id},{"state","alive"}});
+    auto result = select("users", {{"id", user_id}, {"state", "alive"}});
     return result[0]["nickname"];
 }
 std::string MySQLConn::getIdByEmail(std::string &email)
 {
-    auto result = select("users", {{"email", email},{"state","alive"}});
+    auto result = select("users", {{"email", email}, {"state", "alive"}});
     if (result.empty())
         return "";
     return result[0]["id"];
@@ -207,12 +207,14 @@ bool MySQLConn::update(const std::string &table, const std::map<std::string, std
 
 Result MySQLConn::select(const std::string &table,
                          const std::map<std::string, std::string> &conditions,
-                         const std::map<std::string, std::vector<std::string>> &in_conditions)
+                         const std::map<std::string, std::vector<std::string>> &in_conditions,
+                         const std::vector<std::pair<std::string, std::string>> &or_conditions)
 {
     std::stringstream sql;
     sql << "select * from " << table;
 
     std::vector<std::string> where_clauses;
+
     if (!conditions.empty())
     {
         std::stringstream where;
@@ -236,7 +238,18 @@ Result MySQLConn::select(const std::string &table,
         }
     }
 
+    if (!or_conditions.empty())
+    {
+        std::vector<std::string> or_parts;
+        for (const auto &p : or_conditions)
+        {
+            or_parts.push_back(p.first + " = '" + escapeStr(p.second) + "'");
+        }
+        where_clauses.push_back("(" + join(or_parts, " or ") + ")");
+    }
+
     if (!where_clauses.empty())
         sql << " where " << join(where_clauses, " and ");
+
     return queryResult(sql.str());
 }

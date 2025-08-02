@@ -116,7 +116,8 @@ void Controller::showChatPanel()
     client_->groupService_.getGroups();
 
     clearScreen();
-    printHeader("💬 消息中心", "选择聊天对象开始对话");
+    std::string id = client_->user_id_;
+    printHeader("💬 消息中心", "我的ID:" + id);
 
     std::vector<std::string> types;
     std::vector<std::string> ids;
@@ -442,6 +443,7 @@ void Controller::showLogin()
 
 void Controller::chatWithFriend()
 {
+    client_->chatService_.getChatLogs();
     std::string friend_id = client_->currentFriend_.id_;
     // 清空未读状态
     {
@@ -532,6 +534,7 @@ void Controller::chatWithFriend()
 
 void Controller::chatWithGroup()
 {
+    client_->chatService_.getChatLogs(true);
     // 清空未读状态
     {
         std::lock_guard<std::mutex> lock(client_->isReadGroupMapMutex_);
@@ -621,7 +624,7 @@ void Controller::showAddFriend()
 {
     clearScreen();
     printHeader("➕ 添加好友", "通过邮箱添加新好友");
-    std::string friend_id = getValidString(" 请输入好友邮箱: ");
+    std::string friend_id = getValidString(" 请输入好友 ID: ");
     if (friend_id == "ESC")
     {
         state_ = State::MAIN_MENU;

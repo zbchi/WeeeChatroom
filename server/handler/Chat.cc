@@ -43,12 +43,13 @@ void Chatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
                                                    {"json", js.dump()}});*/
             }
             // 无论是否在线 存储消息
-          /*  mysql->insert("messages", {{"sender_id", user_id},
+            mysql->insert("messages", {{"sender_id", user_id},
                                        {"receiver_id", receiver_id},
-                                       {"content", content}});
-        */}
-          else
-              LOG_WARN("屏蔽好友关系的消息,来自[%s]发给[%s]", user_id.c_str(), receiver_id.c_str());
+                                       {"content", content},
+                                       {"json", js.dump()}});
+        }
+        else
+            LOG_WARN("屏蔽好友关系的消息,来自[%s]发给[%s]", user_id.c_str(), receiver_id.c_str());
     }
     else
     {
@@ -93,9 +94,10 @@ void GroupChatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time
                                                         {"json", js.dump()}});*/
                 }
             }
-            /* mysql->insert("group_messages", {{"group_id", group_id},
-                                              {"sender_id", sender_id},
-                                              {"content", content}});*/
+            mysql->insert("group_messages", {{"group_id", group_id},
+                                             {"sender_id", sender_id},
+                                             {"content", content},
+                                             {"json", js.dump()}});
         }
     }
     else
@@ -104,4 +106,28 @@ void GroupChatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time
         LOG_WARN("非群成员的消息来自[%s]发给群[%s]", sender_id.c_str(), group_id.c_str());
     }
     LOG_INFO("处理群聊天消息完成来自[%s]发给群[%s]", sender_id.c_str(), group_id.c_str());
+}
+
+void LogsLister::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
+{
+    std::string user_id = js["user_id"];
+    std::string peer_id = js["peer_id"];
+    bool is_group = js["is_group"];
+
+    auto mysql = MySQLConnPool::instance().getConnection();
+    if (is_group)
+    {
+        auto result = mysql->select("group_messages", {{"group_id", peer_id}});
+        for (const auto &r : result)
+            sendJson(conn, r.at("json"));
+    }
+    else
+    {
+        auto result = mysql->select("messages", {}, {},
+                                    {{"sender_id", user_id},
+                                     {"receiver_id", user_id}});
+        for (const auto &r : result)
+            sendJson(conn, r.at("json"));
+    }
+    LOG_INFO("发送历史聊天记录");
 }

@@ -31,11 +31,15 @@ public:
 
     void loadInitChatLogs(std::string &peer_id, ssize_t count = 20, bool is_group = false);
     void loadMoreChatLogs(std::string &peer_id, ssize_t count, ssize_t offset, bool is_group = false);
+
+    void getChatLogs(bool is_group = false);
+
     std::mutex chatLogs_mutex_;
     std::mutex groupChatLogs_mutex_;
 
     Waiter chatMessageWaiter_;
     Waiter chatGroupMessageWaiter_;
+    Waiter getLogsWaiter_;
 
 private:
     std::string getLogPath(std::string &user_id,

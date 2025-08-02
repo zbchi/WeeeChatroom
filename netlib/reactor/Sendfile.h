@@ -24,7 +24,7 @@ struct FileContext
     ssize_t written = 0;
     int pipefd[2];
     long long count = 0;
-
+    
     std::string sender_id;
     std::string peer_id;
     std::string file_path;

@@ -21,3 +21,13 @@ public:
 private:
     Service *service_;
 };
+
+class LogsLister : public Handler
+{
+public:
+    LogsLister(Service *service) : service_(service) {}
+    void handle(const TcpConnectionPtr &conn, json &js, Timestamp time);
+
+private:
+    Service *service_;
+};

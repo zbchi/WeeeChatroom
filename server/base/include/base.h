@@ -5,7 +5,7 @@
 using json = nlohmann::json;
 using namespace mylib;
 
-void sendJson(const mylib::TcpConnectionPtr &conn,const json &js);
+void sendJson(const mylib::TcpConnectionPtr &conn, const json &js);
 void sendJson(const mylib::TcpConnectionPtr &conn, const std::string &jsonStr);
 json makeResponse(int msgid, int errno_, std::string errmsg = "");
 
@@ -49,4 +49,6 @@ enum MsgType
     UNBLOCK_FRIEND,
     UNBLOCK_FRIEND_ACK,
     DESTROY_ACCOUNT,
+    GET_LOGS,
+    GET_LOGS_ACK,
 };
