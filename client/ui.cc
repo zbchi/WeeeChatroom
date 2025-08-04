@@ -269,14 +269,17 @@ std::string getValidString(const std::string &prompt, bool echo)
     return value;
 }
 
-std::string getValidStringGetline(const std::string &prompt)
+std::string getValidStringGetline(const std::string &prompt, bool is_limit)
 {
     std::string value;
     printInput(prompt);
     if (!std::getline(std::cin, value))
         std::exit(0);
-    // if (value.size() > 64)
-    //     value.resize(64);
+    if (is_limit)
+    {
+        if (value.size() > 64)
+            value.resize(64);
+    }
     return value;
 }
 

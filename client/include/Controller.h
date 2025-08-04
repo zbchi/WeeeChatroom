@@ -43,6 +43,7 @@ enum class State
     LOG_HISTORY
 };
 extern std::atomic<State> state_;
+extern std::atomic<bool>is_long;
 
 class Client;
 class Neter;

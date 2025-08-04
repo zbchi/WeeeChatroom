@@ -8,6 +8,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 std::atomic<State> state_ = State::LOG_OR_REG;
+std::atomic<bool> is_long = false;
 
 void Controller::mainLoop()
 {
@@ -457,7 +458,10 @@ void Controller::chatWithFriend()
     std::string content;
     while (true)
     {
-        content = getValidStringReadline("");
+        if (is_long)
+            content = getValidStringReadline("");
+        else
+            content = getValidStringGetline("", false);
         if (content.empty())
             continue;
         if (content == "/e")
@@ -512,6 +516,12 @@ void Controller::chatWithFriend()
             state_ = State::FRIEND_PANEL;
             break;
         }
+        else if (content == "/s")
+        {
+            is_long = is_long ? false : true;
+            flushLogs();
+            break;
+        }
         int chat_errno = client_->chatService_.sendMessage(content);
         if (chat_errno == 0)
         {
@@ -547,7 +557,10 @@ void Controller::chatWithGroup()
     std::string content;
     while (true)
     {
-        content = getValidStringReadline("");
+        if (is_long)
+            content = getValidStringReadline("");
+        else
+            content = getValidStringGetline("", false);
         if (content.empty())
             continue;
         if (content == "/e")
@@ -600,6 +613,12 @@ void Controller::chatWithGroup()
         else if (content == "/m")
         {
             state_ = State::GROUP_PANEL;
+            break;
+        }
+        else if (content == "/s")
+        {
+            is_long = is_long ? false : true;
+            flushGroupLogs();
             break;
         }
         int chat_errno = client_->chatService_.sendGroupMessage(content);
@@ -1105,7 +1124,10 @@ void Controller::printLogs(const ChatLogs &chatLogs, bool is_group)
     for (const auto &log : chatLogs)
         printALog(log, is_group);
 
-    std::cout << DIM << "💡 提示: /c向上翻页,/v向下翻页,/d回到底部,/f传输文件,/m管理聊天,/e退出聊天" << RESET << "\n";
+    if (!is_long)
+        std::cout << DIM << "💡 提示: /c向上翻页,/v向下翻页,/d回到底部,/f传输文件,/m管理聊天,/e退出聊天,/s超长文本" << RESET << "\n";
+    else
+        std::cout << DIM << "💡 提示: /c向上翻页,/v向下翻页,/d回到底部,/f传输文件,/m管理聊天,/e退出聊天,/s多行文本" << RESET << "\n";
 }
 
 void Controller::printALog(const ChatMessage &log, bool is_group)
