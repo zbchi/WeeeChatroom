@@ -1025,7 +1025,7 @@ void Controller::flushLogs()
     pool_.add_last_task([title, logs_copy, this]()
                         {
                             std::lock_guard<std::mutex> lock(printMutex_);
-                            std::cout << "\033[2J\033[H" << std::flush;
+                            clearScreen();
                             printHeader(title);
                             printLogs(logs_copy); }); // 如果打印任务堆积，则执行最新的任务
 }
@@ -1042,7 +1042,7 @@ void Controller::flushGroupLogs()
     pool_.add_last_task([title, logs_copy, this]()
                         {
                             std::lock_guard<std::mutex> lock(printMutex_);
-                            std::cout << "\033[2J\033[H" << std::flush;
+                            clearScreen();
                             printHeader(title);
                             printLogs(logs_copy, true); }); // 如果打印任务堆积，则执行最新的任务
 }
