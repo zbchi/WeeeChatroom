@@ -43,10 +43,11 @@ void Chatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
                                                    {"json", js.dump()}});*/
             }
             // 无论是否在线 存储消息
-            mysql->insert("messages", {{"sender_id", user_id},
+            redis->rpush("messages", js.dump()); // redis做缓存后一次插入mysql
+            /*mysql->insert("messages", {{"sender_id", user_id},
                                        {"receiver_id", receiver_id},
                                        {"content", content},
-                                       {"json", js.dump()}});
+                                       {"json", js.dump()}});*/
         }
         else
             LOG_WARN("屏蔽好友关系的消息,来自[%s]发给[%s]", user_id.c_str(), receiver_id.c_str());
@@ -56,7 +57,7 @@ void Chatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
         chat_errno = 1; // 非好友
         LOG_WARN("非好友关系的消息来自[%s]发给[%s]", user_id.c_str(), receiver_id.c_str());
     } // sendJson(conn, makeResponse(CHAT_MSG_ACK, chat_errno));
-    LOG_INFO("处理聊天消息完成来自[%s]发给[%s]", user_id.c_str(), receiver_id.c_str());
+    // LOG_INFO("处理聊天消息完成来自[%s]发给[%s]", user_id.c_str(), receiver_id.c_str());
 }
 
 void GroupChatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time)
@@ -94,10 +95,11 @@ void GroupChatter::handle(const TcpConnectionPtr &conn, json &js, Timestamp time
                                                         {"json", js.dump()}});*/
                 }
             }
-            mysql->insert("group_messages", {{"group_id", group_id},
-                                             {"sender_id", sender_id},
-                                             {"content", content},
-                                             {"json", js.dump()}});
+            redis->rpush("group_messages", js.dump()); // redis做缓存后一次插入mysql
+            /* mysql->insert("group_messages", {{"group_id", group_id},
+                                              {"sender_id", sender_id},
+                                              {"content", content},
+                                              {"json", js.dump()}});*/
         }
     }
     else

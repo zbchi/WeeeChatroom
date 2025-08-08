@@ -28,6 +28,7 @@ public:
     Result queryResult(const std::string &sql);
 
     bool insert(const std::string &table, const std::map<std::string, std::string> &data);
+    bool insertList(const std::string &table, const std::vector<std::map<std::string, std::string>> &dataList);
     bool del(const std::string &table, const std::map<std::string, std::string> &conditions);
     bool update(const std::string &table,
                 const std::map<std::string, std::string> &updates,

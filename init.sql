@@ -38,7 +38,6 @@ CREATE TABLE IF NOT EXISTS offlineMessages
 
 CREATE TABLE IF NOT EXISTS friends
 (
-    id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     friend_id INT NOT NULL,
     #json TEXT NOT NULL,

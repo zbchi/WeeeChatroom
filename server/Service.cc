@@ -63,6 +63,8 @@ void Service::start()
                     ftpServer_.start(); }); // 启动文件传输服务器
     loop_.runEvery(20.0, [this]()
                    { this->heartBeatCheck(); }); // 定时检测心跳
+    loop_.runEvery(2.0, [this]()
+                   { this->insertFromRedis(); }); // 定时把缓存插入mysql
     server_.start();
     loop_.loop();
 }
@@ -211,4 +213,37 @@ void Service::initCache()
         }
         LOG_INFO("初始化群成员关系缓存成功");
     });
+}
+
+void Service::insertFromRedis()
+{
+    auto mysql = MySQLConnPool::instance().getConnection();
+    std::vector<std::string> messages;
+    redis->lrange("messages", 0, 10000, std::back_inserter(messages));
+    std::vector<std::map<std::string, std::string>> dataList;
+    for (const auto &msg_str : messages)
+    {
+        json msg = json::parse(msg_str);
+        dataList.push_back({{"sender_id", msg["sender_id"]},
+                            {"receiver_id", msg["receiver_id"]},
+                            {"content", msg["content"]},
+                            {"json", msg_str}});
+    }
+    if (mysql->insertList("messages", dataList))
+        redis->ltrim("messages", messages.size(), -1);
+
+        
+    messages.clear();
+    redis->lrange("group_messages", 0, 10000, std::back_inserter(messages));
+    dataList.clear();
+    for (const auto &msg_str : messages)
+    {
+        json msg = json::parse(msg_str);
+        dataList.push_back({{"group_id", msg["group_id"]},
+                            {"sender_id", msg["sender_id"]},
+                            {"content", msg["content"]},
+                            {"json", msg_str}});
+    }
+    if (mysql->insertList("group_messages", dataList))
+        redis->ltrim("group_messages", messages.size(), -1);
 }

@@ -168,6 +168,39 @@ bool MySQLConn::insert(const std::string &table, const std::map<std::string, std
     return update(sql.str());
 }
 
+bool MySQLConn::insertList(const std::string &table, const std::vector<std::map<std::string, std::string>> &dataList)
+{
+    if (dataList.empty())
+        return true;
+
+    std::vector<std::string> columns;
+    std::stringstream sql;
+    sql << "INSERT INTO " << table << " (";
+
+    for (const auto &pair : dataList[0])
+        columns.push_back(pair.first);
+
+    sql << join(columns, ",") << ") VALUES ";
+
+    for (size_t i = 0; i < dataList.size(); ++i)
+    {
+        const auto &data = dataList[i];
+        std::vector<std::string> values;
+        for (const auto &col : columns)
+        {
+            auto it = data.find(col);
+            std::string value = (it != data.end()) ? escapeStr(it->second) : "";
+            values.push_back("'" + value + "'");
+        }
+
+        sql << "(" << join(values, ",") << ")";
+        if (i != dataList.size() - 1)
+            sql << ",";
+    }
+
+    return update(sql.str());
+}
+
 bool MySQLConn::del(const std::string &table, const std::map<std::string, std::string> &conditions)
 {
     std::vector<std::string> where;
