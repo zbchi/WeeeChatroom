@@ -149,7 +149,7 @@ sudo apt install libmysqlclient-dev
 sudo apt install -y libcurl4-openssl-dev
 
 #安装libuuid
-sudo apt-get ins![架构图](docs/architecture.png)tall uuid-dev
+sudo apt-get install uuid-dev
 
 ```
 
