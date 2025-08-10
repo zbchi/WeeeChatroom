@@ -1,10 +1,39 @@
+## WeeeChatroom
+
+一个基于 C++ 实现的多人在线聊天室，支持文本聊天、好友系统、群聊、文件传输等功能。
+ 项目包含 **服务端** 与 **客户端** 两部分，支持本地编译运行，也可通过 Docker 部署。
+
+## 功能特性
+
+- 用户注册、登录、好友管理
+- 私聊与群聊
+- 文件发送与接收
+- 多线程处理大量客户端连接
+- 支持 MySQL 持久化存储
+- 可使用 Docker 一键部署
+
+## 环境依赖
+
+- **C++17** 或以上
+- **g++** 编译器
+- **CMake 3.10+**
+- **MySQL  8.0+**
+- **libmysqlclient-dev**（MySQL开发库）
+- **Redis**（含 hiredis 与 redis++ 库）
+- **nlohmann-json3-dev**（JSON 解析库）
+- **libcurl4-openssl-dev**（HTTP 请求库，用于发送邮件）
+- **uuid-dev**（UUID 生成）
+- **Docker**（可选）
+
+
+
 ## 架构
 
 ### 服务端架构
 
 ![服务端架构图](images/server.drawio.png)
 
-网络IO(主从Reactor模式)
+#### 网络IO(主从Reactor模式)
 
 主reactor(Main Thread Acceptor):专注于通过epoll处理accept事件并接入新连接，并将新的连接分配给子reactor(IO Thread)  (轮询算法)
 
@@ -12,7 +41,7 @@
 
 
 
-业务逻辑
+#### 业务逻辑
 
 TcpServer设置onMessage回调，将接收到的数据传递给业务层请求分发Handler，各个业务类都是Handler的子类(继承Handler)，通过设置的路由组件将不同的任务类型派发到对应的函数
 
@@ -20,7 +49,7 @@ Work线程池与IO线程解耦，将耗时的业务逻辑操作(对数据库的�
 
 
 
-数据存储
+#### 数据存储
 
 使用MySQL做持久化存储(账户信息等)，Redis存储需要频繁查询的数据(是否为好友关系，是否在线等)，另外，大量消息并发时将Redis作为中间缓存，而后定时一次性插入MySQL中，提高并发响应速度，避免频繁写入MySQL
 
@@ -41,9 +70,9 @@ FileThread与网络线程分离，防止大文件影响正常通信
 <!-- 
 
 > docker run 最后的参数是服务端的Ip地址。
-如用容器启动并传文件:  
-1.把文件托进/tmp/chatclient中。
-2.使用/tmp/chatclient为父目录传输文件，如:/tmp/chatclient/文件名
+> 如用容器启动并传文件:  
+> 1.把文件托进/tmp/chatclient中。
+> 2.使用/tmp/chatclient为父目录传输文件，如:/tmp/chatclient/文件名
 
 ```bash
 docker pull zbchi/chatroomcli
@@ -120,7 +149,7 @@ docker compose up
 sudo apt update
 sudo apt install nlohmann-json3-dev
 
-#安装并启动Redisls
+#安装并启动Redis
 sudo apt update
 sudo apt install redis -y
 sudo systemctl start redis
